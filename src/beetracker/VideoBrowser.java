@@ -1,3 +1,11 @@
+/**
+ * @file VideoBrowser.java
+ * @author Kay Choi, 909926828
+ * @date 29 Jan 15
+ * @description Uses a Java Swing file selector to retrieves the full path of
+ *   a video file.
+ */
+
 package beetracker;
 
 import java.io.IOException;

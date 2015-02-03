@@ -7,6 +7,8 @@
 
 package beetracker;
 
+import java.util.ArrayList;
+
 import blobDetection.Blob;
 import blobDetection.BlobDetection;
 import blobDetection.EdgeVertex;
@@ -15,7 +17,8 @@ import processing.core.PImage;
 
 public class BlobDetectionUtils {
     final static int hueThreshold = 10, satThreshold = 100;
-    
+    private static final float noise = 0.01f;
+    private int area;
     private BlobDetection bd;
     
     /**
@@ -27,6 +30,7 @@ public class BlobDetectionUtils {
         bd = new BlobDetection(width, height);
         bd.setPosDiscrimination(true);
         bd.setThreshold(.2f);
+        area = width * height;
     }
 
     /**
@@ -81,7 +85,8 @@ public class BlobDetectionUtils {
     }
     
     /**
-     * Draws the edges of the currently detected blobs.
+     * Draws the edges of the currently detected blobs. Blobs with a bounding
+     * box of less than 1% of the total image area are ignored as noise.
      * @param parent the calling PApplet
      */
     public void drawEdges(PApplet parent) {
@@ -91,32 +96,60 @@ public class BlobDetectionUtils {
         for (int n = 0; n < bd.getBlobNb(); n++) {
             b = bd.getBlob(n);
             if (b != null) {
-                // Edges
-                parent.strokeWeight(3);
-                parent.stroke(0xFFFF00AA);
-                for (int m = 0; m < b.getEdgeNb(); m++) {
-                    eA = b.getEdgeVertexA(m);
-                    eB = b.getEdgeVertexB(m);
+                if((float)(b.xMax-b.xMin)*(b.yMax-b.yMin)/area > noise) {
+                    // Edges
+                    parent.strokeWeight(3);
+                    parent.stroke(0xFFFF00AA);
+                    for (int m = 0; m < b.getEdgeNb(); m++) {
+                        eA = b.getEdgeVertexA(m);
+                        eB = b.getEdgeVertexB(m);
 
-                    if (eA !=null && eB !=null) {
-                        parent.line(
-                            eA.x*width, eA.y*height,
-                            eB.x*width, eB.y*height
-                        );
+                        if (eA !=null && eB !=null) {
+                            parent.line(
+                                eA.x*parent.width, eA.y*parent.height,
+                                eB.x*parent.width, eB.y*parent.height
+                            );
+                        }
                     }
+                    
+                    //bounding boxes
+                    parent.strokeWeight(1);
+                    parent.stroke(0xFF00FFAA);
+                    parent.rectMode(parent.CORNER);
+                    parent.rect(
+                        b.xMin*parent.width,
+                        b.yMin*parent.height,
+                        b.w*parent.width,
+                        b.h*parent.height
+                    );
                 }
-                
-                //bounding boxes
-                parent.strokeWeight(1);
-                parent.stroke(0xFF00FFAA);
-                parent.rectMode(parent.CORNER);
-                parent.rect(
-                    b.xMin*width,
-                    b.yMin*height,
-                    b.w*width,
-                    b.h*height
-                );
             }
         }
+    }
+
+    /**
+     * Retrieves the centroids of the currently detected blobs. Blobs with a
+     * bounding box of less than 1% of the total image area are ignored as
+     * noise.
+     * @return an ArrayList containing the xy coordinates of the detected blob
+     *   centroids
+     */
+    public ArrayList<int[]> getCentroids() {
+        ArrayList<int[]> result = new ArrayList<int[]>();
+        int[] tmp;
+        Blob b;
+
+        for(int i = 0; i < bd.getBlobNb(); i++) {
+            b = bd.getBlob(i);
+
+            if((float)(b.xMax-b.xMin)*(b.yMax-b.yMin)/area > noise) {
+                tmp = new int[2];
+                tmp[0] = b.x;
+                tmp[1] = b.y;
+                result.add(tmp);
+            }
+        }
+
+        return result;
     }
 }

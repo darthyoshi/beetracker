@@ -17,7 +17,10 @@ import controlP5.ControlP5Constants;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.video.Movie;
-import weka.clusterers.SimpleKMeans;
+import weka.core.Attribute;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.clusterers.XMeans;
 
 public class BeeTracker extends PApplet {
     private int[] departureCount;
@@ -37,6 +40,9 @@ public class BeeTracker extends PApplet {
     private PImage blobImg;
 
     private BlobDetectionUtils bdu;
+
+    private Instances dataSet;
+    private static Attribute x, y;
 
     @Override
     public void setup() {
@@ -62,6 +68,12 @@ public class BeeTracker extends PApplet {
         blobImg = new PImage(width/4, height/4);
 
         bdu = new BlobDetectionUtils(width/4, height/4);
+
+        attrDef = new Instances(new java.io.BufferedReader(
+            new java.io.FileReader("header.arff"))
+        );
+        x = new Attribute("x");
+        y = new Attribute("y");
     }
 
     @Override
@@ -86,8 +98,10 @@ public class BeeTracker extends PApplet {
             image(blobImg, 0, 0, blobImg.width * 4, blobImg.height * 4);
 
             bdu.computeBlobs(blobImg.pixels);
-            
+
             bdu.drawEdges(this);
+
+            xMeans(bdu.getCentroids());
         }
     }
 
@@ -125,15 +139,43 @@ public class BeeTracker extends PApplet {
 
         float aspect = 1.0 * img.width / img.height;
 
+        //scale by width
         result[0] = blobImg.width;
         result[1] = (int)(result[0] * aspect);
 
+        //scale by height if necessary
         if(result[1] > blobImg.height) {
             result[1] = blobImg.height;
             result[0] = (int)(result[1] / aspect);
         }
 
         return result;
+    }
+
+    /**
+     * Uses the X-means algorithm to determine the
+     * @param points an ArrayList containing the points to process.
+     */
+    private void xMeans(ArrayList<int[]> points) {
+        Instance row;
+        int[] tmp;
+
+        //clear old points from data set
+        dataSet.delete();
+
+        //add new points to data set
+        for(int i = 0; i < points.size(); i++) {
+            tmp = points.get(i);
+
+            row = new Instance(2);
+            row.setValue(x, tmp[0]);
+            row.setValue(y, tmp[1]);
+            row.setDataset(dataSet);
+
+            dataSet.add(row);
+        }
+        
+        //invoke weka XMeans clusterer with Instances
     }
 
     /**

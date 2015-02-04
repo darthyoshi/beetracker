@@ -95,7 +95,7 @@ public class BeeTracker extends PApplet {
         try {
             clusterer.setOptions(options);
 
-            attrDef = new Instances(new java.io.BufferedReader(
+            dataSet = new Instances(new java.io.BufferedReader(
                 new java.io.FileReader("header.arff"))
             );
         } catch(Exception e) {

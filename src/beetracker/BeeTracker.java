@@ -5,7 +5,9 @@
  * @description A tool for tracking bees in a video.
  */
 
- package beetracker;
+package beetracker;
+
+import java.io.BufferedWriter;
 
 import blobDetection.Blob;
 import blobDetection.BlobDetection;
@@ -17,10 +19,9 @@ import controlP5.ControlP5Constants;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.video.Movie;
-import weka.core.Attribute;
-import weka.core.Instance;
-import weka.core.Instances;
 import weka.clusterers.XMeans;
+import weka.core.Instances;
+import weka.core.SparseInstance;
 
 public class BeeTracker extends PApplet {
     private int[] departureCount;
@@ -41,11 +42,31 @@ public class BeeTracker extends PApplet {
 
     private BlobDetectionUtils bdu;
 
+    private XMeans clusterer;
     private Instances dataSet;
-    private static Attribute x, y;
+    private static final String options = {
+        "-I", "5",          //max iterations (overall)
+        "-L", "1",          //min #clusters
+        "-H", "10",         //max #clusters
+        "-C", "0.5",        //cutoff factor
+        "-D", "weka.core.EuclideanDistance -R first-last", //distance function
+        "-S", "5"           //random seed
+    };
+    private ArrayList<int[]>[] clusters;
+
+    private BufferedWriter writer = null;
 
     @Override
     public void setup() {
+        try {
+            writer = new BufferedWriter(new java.io.OutputStreamWriter(
+                new java.io.FileOutputStream("Console.log"))
+            );
+        } catch(IOException e) {
+            e.printStackTrace();
+            exit();
+        }
+
         size(800, 600);
         frameRate(30);
         background(0x444444);
@@ -69,11 +90,24 @@ public class BeeTracker extends PApplet {
 
         bdu = new BlobDetectionUtils(width/4, height/4);
 
-        attrDef = new Instances(new java.io.BufferedReader(
-            new java.io.FileReader("header.arff"))
-        );
-        x = new Attribute("x");
-        y = new Attribute("y");
+        clusterer = new XMeans();
+
+        try {
+            clusterer.setOptions(options);
+
+            attrDef = new Instances(new java.io.BufferedReader(
+                new java.io.FileReader("header.arff"))
+            );
+        } catch(Exception e) {
+            try {
+                writer.append(e.getMessage()).append('\n');
+                writer.flush();
+            } catch(IOException ex) {
+                ex.printStackTrace();
+            } finally {
+                exit();
+            }
+        }
     }
 
     @Override
@@ -101,7 +135,12 @@ public class BeeTracker extends PApplet {
 
             bdu.drawEdges(this);
 
-            xMeans(bdu.getCentroids());
+            clusters = getClusters(bdu.getCentroids());
+
+            textSize(32);
+            textAlign(CENTER);
+            fill(0xFFFF0099);
+            text("#bees: " + clusters.size(), width/2, 50);
         }
     }
 
@@ -117,8 +156,8 @@ public class BeeTracker extends PApplet {
             String videoPath = VideoBrowser.getVideoName(this);
 
             if(videoPath != null) {
-//              movie = new Movie(this, videoName);
-//              movie.play();
+//                movie = new Movie(this, videoName);
+//                movie.play();
                 println(videoPath);
             }
 
@@ -155,27 +194,73 @@ public class BeeTracker extends PApplet {
     /**
      * Uses the X-means algorithm to determine the
      * @param points an ArrayList containing the points to process.
+     * @return
      */
-    private void xMeans(ArrayList<int[]> points) {
-        Instance row;
+    private ArrayList<int[]>[] getClusters(ArrayList<int[]> points) {
+        ArrayList<int[]>[] result;
+        SparseInstance row;
         int[] tmp;
+        int i;
 
         //clear old points from data set
         dataSet.delete();
 
         //add new points to data set
-        for(int i = 0; i < points.size(); i++) {
+        for(i = 0; i < points.size(); i++) {
             tmp = points.get(i);
 
-            row = new Instance(2);
-            row.setValue(x, tmp[0]);
-            row.setValue(y, tmp[1]);
+            row = new SparseInstance(2);
+            row.setValue(0, tmp[0]);
+            row.setValue(1, tmp[1]);
             row.setDataset(dataSet);
 
             dataSet.add(row);
         }
-        
-        //invoke weka XMeans clusterer with Instances
+
+        try {
+            //invoke weka XMeans clusterer with Instances
+            clusterer.buildClusterer(dataSet);
+
+            //create list of clusters
+            result = new ArrayList<int[]>[clusterer.numberOfClusters()];
+            for(i = 0; i < clusterer.numberOfClusters(); i++) {
+                result[i] = new ArrayList<int[]>();
+            }
+
+            for(i = 0; i < dataSet.numInstances(); i++) {
+                row = dataSet.instance(i);
+
+                //group points in a cluster together in list
+                tmp = new int[2];
+                tmp[0] = (int)row.value(0);
+                tmp[1] = (int)row.value(1);
+                result[clusterer.clusterInstance(row)].add(tmp);
+            }
+        } catch (Exception e) {
+            try {
+                writer.append(e.getMessage()).append('\n');
+                writer.flush();
+            } catch(IOException ex) {
+                ex.printStackTrace();
+            } finally {
+                exit();
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public void exit() {
+        if(writer != null) {
+            try {
+                writer.close();
+            } catch(IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        super.exit();
     }
 
     /**

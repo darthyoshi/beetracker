@@ -1,6 +1,8 @@
-% options: weka.clusterers.XMeans -I 5 -M 1000 -J 1000 -L 1 -H 10 -B 1.0 -C 0.5 -D "weka.core.EuclideanDistance -R first-last" -S 5
+% This file defines the format of points for use with Weka.
 
 @relation points
 
 @attribute x numeric
 @attribute y numeric
+
+@data

@@ -18,7 +18,6 @@ import processing.core.PImage;
 public class BlobDetectionUtils {
     final static int hueThreshold = 10, satThreshold = 100;
     private static final float noise = 0.01f;
-    private int area;
     private BlobDetection bd;
     
     /**
@@ -30,7 +29,6 @@ public class BlobDetectionUtils {
         bd = new BlobDetection(width, height);
         bd.setPosDiscrimination(true);
         bd.setThreshold(.2f);
-        area = width * height;
     }
 
     /**
@@ -41,9 +39,14 @@ public class BlobDetectionUtils {
      * @param img the PImage to preprocess
      * @param hues
      */
-    public static void preProcessImg(PApplet parent, PImage img, int[] hues) {
+    public static void preProcessImg(
+        PApplet parent,
+        PImage img,
+        ArrayList<Integer> hues
+    ) {
         short j;
         boolean match;
+        int tmp, hue;
 
         img.loadPixels();
 
@@ -51,16 +54,15 @@ public class BlobDetectionUtils {
         for(int i = 0; i < img.pixels.length; i++) {
             match = false;
 
-            for(j = 0; j < (short)hues.length; j++) {
-                if(parent.hue(img.pixels[i]) > hues[j] - hueThreshold &&
-                    parent.hue(img.pixels[i]) < hues[j] + hueThreshold &&
+            for(j = 0; j < (short)hues.size(); j++) {
+                hue = hues.get(j);
+                tmp = parent.hue(img.pixels[i]);
+
+                if(tmp > hue - hueThreshold &&
+                    tmp < hue + hueThreshold &&
                     parent.saturation(img.pixels[i]) > satThreshold)
                 {
-                    img.pixels[i] = parent.color(
-                        parent.hue(img.pixels[i]),
-                        255,
-                        255
-                    );
+                    img.pixels[i] = parent.color(hue, 255, 255);
 
                     match = true;
 
@@ -131,19 +133,19 @@ public class BlobDetectionUtils {
      * Retrieves the centroids of the currently detected blobs. Blobs with a
      * bounding box of less than 1% of the total image area are ignored as
      * noise.
-     * @return an ArrayList containing the xy coordinates of the detected blob
-     *   centroids
+     * @return an ArrayList containing the normalized xy coordinates of the
+     *  detected blob centroids
      */
-    public ArrayList<int[]> getCentroids() {
-        ArrayList<int[]> result = new ArrayList<int[]>();
-        int[] tmp;
+    public ArrayList<float[]> getCentroids() {
+        ArrayList<float[]> result = new ArrayList<float[]>();
+        float[] tmp;
         Blob b;
 
         for(int i = 0; i < bd.getBlobNb(); i++) {
             b = bd.getBlob(i);
 
-            if((float)(b.xMax-b.xMin)*(b.yMax-b.yMin)/area > noise) {
-                tmp = new int[2];
+            if((b.xMax-b.xMin)*(b.yMax-b.yMin) > noise) {
+                tmp = new float[2];
                 tmp[0] = b.x;
                 tmp[1] = b.y;
                 result.add(tmp);

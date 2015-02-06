@@ -8,6 +8,8 @@
 package beetracker;
 
 import java.io.BufferedWriter;
+import java.util.Hashtable;
+import java.util.Scanner;
 
 import blobDetection.Blob;
 import blobDetection.BlobDetection;
@@ -26,8 +28,8 @@ import weka.core.SparseInstance;
 public class BeeTracker extends PApplet {
     private int[] departureCount;
     private int[] returnCount;
-    private static int numColors;
-    private int[] colors;
+    private Hashtable<Integer,Centroid> centroids;
+    private ArrayList<Integer> colors;
     private int[] newDims;
     static final short[] beeActions = {0, 1}; //0 = depart, 1 = return
 
@@ -58,6 +60,9 @@ public class BeeTracker extends PApplet {
 
     @Override
     public void setup() {
+        size(800, 600);
+        frameRate(30);
+
         try {
             writer = new BufferedWriter(new java.io.OutputStreamWriter(
                 new java.io.FileOutputStream("Console.log"))
@@ -67,8 +72,26 @@ public class BeeTracker extends PApplet {
             exit();
         }
 
-        size(800, 600);
-        frameRate(30);
+        centroids = new Hashtable<Integer,Centroid>();
+        colors = new ArrayList<Integer>();
+
+        Scanner scan = null;
+        try {
+            scan = new Scanner(new java.io.File("hues.txt"));
+
+            Integer tmp;
+            while(scan.hasNext()) {
+                tmp = Integer.valueOf(scan.next());
+
+                centroids.add(tmp, null);
+
+                colors.add(tmp);
+            }
+        } catch(NumberFormatException ex) {
+            centroids.clear();
+            colors.clear();
+        } catch(FileNotFoundException e) {}
+
         background(0x444444);
 
         cp5 = new ControlP5(this);
@@ -112,6 +135,10 @@ public class BeeTracker extends PApplet {
 
     @Override
     public void draw() {
+        textSize(32);
+        textAlign(CENTER);
+        fill(0xFFFF0099);
+
         if(movie != null) {
             if(movie.available()) {
                 movie.read();
@@ -129,18 +156,21 @@ public class BeeTracker extends PApplet {
 
             BlobDetectionUtils.preProcessImg(this, blobImg, colors);
 
-            image(blobImg, 0, 0, blobImg.width * 4, blobImg.height * 4);
+            image(blobImg, 0, 0, blobImg.width*4, blobImg.height*4);
 
             bdu.computeBlobs(blobImg.pixels);
 
             bdu.drawEdges(this);
 
-            clusters = getClusters(bdu.getCentroids());
+            ArrayList<float[]> points = bdu.getCentroids();
+            clusters = getClusters(points);
+            updateCentroids(points);
 
-            textSize(32);
-            textAlign(CENTER);
-            fill(0xFFFF0099);
             text("#bees: " + clusters.size(), width/2, 50);
+        }
+
+        if(colors.isEmpty()) {
+            text("No colors selected!", width/2, height/2);
         }
     }
 
@@ -164,7 +194,9 @@ public class BeeTracker extends PApplet {
             break;
 
         case "colorsButton":
+            
 
+            break;
         }
     }
 
@@ -196,9 +228,10 @@ public class BeeTracker extends PApplet {
      * @param points an ArrayList containing the points to process.
      * @return
      */
-    private ArrayList<int[]>[] getClusters(ArrayList<int[]> points) {
+    private ArrayList<int[]>[] getClusters(ArrayList<float[]> points) {
         ArrayList<int[]>[] result;
         SparseInstance row;
+        float[] point;
         int[] tmp;
         int i;
 
@@ -207,11 +240,11 @@ public class BeeTracker extends PApplet {
 
         //add new points to data set
         for(i = 0; i < points.size(); i++) {
-            tmp = points.get(i);
+            point = points.get(i);
 
             row = new SparseInstance(2);
-            row.setValue(0, tmp[0]);
-            row.setValue(1, tmp[1]);
+            row.setValue(0, point[0]*width);
+            row.setValue(1, point[1]*height);
             row.setDataset(dataSet);
 
             dataSet.add(row);
@@ -222,8 +255,9 @@ public class BeeTracker extends PApplet {
             clusterer.buildClusterer(dataSet);
 
             //create list of clusters
-            result = new ArrayList<int[]>[clusterer.numberOfClusters()];
-            for(i = 0; i < clusterer.numberOfClusters(); i++) {
+            int numClusters = clusterer.numberOfClusters();
+            result = new ArrayList<int[]>[numClusters];
+            for(i = 0; i < numClusters; i++) {
                 result[i] = new ArrayList<int[]>();
             }
 
@@ -264,10 +298,54 @@ public class BeeTracker extends PApplet {
     }
 
     /**
+     * @param points
+     */
+    private void updateCentroids(ArrayList<float[]> points) {
+/*        int hueVal;
+        Centroid centroid;
+        float[] point;
+
+        blobImg.loadPixels();
+
+        for(int i = 0; i < points.size(); i++) {
+            point = points.get(i);
+
+            //grab centroid pixel from blob image
+            hueVal = blobImg.pixels[
+                (int)(point[1]*blobImg.height) * blobImg.width + 
+                (int)(point[0]*blobImg.width)
+            ]
+            //-case: centroid is not in a blob (pixel is black)
+            if(brightness(hueVal) == 0) {
+                //iterate through cluster centroids for valid hue
+            }
+            //-case: centroid is in a blob (pixel has valid hue)
+            else {
+                hueVal = hue(hueVal);
+            }
+
+            //update centroid position
+            centroid = centroids.get(hueVal);
+            if(centroid == null) {
+                centroid = new Centroid();
+                centroids.add(hueVal, centroid);
+            }
+            centroid.x = (int)(point[0]*width);
+            centroid.y = (int)(point[1]*height);
+        }
+*/
+    }
+
+    /**
      * Main method for executing BeeTracker as a Java application.
      * @param args command line arguments
      */
     public static void main(String[] args) {
         PApplet.main(new String[] { beetracker.BeeTracker.class.getName() });
+    }
+    
+    private class Centroid {
+        int x, y;
+        boolean updated = false;
     }
 }

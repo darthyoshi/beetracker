@@ -16,9 +16,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import processing.core.PApplet;
 
 public class VideoBrowser {
-    private JFileChooser browser;
-    private PApplet parent;
-
     /**
      * 
      * @return 
@@ -40,7 +37,7 @@ public class VideoBrowser {
             }
             
             catch (IOException e) {
-                parent.println(e.getMessage());
+                PApplet.println(e.getMessage());
             }
         }
 

@@ -91,18 +91,35 @@ public class BlobDetectionUtils {
      * Draws the edges of the currently detected blobs. Blobs with a bounding
      * box of less than 1% of the total image area are ignored as noise.
      * @param parent the calling PApplet
+     * @param pip
+     * @param box
      */
-    public void drawEdges(PApplet parent) {
+    public void drawEdges(PApplet parent, boolean pip, float[] box) {
         parent.noFill();
         Blob b;
         EdgeVertex eA,eB;
+        int[] offset = new int[2];
+        int[] dims = new int[2];
+
+        if(pip) {
+            offset[0] = offset[1] = 50;
+            dims[0] = parent.width-100;
+            dims[1] = parent.height-100;
+        }
+
+        else {
+            offset[0] = 50 + (int)(box[0]*(parent.width-100));
+            offset[1] = 50 + (int)(box[1]*(parent.height-100));
+            dims[0] = (int)(Math.abs(box[2]-box[0])*(parent.width-100));
+            dims[1] = (int)(Math.abs(box[3]-box[1])*(parent.height-100));
+        }
 
         for (int n = 0; n < bd.getBlobNb(); n++) {
             b = bd.getBlob(n);
             if (b != null) {
                 if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
                     // Edges
-                    parent.strokeWeight(3);
+                    parent.strokeWeight(2);
                     parent.stroke(0xFFFF00AA);
                     for (int m = 0; m < b.getEdgeNb(); m++) {
                         eA = b.getEdgeVertexA(m);
@@ -110,8 +127,10 @@ public class BlobDetectionUtils {
 
                         if (eA !=null && eB !=null) {
                             parent.line(
-                                eA.x*parent.width, eA.y*parent.height,
-                                eB.x*parent.width, eB.y*parent.height
+                                eA.x*dims[0] + offset[0],
+                                eA.y*dims[1] + offset[1],
+                                eB.x*dims[0] + offset[0],
+                                eB.y*dims[1] + offset[1]
                             );
                         }
                     }
@@ -121,10 +140,10 @@ public class BlobDetectionUtils {
                     parent.stroke(0xFF00FFAA);
                     parent.rectMode(PConstants.CORNER);
                     parent.rect(
-                        b.xMin*parent.width,
-                        b.yMin*parent.height,
-                        b.w*parent.width,
-                        b.h*parent.height
+                        b.xMin*dims[0] + offset[0],
+                        b.yMin*dims[1] + offset[1],
+                        b.w*dims[0],
+                        b.h*dims[1]
                     );
                 }
             }

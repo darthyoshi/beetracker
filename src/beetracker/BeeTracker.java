@@ -11,35 +11,23 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Scanner;
 
-import controlP5.Button;
-import controlP5.ControlEvent;
-import controlP5.ControlP5;
-import controlP5.ControlP5Constants;
-import controlP5.Group;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.video.Movie;
-import weka.clusterers.XMeans;
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.SparseInstance;
+import controlP5.ControlEvent;
 
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
+    private ArrayList<Float> colors;
     private int[] departureCount;
     private int[] returnCount;
-    private Hashtable<Float, Centroid> centroids;
-    private ArrayList<Float> colors;
-    private int[] newDims;
-    static final short[] beeActions = {0, 1}; //0 = depart, 1 = return
+    private boolean isPlaying = false, init = false, pip = false;
+    private static final int[] mainBounds = {50, 50, 750, 550};
 
-    private ControlP5 cp5;
-    private Group group;
-    private Button openButton;
-    private Button colorsButton;
+    private float[] dragBox;
+    private boolean isDrag = false;
 
     private Movie movie = null;
 private PImage test = null;
@@ -47,16 +35,10 @@ private PImage test = null;
 
     private BlobDetectionUtils bdu;
 
-    private XMeans clusterer;
-    private Instances dataSet;
-    private static final String options[] = {
-        "-I", "5",          //max iterations (overall)
-        "-L", "1",          //min #clusters
-        "-H", "10",         //max #clusters
-        "-C", "0.5",        //cutoff factor
-        "-D", "weka.core.EuclideanDistance -R first-last", //distance function
-        "-S", "5"           //random seed
-    };
+    private DataMinerUtils dmu;
+
+    private UIControl uic;
+
     private ArrayList<ArrayList<int[]>> clusters;
 
     private BufferedWriter writer = null;
@@ -75,10 +57,8 @@ private PImage test = null;
             exit();
         }
 
-        centroids = new Hashtable<Float,Centroid>();
-        colors = new ArrayList<Float>();
-
         Scanner scan = null;
+        colors = new ArrayList<Float>();
         try {
             scan = new Scanner(new java.io.File("colors.txt"));
 
@@ -86,101 +66,109 @@ private PImage test = null;
             while(scan.hasNext()) {
                 tmp = hue(Integer.valueOf(scan.next(), 16));
 
-                centroids.put(tmp, new Centroid());
-
                 colors.add(tmp);
             }
         } catch(NumberFormatException ex) {
-            centroids.clear();
             colors.clear();
         } catch(FileNotFoundException e) {}
 
+        uic = new UIControl(this);
+
+        dmu = new DataMinerUtils(this, writer, colors);
+
         background(0x444444);
 
-        cp5 = new ControlP5(this);
-        cp5.setFont(cp5.getFont().getFont(), 15);
-
-        group = cp5.addGroup("group").setLabel("").setVisible(true);
-
-        openButton = cp5.addButton("openButton")
-            .setSize(120, 20)
-            .setPosition(25, 25)
-            .setCaptionLabel("Open video file")
-            .setGroup(group);
-        openButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
-
-        colorsButton = cp5.addButton("colorsButton")
-            .setSize(150, 20)
-            .setPosition(150, 25)
-            .setCaptionLabel("Set tracking colors")
-            .setGroup(group);
-        colorsButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
-
-        //TODO add buttons for control during playback
-
-        blobImg = new PImage(width/4, height/4);
+        blobImg = createImage(width/4, height/4, RGB);
 
         bdu = new BlobDetectionUtils(width/4, height/4);
 
-        clusterer = new XMeans();
-
-        try {
-            clusterer.setOptions(options);
-
-            dataSet = new Instances(new java.io.BufferedReader(
-                new java.io.FileReader("header.arff"))
-            );
-        } catch(Exception e) {
-            try {
-                writer.append(e.getMessage()).append('\n');
-                writer.flush();
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            } finally {
-                exit();
-            }
-        }
+        dragBox = new float[4];
+        dragBox[0] = dragBox[1] = 0f;
+        dragBox[2] = dragBox[3] = 1f;
     }
 
     @Override
     public void draw() {
+        background(0x222222);
+
+        noStroke();
+        fill(0xff444444);
+        rectMode(CORNERS);
+        rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
+
         textSize(32);
         textAlign(CENTER);
         fill(0xFFFF0099);
 
-   //     if(movie != null) {
-       /*     if(movie.available()) {
+        if(/*movie*/test != null) {
+       /*     if((isPlaying || init) && movie.available()) {
                 movie.read();
-            }*/if(test != null) {
 
-            image(/*movie*/test, 0, 0, width, height);
+                if(init) {
+                    movie.stop();
+                    init = false;
+                }
+            }*/
 
-            newDims = resizeDims(/*movie*/test);
+            imageMode(CENTER);
+            image(/*movie*/test, width/2, height/2, width-100, height-100);
 
-            blobImg.copy(
-             /*   movie*/test,
-                0, 0, test/*movie*/.width, test/*movie*/.height,
-                0, 0, /*newDims[0]*/blobImg.width, /*newDims[1]*/blobImg.height
-            );
+            if(!init) {
+                blobImg.copy(
+                 /*   movie*/test,
+                    (int)(/*movie*/test.width*dragBox[0]),
+                    (int)(/*movie*/test.height*dragBox[1]),
+                    (int)(/*movie*/test.width*dragBox[2]),
+                    (int)(/*movie*/test.height*dragBox[3]),
+                    0, 0, blobImg.width, blobImg.height
+                );
 
-            BlobDetectionUtils.preProcessImg(this, blobImg, colors);
+                BlobDetectionUtils.preProcessImg(this, blobImg, colors);
 
-            image(blobImg, 0, 0, blobImg.width*4, blobImg.height*4);
+                bdu.computeBlobs(blobImg.pixels);
 
-            bdu.computeBlobs(blobImg.pixels);
+                if(pip) {
+                    image(blobImg, width/2, height/2, width-100, height-100);
+                }
 
-            bdu.drawEdges(this);
+                bdu.drawEdges(this, pip, dragBox);
 
-            ArrayList<float[]> points = bdu.getCentroids();
-            clusters = getClusters(points);
- //           updateCentroids();
+                clusters = dmu.getClusters(bdu.getCentroids());
 
-            text("#bees: " + clusters.size(), width/2, 50);
+     //           dm.updateCentroids(blobImg, clusters);
+
+                text("#bees: " + clusters.size(), width/2, 50);
+            }
         }
 
         if(colors.isEmpty()) {
             text("No colors selected!", width/2, height/2);
         }
+
+        strokeWeight(1);
+        noFill();
+
+        //inset box
+        stroke(0xffff0505);
+        rectMode(CORNERS);
+        rect(
+            dragBox[0]*(width-100)+50, dragBox[1]*(height-100)+50,
+            dragBox[2]*(width-100)+50, dragBox[3]*(height-100)+50
+        );
+        if(isDrag) {
+            line(
+                dragBox[0]*(width-100)+50, dragBox[1]*(height-100)+50,
+                dragBox[2]*(width-100)+50, dragBox[3]*(height-100)+50
+            );
+            line(
+                dragBox[0]*(width-100)+50, dragBox[3]*(height-100)+50,
+                dragBox[2]*(width-100)+50, dragBox[1]*(height-100)+50
+            );
+        }
+
+        //main window border
+        stroke(0xff000000);
+        rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
     }
 
     /**
@@ -197,8 +185,10 @@ private PImage test = null;
             if(videoPath != null) {
 //                movie = new Movie(this, videoName);
 //                movie.play();
+                init = true;
 */
-                group.setVisible(!group.isVisible());
+                uic.toggleGroup();
+                uic.togglePlay();
 /*
                 try {
                     writer.append(videoPath);
@@ -215,92 +205,29 @@ test = this.loadImage("test.jpg");
 
 
             break;
-        }
-    }
 
-    /**
-     * Calculates the dimensions of a resized PImage.
-     * @param img the PImage to resize
-     * @return an array containing the new dimensions
-     */
-    private int[] resizeDims(PImage img) {
-        int[] result = new int[2];
+        case "playButton":
+            isPlaying = !isPlaying;
 
-        float aspect = 1f * img.width / img.height;
-
-        //scale by width
-        result[0] = blobImg.width;
-        result[1] = (int)(result[0] * aspect);
-
-        //scale by height if necessary
-        if(result[1] > blobImg.height) {
-            result[1] = blobImg.height;
-            result[0] = (int)(result[1] / aspect);
-        }
-
-        return result;
-    }
-
-    /**
-     * Uses the X-means algorithm to determine the
-     * @param points an ArrayList containing the points to process.
-     * @return
-     */
-    private ArrayList<ArrayList<int[]>> getClusters(ArrayList<float[]> points) {
-        ArrayList<ArrayList<int[]>> result = null;
-        Instance row;
-        float[] point;
-        int[] tmp;
-        int i;
-
-        //clear old points from data set
-        dataSet.delete();
-
-        //add new points to data set
-        for(i = 0; i < points.size(); i++) {
-            point = points.get(i);
-
-            row = new SparseInstance(2);
-            row.setValue(0, point[0]*width);
-            row.setValue(1, point[1]*height);
-            row.setDataset(dataSet);
-
-            dataSet.add(row);
-        }
-
-        try {
-            //invoke weka XMeans clusterer with Instances
-            clusterer.buildClusterer(dataSet);
-
-            //create list of clusters
-            int numClusters = clusterer.numberOfClusters();
-            result = new ArrayList<ArrayList<int[]>>(numClusters);
-            for(i = 0; i < numClusters; i++) {
-                result.add(new ArrayList<int[]>());
+            if(movie != null) {
+                movie.stop();
             }
 
-            for(i = 0; i < dataSet.numInstances(); i++) {
-                row = dataSet.instance(i);
-                point = points.get(i);
+            break;
 
-                //group points in a cluster together in list
-                tmp = new int[2];
-                tmp[0] = (int)row.value(0);
-                tmp[1] = (int)row.value(1);
-                result.get(clusterer.clusterInstance(row)).add(tmp);
+        case "stopButton":
+            isPlaying = false;
+
+            if(/*movie*/test != null) {
+//              movie.stop();
+                test = null;
             }
-        } catch (Exception e) {
-            try {
-                writer.append(e.getMessage()).append('\n');
-                writer.flush();
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            } finally {
-                exit();
-            }
+
+            uic.toggleGroup();
+            uic.togglePlay();
+
+            break;
         }
-
-        return result;
     }
 
     @Override
@@ -317,63 +244,84 @@ test = this.loadImage("test.jpg");
     }
 
     /**
-     * @param points
+     * Hnndler for mouse press.
+     * @param mouseX the x-coordinate of the mouse
+     * @param mouseY the y-coordinate of the mouse
      */
-    private void updateCentroids() {
-        int pixel;
-        float hueVal = -1, tmpHue;
-        Centroid centroid;
-        double[] point;
-        ArrayList<int[]> cluster;
-        Instances centers = clusterer.getClusterCenters();
-        Instance center;
+    public void mousePressed(int mouseX, int mouseY) {
+        if(mouseX > mainBounds[0] && mouseX < mainBounds[2] &&
+            mouseY > mainBounds[1] && mouseY < mainBounds[3])
+        {
+            dragBox[0] = dragBox[2] = (mouseX-50)/700f;
+            dragBox[1] = dragBox[3] = (mouseY-50)/500f;
 
-        colorMode(HSB, 255);
+            isDrag = true;
+        }
+    }
 
-        blobImg.loadPixels();
+    /**
+     * Handler for mouse drag.
+     * @param mouseX the x-coordinate of the mouse
+     * @param mouseY the y-coordinate of the mouse
+     */
+    public void mouseDragged(int mouseX, int mouseY) {
+        if(isDrag) {
+            int tmp[] = constrainMouse(mouseX, mouseY);
 
-        for(int i = 0; i < centers.numInstances(); i++) {
-            center = centers.instance(i);
-            point = new double[2];
+            dragBox[2] = (tmp[0]-50)/700f;
+            dragBox[3] = (tmp[1]-50)/500f;
+        }
+    }
 
-            point[0] = center.value(0);
-            point[1] = center.value(1);
+    /**
+     * Constrains the mouse coordinates within the item window.
+     * @param mouseX the x-coordinate of the mouse
+     * @param mouseY the y-coordinate of the mouse
+     * @return an integer array containing the adjusted coordinates
+     */
+    private int[] constrainMouse(int mouseX, int mouseY) {
+        int[] result = new int[2];
 
-            //grab centroid pixel from blob image
-            pixel = blobImg.pixels[
-                (int)(point[1]*blobImg.height*blobImg.width/height) +
-                (int)(point[0]*blobImg.width/width)
-            ];
-            //-case: centroid is not in a blob (pixel is black)
-            if(brightness(pixel) == 0) {
-                cluster = clusters.get(i);
+        if(mouseX < mainBounds[0]) {
+            result[0] = mainBounds[0];
+        }
 
-                //iterate through cluster centroids for valid hue
-                for(int[] tmp : cluster) {
-                    hueVal = (int)(((float)(tmp[1]))*blobImg.height*
-                        blobImg.width/height) +
-                        (int)(((float)(tmp[0]))*blobImg.width/width);
+        else if(mouseX > mainBounds[2]) {
+            result[0] = mainBounds[2];
+        }
 
-                    if(brightness(pixel) > 0) {
-                        hueVal = hue(pixel);
+        else {
+            result[0] = mouseX;
+        }
 
-                        break;
-                    }
-                }
+        if(mouseY < mainBounds[1]) {
+            result[1] = mainBounds[1];
+        }
+
+        else if(mouseY > mainBounds[3]) {
+            result[1] = mainBounds[3];
+        }
+
+        else {
+            result[1] = mouseY;
+        }
+
+        return result;
+    }
+
+    /**
+     * Handler for mouse release.
+     * @param mouseX the x-coordinate of the mouse
+     * @param mouseY the y-coordinate of the mouse
+     */
+    public void mouseReleased(int mouseX, int mouseY) {
+        if(isDrag) {
+            if(dragBox[0] == dragBox[2] || dragBox[1] == dragBox[3]) {
+                dragBox[0] = dragBox[1] = 0f;
+                dragBox[2] = dragBox[3] = 1f;
             }
-            //-case: centroid is in a blob (pixel has valid hue)
-            else {
-                hueVal = hue(pixel);
-            }
 
-            //update centroid position
-            centroid = centroids.get(hueVal);
-            if(centroid == null) {
-                centroid = new Centroid();
-                centroids.put(hueVal, centroid);
-            }
-            centroid.x = (int)(point[0]*width);
-            centroid.y = (int)(point[1]*height);
+            isDrag = false;
         }
     }
 
@@ -383,10 +331,5 @@ test = this.loadImage("test.jpg");
      */
     public static void main(String[] args) {
         PApplet.main(new String[] { beetracker.BeeTracker.class.getName() });
-    }
-
-    private class Centroid {
-        float x, y;
-        boolean updated = false;
     }
 }

@@ -7,16 +7,18 @@
 
 package beetracker;
 
-import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+import controlP5.ControlEvent;
 
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.video.Movie;
-import controlP5.ControlEvent;
 
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
@@ -25,6 +27,9 @@ public class BeeTracker extends PApplet {
     private int[] returnCount;
     private boolean isPlaying = false, init = false, pip = false;
     private static final int[] mainBounds = {50, 50, 750, 550};
+    private short playbackSpeed = 1;
+
+    private File currentDir = null;
 
     private float[] dragBox;
     private boolean isDrag = false;
@@ -41,26 +46,28 @@ private PImage test = null;
 
     private ArrayList<ArrayList<int[]>> clusters;
 
-    private BufferedWriter writer = null;
+    private PrintStream log = null;
 
     @Override
     public void setup() {
         size(800, 600);
         frameRate(30);
 
-        try {
-            writer = new BufferedWriter(new java.io.OutputStreamWriter(
-                new java.io.FileOutputStream("Console.log"))
-            );
-        } catch(IOException e) {
-            e.printStackTrace();
-            exit();
+        if(frame != null) {
+            frame.setTitle("BeeTracker");
         }
+
+        try {
+			log = new PrintStream(new File("Console.log"));
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+			exit();
+		}
 
         Scanner scan = null;
         colors = new ArrayList<Float>();
         try {
-            scan = new Scanner(new java.io.File("colors.txt"));
+            scan = new Scanner(new File("colors.txt"));
 
             Float tmp;
             while(scan.hasNext()) {
@@ -74,7 +81,7 @@ private PImage test = null;
 
         uic = new UIControl(this);
 
-        dmu = new DataMinerUtils(this, writer, colors);
+        dmu = new DataMinerUtils(this, log, colors);
 
         background(0x444444);
 
@@ -97,29 +104,27 @@ private PImage test = null;
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
 
         textSize(32);
-        textAlign(CENTER);
         fill(0xFFFF0099);
 
-        if(/*movie*/test != null) {
-       /*     if((isPlaying || init) && movie.available()) {
+        if(movie/*test*/ != null) {
+            if((isPlaying || init) && movie.available()) {
                 movie.read();
-
+println(movie.time()/movie.duration());
                 if(init) {
                     movie.stop();
-                    init = false;
                 }
-            }*/
+            }
 
             imageMode(CENTER);
-            image(/*movie*/test, width/2, height/2, width-100, height-100);
+            image(movie/*test*/, width/2, height/2, width-100, height-100);
 
             if(!init) {
                 blobImg.copy(
-                 /*   movie*/test,
-                    (int)(/*movie*/test.width*dragBox[0]),
-                    (int)(/*movie*/test.height*dragBox[1]),
-                    (int)(/*movie*/test.width*dragBox[2]),
-                    (int)(/*movie*/test.height*dragBox[3]),
+                    movie/*test*/,
+                    (int)(movie/*test*/.width*dragBox[0]),
+                    (int)(movie/*test*/.height*dragBox[1]),
+                    (int)(movie/*test*/.width*dragBox[2]),
+                    (int)(movie/*test*/.height*dragBox[3]),
                     0, 0, blobImg.width, blobImg.height
                 );
 
@@ -135,14 +140,29 @@ private PImage test = null;
 
                 clusters = dmu.getClusters(bdu.getCentroids());
 
-     //           dm.updateCentroids(blobImg, clusters);
+     //           dmu.updateCentroids(blobImg, clusters);
 
-                text("#bees: " + clusters.size(), width/2, 50);
+                text("#bees: " + clusters.size(), width/2, 25);
+
+                textAlign(RIGHT, CENTER);
+                text("current speed: "+playbackSpeed+'x', 750, 575);
+            }
+
+            else {
+            	textSize(16);
+                textAlign(CENTER, CENTER);
+                text(
+            		"Drag the mouse to define the area to process.\n" +
+            		"The entire image will be processed by default.",
+            		width/2, 25
+        		);
+                text("Press play to begin.", width/2, 575);
             }
         }
 
         if(colors.isEmpty()) {
-            text("No colors selected!", width/2, height/2);
+            textAlign(CENTER, CENTER);
+            text("colors.txt not found. Please choose a color.", width/2, 25);
         }
 
         strokeWeight(1);
@@ -180,25 +200,33 @@ private PImage test = null;
 
         switch(eventName) {
         case "openButton":
-   /*         String videoPath = VideoBrowser.getVideoName(this);
+        	File video = VideoBrowser.getVideoFile(this, currentDir);
+
+            String videoPath = null;
+
+            if(video != null) {
+	            try {
+					videoPath = video.getCanonicalPath();
+				} catch (IOException e) {
+					e.printStackTrace(log);
+					exit();
+				}
+
+	            currentDir = video.getParentFile();
+            }
 
             if(videoPath != null) {
-//                movie = new Movie(this, videoName);
-//                movie.play();
+                movie = new Movie(this, videoPath);
+                movie.play();
                 init = true;
-*/
+
                 uic.toggleGroup();
                 uic.togglePlay();
-/*
-                try {
-                    writer.append(videoPath);
-                    writer.flush();
-                } catch(IOException ex) {
-                    ex.printStackTrace();
-                    exit();
-                }
-            }*/
-test = this.loadImage("test.jpg");
+
+                log.append("loaded ").append(videoPath).append('\n');
+				log.flush();
+            }
+//test = this.loadImage("test.jpg");
             break;
 
         case "colorsButton":
@@ -209,8 +237,16 @@ test = this.loadImage("test.jpg");
         case "playButton":
             isPlaying = !isPlaying;
 
+            init = false;
+
             if(movie != null) {
-                movie.stop();
+            	if(isPlaying) {
+            		movie.play();
+	            }
+
+            	else {
+	                movie.stop();
+	            }
             }
 
             break;
@@ -218,13 +254,28 @@ test = this.loadImage("test.jpg");
         case "stopButton":
             isPlaying = false;
 
-            if(/*movie*/test != null) {
-//              movie.stop();
-                test = null;
+            if(movie/*test*/ != null) {
+                movie.stop();
+                movie/*test*/ = null;
             }
 
             uic.toggleGroup();
             uic.togglePlay();
+
+            dragBox[0] = dragBox[1] = 0f;
+            dragBox[2] = dragBox[3] = 1f;
+
+            break;
+
+        case "fastForward":
+            if(movie != null) {
+                playbackSpeed *= 2;
+                if(playbackSpeed > 16) {
+                    playbackSpeed = 1;
+                }
+
+                movie.frameRate(playbackSpeed*frameRate);
+            }
 
             break;
         }
@@ -232,25 +283,19 @@ test = this.loadImage("test.jpg");
 
     @Override
     public void exit() {
-        if(writer != null) {
-            try {
-                writer.close();
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            }
+        if(log != null) {
+            log.close();
         }
 
         super.exit();
     }
 
     /**
-     * Hnndler for mouse press.
-     * @param mouseX the x-coordinate of the mouse
-     * @param mouseY the y-coordinate of the mouse
+     * Handler for mouse press.
      */
-    public void mousePressed(int mouseX, int mouseY) {
+    public void mousePressed() {
         if(mouseX > mainBounds[0] && mouseX < mainBounds[2] &&
-            mouseY > mainBounds[1] && mouseY < mainBounds[3])
+            mouseY > mainBounds[1] && mouseY < mainBounds[3] && init)
         {
             dragBox[0] = dragBox[2] = (mouseX-50)/700f;
             dragBox[1] = dragBox[3] = (mouseY-50)/500f;
@@ -261,10 +306,8 @@ test = this.loadImage("test.jpg");
 
     /**
      * Handler for mouse drag.
-     * @param mouseX the x-coordinate of the mouse
-     * @param mouseY the y-coordinate of the mouse
      */
-    public void mouseDragged(int mouseX, int mouseY) {
+    public void mouseDragged() {
         if(isDrag) {
             int tmp[] = constrainMouse(mouseX, mouseY);
 
@@ -311,10 +354,8 @@ test = this.loadImage("test.jpg");
 
     /**
      * Handler for mouse release.
-     * @param mouseX the x-coordinate of the mouse
-     * @param mouseY the y-coordinate of the mouse
      */
-    public void mouseReleased(int mouseX, int mouseY) {
+    public void mouseReleased() {
         if(isDrag) {
             if(dragBox[0] == dragBox[2] || dragBox[1] == dragBox[3]) {
                 dragBox[0] = dragBox[1] = 0f;

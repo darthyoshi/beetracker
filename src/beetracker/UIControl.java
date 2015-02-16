@@ -14,9 +14,7 @@ import controlP5.Group;
 import controlP5.Toggle;
 
 public class UIControl {
-    private Group group1, group2;
-    private Button openButton;
-    private Button colorsButton;
+    private final Group group1, group2;
 
     /**
      * Class constructor.
@@ -29,23 +27,27 @@ public class UIControl {
         group1 = cp5.addGroup("setup").setLabel("").setVisible(true);
         group2 = cp5.addGroup("playback").setLabel("").setVisible(false);
 
-        openButton = cp5.addButton("openButton")
-            .setSize(120, 20)
-            .setPosition(25, 25)
-            .setCaptionLabel("Open video file")
-            .setGroup(group1);
-        openButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
+        Button openButton = cp5.addButton("openButton").setSize(120, 20);
+        openButton.setPosition(
+        		(parent.width - openButton.getWidth())/2,
+        		parent.height/2 -20
+    		).setCaptionLabel("Open video file")
+            .setGroup(group1)
+            .getCaptionLabel()
+            .alignX(ControlP5Constants.CENTER);
 
-        colorsButton = cp5.addButton("colorsButton")
-            .setSize(150, 20)
-            .setPosition(150, 25)
-            .setCaptionLabel("Set tracking colors")
-            .setGroup(group1);
-        colorsButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
+        Button colorsButton = cp5.addButton("colorsButton").setSize(160, 20);
+        colorsButton.setPosition(
+        		(parent.width - colorsButton.getWidth())/2,
+        		parent.height/2 + 20
+    		).setCaptionLabel("Edit tracking colors")
+            .setGroup(group1)
+            .getCaptionLabel()
+            .alignX(ControlP5Constants.CENTER);
 
         new NewToggle(cp5, "playButton")
             .setCaptionLabel("")
-            .setPosition(10, 10)
+            .setPosition(50, parent.height - 40)
             .setSize(30, 30)
             .setGroup(group2)
             .setImages(
@@ -56,14 +58,14 @@ public class UIControl {
 
         cp5.addButton("fastForward")
             .setCaptionLabel("")
-            .setPosition(50, 10)
+            .setPosition(90, parent.height - 40)
             .setSize(30, 30)
             .setGroup(group2)
             .setImage(parent.loadImage("data/img/fastforward.png"));
 
         cp5.addButton("stopButton")
             .setCaptionLabel("")
-            .setPosition(90, 10)
+            .setPosition(130, parent.height - 40)
             .setSize(30, 30)
             .setGroup(group2)
             .setImage(parent.loadImage("data/img/stopbutton.png"));
@@ -91,6 +93,7 @@ public class UIControl {
             super(control, label);
         }
 
+        @Override
         public void onEnter() {}
     }
 

@@ -7,13 +7,13 @@
 
 package beetracker;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
+
 import weka.clusterers.XMeans;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -22,7 +22,7 @@ import weka.core.SparseInstance;
 public class DataMinerUtils {
     private Hashtable<Float, Centroid> centroids;
 
-    private BufferedWriter writer;
+    private PrintStream log;
 
     private PApplet parent;
 
@@ -37,9 +37,15 @@ public class DataMinerUtils {
         "-S", "5"           //random seed
     };
 
-    public DataMinerUtils(PApplet parent, BufferedWriter writer, ArrayList<Float> colors) {
+    /**
+     * Class constructor.
+     * @param parent the instantiating PApplet
+     * @param log a PrintStream object pointing to the output log
+     * @param colors the list of colors to scan for.
+     */
+    public DataMinerUtils(PApplet parent, PrintStream log, ArrayList<Float> colors) {
         this.parent = parent;
-        this.writer = writer;
+        this.log = log;
 
         clusterer = new XMeans();
 
@@ -50,20 +56,12 @@ public class DataMinerUtils {
                 new java.io.FileReader("header.arff"))
             );
         } catch(Exception e) {
-            try {
-                writer.append(e.getMessage()).append('\n');
-                writer.flush();
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            } finally {
-                parent.exit();
-            }
+            e.printStackTrace(log);
+            parent.exit();
         }
 
         centroids = new Hashtable<Float, Centroid>();
-        for(Float color: colors) {
-            centroids.put(color, new Centroid());
-        }
+        updateColors(colors);
     }
 
 
@@ -73,7 +71,7 @@ public class DataMinerUtils {
      * @return
      */
     public ArrayList<ArrayList<int[]>> getClusters(ArrayList<float[]> points) {
-        ArrayList<ArrayList<int[]>> result = null;
+        ArrayList<ArrayList<int[]>> result = new ArrayList<ArrayList<int[]>>();
         Instance row;
         float[] point;
         int[] tmp;
@@ -95,15 +93,16 @@ public class DataMinerUtils {
         }
 
         try {
-            //invoke weka XMeans clusterer with Instances
-            clusterer.buildClusterer(dataSet);
+        	if(!points.isEmpty()) {
+	            //invoke weka XMeans clusterer with Instances
+	            clusterer.buildClusterer(dataSet);
 
-            //create list of clusters
-            int numClusters = clusterer.numberOfClusters();
-            result = new ArrayList<ArrayList<int[]>>(numClusters);
-            for(i = 0; i < numClusters; i++) {
-                result.add(new ArrayList<int[]>());
-            }
+	            //populate list of clusters
+	            for(i = 0; i < clusterer.numberOfClusters(); i++) {
+	                result.add(new ArrayList<int[]>());
+	            }
+        	}
+            result.trimToSize();
 
             for(i = 0; i < dataSet.numInstances(); i++) {
                 row = dataSet.instance(i);
@@ -116,14 +115,8 @@ public class DataMinerUtils {
                 result.get(clusterer.clusterInstance(row)).add(tmp);
             }
         } catch (Exception e) {
-            try {
-                writer.append(e.getMessage()).append('\n');
-                writer.flush();
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            } finally {
-                parent.exit();
-            }
+            e.printStackTrace(log);
+            parent.exit();
         }
 
         return result;
@@ -131,9 +124,8 @@ public class DataMinerUtils {
 
     /**
      *
-     * @param clusters
-     * @param parent
      * @param bolbImg
+     * @param clusters
      */
     public void updateCentroids(processing.core.PImage blobImg, ArrayList<ArrayList<int[]>> clusters) {
         int pixel;
@@ -190,6 +182,12 @@ public class DataMinerUtils {
             }
             centroid.x = (int)(point[0]*parent.width);
             centroid.y = (int)(point[1]*parent.height);
+        }
+    }
+
+    public void updateColors(ArrayList<Float> colors) {
+        for(Float color: colors) {
+            centroids.put(color, new Centroid());
         }
     }
 

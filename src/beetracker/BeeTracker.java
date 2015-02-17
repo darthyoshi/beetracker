@@ -22,12 +22,13 @@ import processing.video.Movie;
 
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
-    private ArrayList<Float> colors;
+    private ArrayList<Integer> colors;
     private int[] departureCount;
     private int[] returnCount;
     private boolean isPlaying = false, init = false, pip = false;
     private static final int[] mainBounds = {50, 50, 750, 550};
     private short playbackSpeed = 1;
+    private int listVal = 0;
 
     private File currentDir = null;
 
@@ -60,26 +61,37 @@ private PImage test = null;
         try {
 			log = new PrintStream(new File("Console.log"));
 		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
+			e1.printStackTrace(log);
 			exit();
 		}
 
+        uic = new UIControl(this);
+
         Scanner scan = null;
-        colors = new ArrayList<Float>();
+        colors = new ArrayList<Integer>();
         try {
             scan = new Scanner(new File("colors.txt"));
 
-            Float tmp;
+            int rgbVal;
+            String color, header = "ff";
             while(scan.hasNext()) {
-                tmp = hue(Integer.valueOf(scan.next(), 16));
+                color = scan.next();
+                rgbVal = (int)Long.parseLong(header + color, 16);
 
-                colors.add(tmp);
+                uic.addListItem(color, rgbVal);
+
+                colors.add(rgbVal);
             }
         } catch(NumberFormatException ex) {
             colors.clear();
-        } catch(FileNotFoundException e) {}
-
-        uic = new UIControl(this);
+            ex.printStackTrace(log);
+        } catch(FileNotFoundException e) {
+            e.printStackTrace(log);
+        } finally {
+            if(scan != null) {
+                scan.close();
+            }
+        }
 
         dmu = new DataMinerUtils(this, log, colors);
 
@@ -162,7 +174,7 @@ println(movie.time()/movie.duration());
 
         if(colors.isEmpty()) {
             textAlign(CENTER, CENTER);
-            text("colors.txt not found. Please choose a color.", width/2, 25);
+            text("No colors selected. Please choose a color.", width/2, 25);
         }
 
         strokeWeight(1);
@@ -229,8 +241,48 @@ println(movie.time()/movie.duration());
 //test = this.loadImage("test.jpg");
             break;
 
-        case "colorsButton":
+        case "editColor":
+            int color = ColorPicker.getColor(this);
 
+            if(listVal == 0) {
+                if(!colors.contains(color)) {
+                    colors.add(color);
+
+                    String code = Integer.toHexString(color);
+                    if(code.length() > 6) {
+                        code = code.substring(code.length()-6, code.length());
+                    }
+
+                    uic.addListItem(code, color);
+
+                    dmu.initColors(getHues());
+                }
+            }
+
+            else if(colors.contains(listVal)) {
+                colors.set(colors.indexOf(listVal), color);
+
+                uic.clearList();
+                for(Integer rgbVal : colors) {
+                    uic.addListItem(Integer.toHexString(rgbVal), rgbVal);
+                }
+
+                dmu.initColors(getHues());
+            }
+
+            break;
+
+        case "removeColor":
+            if(listVal != 0 && colors.contains(listVal)) {
+                colors.remove(colors.indexOf(listVal));
+
+                uic.clearList();
+                for(Integer rgbVal : colors) {
+                    uic.addListItem(Integer.toHexString(rgbVal), rgbVal);
+                }
+
+                dmu.initColors(getHues());
+            }
 
             break;
 
@@ -278,7 +330,27 @@ println(movie.time()/movie.duration());
             }
 
             break;
+
+        case "colorList":
+            listVal = (int)event.getValue();
+println(listVal+" "+Integer.toHexString(listVal));
+
+            break;
         }
+    }
+
+    /**
+     * TODO add method header
+     * @return
+     */
+    private ArrayList<Float> getHues() {
+        ArrayList<Float> result = new ArrayList<Float>(colors.size());
+
+        for(Integer color : colors) {
+            result.add(hue(color));
+        }
+
+        return result;
     }
 
     @Override
@@ -290,9 +362,7 @@ println(movie.time()/movie.duration());
         super.exit();
     }
 
-    /**
-     * Handler for mouse press.
-     */
+    @Override
     public void mousePressed() {
         if(mouseX > mainBounds[0] && mouseX < mainBounds[2] &&
             mouseY > mainBounds[1] && mouseY < mainBounds[3] && init)
@@ -304,9 +374,7 @@ println(movie.time()/movie.duration());
         }
     }
 
-    /**
-     * Handler for mouse drag.
-     */
+    @Override
     public void mouseDragged() {
         if(isDrag) {
             int tmp[] = constrainMouse(mouseX, mouseY);
@@ -352,9 +420,7 @@ println(movie.time()/movie.duration());
         return result;
     }
 
-    /**
-     * Handler for mouse release.
-     */
+    @Override
     public void mouseReleased() {
         if(isDrag) {
             if(dragBox[0] == dragBox[2] || dragBox[1] == dragBox[3]) {

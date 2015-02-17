@@ -41,9 +41,9 @@ public class DataMinerUtils {
      * Class constructor.
      * @param parent the instantiating PApplet
      * @param log a PrintStream object pointing to the output log
-     * @param colors the list of colors to scan for.
+     * @param colors the list of colors to scan for
      */
-    public DataMinerUtils(PApplet parent, PrintStream log, ArrayList<Float> colors) {
+    public DataMinerUtils(PApplet parent, PrintStream log, ArrayList<Integer> colors) {
         this.parent = parent;
         this.log = log;
 
@@ -61,14 +61,22 @@ public class DataMinerUtils {
         }
 
         centroids = new Hashtable<Float, Centroid>();
-        updateColors(colors);
+
+        ArrayList<Float> hues = new ArrayList<Float>(colors.size());
+
+        for(Integer color : colors) {
+            hues.add(parent.hue(color));
+        }
+
+        initColors(hues);
     }
 
 
     /**
-     * Uses the X-means algorithm to determine the
+     * Uses the X-means algorithm to sort a set of points into clusters.
      * @param points an ArrayList containing the points to process.
-     * @return
+     * @return an ArrayList of clusters, where each cluster is an ArrayList of
+     *   integer coordinates
      */
     public ArrayList<ArrayList<int[]>> getClusters(ArrayList<float[]> points) {
         ArrayList<ArrayList<int[]>> result = new ArrayList<ArrayList<int[]>>();
@@ -106,7 +114,6 @@ public class DataMinerUtils {
 
             for(i = 0; i < dataSet.numInstances(); i++) {
                 row = dataSet.instance(i);
-                point = points.get(i);
 
                 //group points in a cluster together in list
                 tmp = new int[2];
@@ -123,8 +130,8 @@ public class DataMinerUtils {
     }
 
     /**
-     *
-     * @param bolbImg
+     * TODO add method header
+     * @param blobImg
      * @param clusters
      */
     public void updateCentroids(processing.core.PImage blobImg, ArrayList<ArrayList<int[]>> clusters) {
@@ -185,14 +192,20 @@ public class DataMinerUtils {
         }
     }
 
-    public void updateColors(ArrayList<Float> colors) {
+    /**
+     * TODO add method header
+     * @param colors
+     */
+    public final void initColors(ArrayList<Float> colors) {
+        centroids.clear();
+
         for(Float color: colors) {
             centroids.put(color, new Centroid());
         }
     }
 
     /**
-     *
+     * TODO add class header
      * @author Kay Choi
      *
      */

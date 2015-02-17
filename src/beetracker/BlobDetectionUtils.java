@@ -23,7 +23,7 @@ public class BlobDetectionUtils {
     private BlobDetection bd;
 
     /**
-     *
+     * TODO add method header
      * @param width
      * @param height
      */
@@ -44,7 +44,7 @@ public class BlobDetectionUtils {
     public static void preProcessImg(
         PApplet parent,
         PImage img,
-        ArrayList<Float> colors
+        ArrayList<Integer> colors
     ) {
         short j;
         boolean match;
@@ -58,7 +58,7 @@ public class BlobDetectionUtils {
             tmp = parent.hue(img.pixels[i]);
 
             for(j = 0; j < (short)colors.size(); j++) {
-                hue = colors.get(j);
+                hue = parent.hue(colors.get(j));
 
                 if(tmp > hue - hueThreshold &&
                     tmp < hue + hueThreshold &&

@@ -10,11 +10,15 @@ package beetracker;
 import controlP5.Button;
 import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
+import controlP5.DropdownList;
 import controlP5.Group;
 import controlP5.Toggle;
 
 public class UIControl {
     private final Group group1, group2;
+    DropdownList colorList;
+
+    private final String listLbl = "New color";
 
     /**
      * Class constructor.
@@ -36,11 +40,33 @@ public class UIControl {
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
-        Button colorsButton = cp5.addButton("colorsButton").setSize(160, 20);
-        colorsButton.setPosition(
-        		(parent.width - colorsButton.getWidth())/2,
-        		parent.height/2 + 20
-    		).setCaptionLabel("Edit tracking colors")
+        Button editColor = cp5.addButton("editColor").setSize(90, 20);
+        editColor.setPosition(
+        		(parent.width - editColor.getWidth())/2,
+        		parent.height/2 + 40
+    		).setCaptionLabel("Edit color")
+            .setGroup(group1)
+            .getCaptionLabel()
+            .alignX(ControlP5Constants.CENTER);
+
+        colorList = cp5.addDropdownList("colorList")
+            .setCaptionLabel("Colors")
+            .actAsPulldownMenu(true)
+            .setGroup(group1)
+            .setCaptionLabel(listLbl)
+            .setBarHeight(20)
+            .setSize(90, 60);
+        colorList.setPosition(
+                (parent.width - colorList.getWidth())/2,
+                editColor.getPosition().y - 5
+            ).addItem(listLbl, 0);
+        colorList.getCaptionLabel().alignY(ControlP5Constants.CENTER);
+
+        Button removeColor = cp5.addButton("removeColor").setSize(120, 20);
+        removeColor.setPosition(
+                (parent.width - removeColor.getWidth())/2,
+                400
+            ).setCaptionLabel("Remove color")
             .setGroup(group1)
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
@@ -72,7 +98,7 @@ public class UIControl {
     }
 
     /**
-     *
+     * TODO add method header
      */
     public void toggleGroup() {
         group1.setVisible(!group1.isVisible());
@@ -98,9 +124,27 @@ public class UIControl {
     }
 
     /**
-     *
+     * TODO add method header
      */
     public void togglePlay() {
         group2.setVisible(!group2.isVisible());
+    }
+
+    /**
+     * TODO add method header
+     * @param color
+     * @param val
+     */
+    public void addListItem(String color, int val) {
+        colorList.addItem(color, val);
+    }
+
+    /**
+     * TODO add method header
+     */
+    public void clearList() {
+        colorList.clear();
+        colorList.addItem(listLbl, 0);
+        colorList.setCaptionLabel(listLbl);
     }
 }

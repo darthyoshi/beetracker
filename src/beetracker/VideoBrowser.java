@@ -17,7 +17,9 @@ import processing.core.PApplet;
 
 public class VideoBrowser {
     /**
-     *
+     * TODO add method header
+     * @param parent
+     * @param currentDir
      * @return
      */
     public static File getVideoFile(PApplet parent, File currentDir) {

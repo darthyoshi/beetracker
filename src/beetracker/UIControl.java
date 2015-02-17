@@ -16,12 +16,15 @@ import controlP5.Toggle;
 
 public class UIControl {
     private final Group group1, group2;
-    DropdownList colorList;
+    private DropdownList colorList;
+    private Toggle playToggle;
+    private Button openButton;
 
     private final String listLbl = "New color";
 
     /**
      * Class constructor.
+     * TODO move color editing components
      * @param parent the instantiating PApplet object
      */
     public UIControl(processing.core.PApplet parent) {
@@ -31,20 +34,19 @@ public class UIControl {
         group1 = cp5.addGroup("setup").setLabel("").setVisible(true);
         group2 = cp5.addGroup("playback").setLabel("").setVisible(false);
 
-        Button openButton = cp5.addButton("openButton").setSize(120, 20);
+        openButton = cp5.addButton("openButton").setSize(120, 20);
         openButton.setPosition(
-        		(parent.width - openButton.getWidth())/2,
-        		parent.height/2 -20
-    		).setCaptionLabel("Open video file")
-            .setGroup(group1)
+                (parent.width - openButton.getWidth())/2,
+                parent.height/2 -20
+            ).setCaptionLabel("Open video file")
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
         Button editColor = cp5.addButton("editColor").setSize(90, 20);
         editColor.setPosition(
-        		(parent.width - editColor.getWidth())/2,
-        		parent.height/2 + 40
-    		).setCaptionLabel("Edit color")
+                (parent.width - editColor.getWidth())/2,
+                parent.height/2 + 40
+            ).setCaptionLabel("Edit color")
             .setGroup(group1)
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
@@ -71,7 +73,7 @@ public class UIControl {
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
-        new NewToggle(cp5, "playButton")
+        playToggle = new NewToggle(cp5, "playButton")
             .setCaptionLabel("")
             .setPosition(50, parent.height - 40)
             .setSize(30, 30)
@@ -95,12 +97,19 @@ public class UIControl {
             .setSize(30, 30)
             .setGroup(group2)
             .setImage(parent.loadImage("data/img/stopbutton.png"));
+
+        Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
+        pipToggle.setCaptionLabel(" Zoom")
+            .setGroup(group2)
+            .setPosition(170, parent.height - 30)
+            .getCaptionLabel()
+            .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER);
     }
 
     /**
      * TODO add method header
      */
-    public void toggleGroup() {
+    public void toggleColors() {
         group1.setVisible(!group1.isVisible());
     }
 
@@ -146,5 +155,19 @@ public class UIControl {
         colorList.clear();
         colorList.addItem(listLbl, 0);
         colorList.setCaptionLabel(listLbl);
+    }
+
+    /**
+     * TODO add method header
+     */
+    public void togglePlayState() {
+        playToggle.toggle();
+    }
+
+    /**
+     * TODO add method header
+     */
+    public void toggleOpenButton() {
+        openButton.setVisible(!openButton.isVisible());
     }
 }

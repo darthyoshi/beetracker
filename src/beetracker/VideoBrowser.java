@@ -33,7 +33,7 @@ public class VideoBrowser {
         browser.addChoosableFileFilter(new FileNameExtensionFilter("*.mov", "mov"));
         browser.removeChoosableFileFilter(browser.getAcceptAllFileFilter());
         if(currentDir != null) {
-        	browser.setCurrentDirectory(currentDir);
+            browser.setCurrentDirectory(currentDir);
         }
 
         if(browser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {

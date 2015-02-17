@@ -101,15 +101,15 @@ public class DataMinerUtils {
         }
 
         try {
-        	if(!points.isEmpty()) {
-	            //invoke weka XMeans clusterer with Instances
-	            clusterer.buildClusterer(dataSet);
+            if(!points.isEmpty()) {
+                //invoke weka XMeans clusterer with Instances
+                clusterer.buildClusterer(dataSet);
 
-	            //populate list of clusters
-	            for(i = 0; i < clusterer.numberOfClusters(); i++) {
-	                result.add(new ArrayList<int[]>());
-	            }
-        	}
+                //populate list of clusters
+                for(i = 0; i < clusterer.numberOfClusters(); i++) {
+                    result.add(new ArrayList<int[]>());
+                }
+            }
             result.trimToSize();
 
             for(i = 0; i < dataSet.numInstances(); i++) {
@@ -147,48 +147,50 @@ public class DataMinerUtils {
 
         blobImg.loadPixels();
 
-        for(int i = 0; i < centers.numInstances(); i++) {
-            center = centers.instance(i);
-            point = new double[2];
+        if(centers != null) {
+            for(int i = 0; i < centers.numInstances(); i++) {
+                center = centers.instance(i);
+                point = new double[2];
 
-            point[0] = center.value(0);
-            point[1] = center.value(1);
+                point[0] = center.value(0);
+                point[1] = center.value(1);
 
-            //grab centroid pixel from blob image
-            pixel = blobImg.pixels[
-                (int)(point[1]*blobImg.height*blobImg.width/parent.height) +
-                (int)(point[0]*blobImg.width/parent.width)
-            ];
-            //-case: centroid is not in a blob (pixel is black)
-            if(parent.brightness(pixel) == 0) {
-                cluster = clusters.get(i);
+                //grab centroid pixel from blob image
+                pixel = blobImg.pixels[
+                    (int)(point[1]*blobImg.height*blobImg.width/parent.height) +
+                    (int)(point[0]*blobImg.width/parent.width)
+                ];
+                //-case: centroid is not in a blob (pixel is black)
+                if(parent.brightness(pixel) == 0) {
+                    cluster = clusters.get(i);
 
-                //iterate through cluster centroids for valid hue
-                for(int[] tmp : cluster) {
-                    hueVal = (int)(((float)(tmp[1]))*blobImg.height*
-                        blobImg.width/parent.height) +
-                        (int)(((float)(tmp[0]))*blobImg.width/parent.width);
+                    //iterate through cluster centroids for valid hue
+                    for(int[] tmp : cluster) {
+                        hueVal = (int)(((float)(tmp[1]))*blobImg.height*
+                            blobImg.width/parent.height) +
+                            (int)(((float)(tmp[0]))*blobImg.width/parent.width);
 
-                    if(parent.brightness(pixel) > 0) {
-                        hueVal = parent.hue(pixel);
+                        if(parent.brightness(pixel) > 0) {
+                            hueVal = parent.hue(pixel);
 
-                        break;
+                            break;
+                        }
                     }
                 }
-            }
-            //-case: centroid is in a blob (pixel has valid hue)
-            else {
-                hueVal = parent.hue(pixel);
-            }
+                //-case: centroid is in a blob (pixel has valid hue)
+                else {
+                    hueVal = parent.hue(pixel);
+                }
 
-            //update centroid position
-            centroid = centroids.get(hueVal);
-            if(centroid == null) {
-                centroid = new Centroid();
-                centroids.put(hueVal, centroid);
+                //update centroid position
+                centroid = centroids.get(hueVal);
+                if(centroid == null) {
+                    centroid = new Centroid();
+                    centroids.put(hueVal, centroid);
+                }
+                centroid.x = (int)(point[0]*parent.width);
+                centroid.y = (int)(point[1]*parent.height);
             }
-            centroid.x = (int)(point[0]*parent.width);
-            centroid.y = (int)(point[1]*parent.height);
         }
     }
 

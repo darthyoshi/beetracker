@@ -23,12 +23,13 @@ import processing.video.Movie;
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
     private ArrayList<Integer> colors;
-    private int[] departureCount;
-    private int[] returnCount;
+    private ArrayList<Integer> departureCount;
+    private ArrayList<Integer> returnCount;
     private boolean isPlaying = false, init = false, pip = false;
     private static final int[] mainBounds = {50, 50, 750, 550};
     private short playbackSpeed = 1;
     private int listVal = 0;
+    private int[] newDims;
 
     private File currentDir = null;
 
@@ -49,6 +50,11 @@ private PImage test = null;
 
     private PrintStream log = null;
 
+    private processing.core.PFont font;
+
+    /**
+     *
+     */
     @Override
     public void setup() {
         size(800, 600);
@@ -59,11 +65,11 @@ private PImage test = null;
         }
 
         try {
-			log = new PrintStream(new File("Console.log"));
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace(log);
-			exit();
-		}
+            log = new PrintStream(new File("Console.log"));
+        } catch (FileNotFoundException e1) {
+            e1.printStackTrace(log);
+            exit();
+        }
 
         uic = new UIControl(this);
 
@@ -104,8 +110,13 @@ private PImage test = null;
         dragBox = new float[4];
         dragBox[0] = dragBox[1] = 0f;
         dragBox[2] = dragBox[3] = 1f;
+
+        font = this.createDefaultFont(12);
     }
 
+    /**
+     *
+     */
     @Override
     public void draw() {
         background(0x222222);
@@ -115,28 +126,33 @@ private PImage test = null;
         rectMode(CORNERS);
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
 
-        textSize(32);
+        textFont(font);
         fill(0xFFFF0099);
 
         if(movie/*test*/ != null) {
             if((isPlaying || init) && movie.available()) {
                 movie.read();
-println(movie.time()/movie.duration());
+
                 if(init) {
                     movie.stop();
                 }
             }
 
             imageMode(CENTER);
-            image(movie/*test*/, width/2, height/2, width-100, height-100);
+            newDims = scaledDims(movie/*test*/.width, movie/*test*/.height);
+            image(movie/*test*/, width/2, height/2, newDims[0], newDims[1]);
 
             if(!init) {
+                blobImg.resize(
+                    (int)(movie/*test*/.width*(dragBox[2] - dragBox[0])),
+                    (int)(movie/*test*/.height*(dragBox[3] - dragBox[1]))
+                );
                 blobImg.copy(
                     movie/*test*/,
                     (int)(movie/*test*/.width*dragBox[0]),
                     (int)(movie/*test*/.height*dragBox[1]),
-                    (int)(movie/*test*/.width*dragBox[2]),
-                    (int)(movie/*test*/.height*dragBox[3]),
+                    (int)(movie/*test*/.width*(dragBox[2] - dragBox[0])),
+                    (int)(movie/*test*/.height*(dragBox[3] - dragBox[1])),
                     0, 0, blobImg.width, blobImg.height
                 );
 
@@ -145,15 +161,31 @@ println(movie.time()/movie.duration());
                 bdu.computeBlobs(blobImg.pixels);
 
                 if(pip) {
-                    image(blobImg, width/2, height/2, width-100, height-100);
+                    blobImg.copy(
+                        movie/*test*/,
+                        (int)(movie/*test*/.width*dragBox[0]),
+                        (int)(movie/*test*/.height*dragBox[1]),
+                        (int)(movie/*test*/.width*(dragBox[2] - dragBox[0])),
+                        (int)(movie/*test*/.height*(dragBox[3] - dragBox[1])),
+                        0, 0, blobImg.width, blobImg.height
+                    );
+                    newDims = scaledDims(blobImg.width, blobImg.height);
+                    image(blobImg, width/2, height/2, newDims[0], newDims[1]);
+
+                    stroke(0xffff0505);
+                    rectMode(CENTER);
+                    noFill();
+                    rect(width/2, height/2, newDims[0], newDims[1]);
                 }
 
                 bdu.drawEdges(this, pip, dragBox);
 
                 clusters = dmu.getClusters(bdu.getCentroids());
 
-     //           dmu.updateCentroids(blobImg, clusters);
+                dmu.updateCentroids(blobImg, clusters);
 
+                textSize(32);
+                textAlign(CENTER, CENTER);
                 text("#bees: " + clusters.size(), width/2, 25);
 
                 textAlign(RIGHT, CENTER);
@@ -161,45 +193,60 @@ println(movie.time()/movie.duration());
             }
 
             else {
-            	textSize(16);
+                textSize(16);
                 textAlign(CENTER, CENTER);
                 text(
-            		"Drag the mouse to define the area to process.\n" +
-            		"The entire image will be processed by default.",
-            		width/2, 25
-        		);
+                    "Drag the mouse to define the area to process.\n" +
+                    "The entire image will be processed by default.",
+                    width/2, 25
+                );
                 text("Press play to begin.", width/2, 575);
+            }
+
+            strokeWeight(1);
+            noFill();
+
+            //inset box
+            stroke(0xffff0505);
+            rectMode(CORNERS);
+
+            if(!pip || init) {
+                rect(
+                    dragBox[0]*newDims[0]+(width-newDims[0])/2,
+                    dragBox[1]*newDims[1]+(height-newDims[1])/2,
+                    dragBox[2]*newDims[0]+(width-newDims[0])/2,
+                    dragBox[3]*newDims[1]+(height-newDims[1])/2
+                );
+            }
+            if(isDrag) {
+                line(
+                    dragBox[0]*newDims[0]+(width-newDims[0])/2,
+                    dragBox[1]*newDims[1]+(height-newDims[1])/2,
+                    dragBox[2]*newDims[0]+(width-newDims[0])/2,
+                    dragBox[3]*newDims[1]+(height-newDims[1])/2
+                );
+                line(
+                    dragBox[0]*newDims[0]+(width-newDims[0])/2,
+                    dragBox[3]*newDims[1]+(height-newDims[1])/2,
+                    dragBox[2]*newDims[0]+(width-newDims[0])/2,
+                    dragBox[1]*newDims[1]+(height-newDims[1])/2
+                );
             }
         }
 
-        if(colors.isEmpty()) {
-            textAlign(CENTER, CENTER);
-            text("No colors selected. Please choose a color.", width/2, 25);
+        else {
+            //TODO title elements
         }
 
-        strokeWeight(1);
-        noFill();
-
-        //inset box
-        stroke(0xffff0505);
-        rectMode(CORNERS);
-        rect(
-            dragBox[0]*(width-100)+50, dragBox[1]*(height-100)+50,
-            dragBox[2]*(width-100)+50, dragBox[3]*(height-100)+50
-        );
-        if(isDrag) {
-            line(
-                dragBox[0]*(width-100)+50, dragBox[1]*(height-100)+50,
-                dragBox[2]*(width-100)+50, dragBox[3]*(height-100)+50
-            );
-            line(
-                dragBox[0]*(width-100)+50, dragBox[3]*(height-100)+50,
-                dragBox[2]*(width-100)+50, dragBox[1]*(height-100)+50
-            );
+        if(colors.isEmpty()) {
+            textSize(28);
+            textAlign(CENTER, CENTER);
+            text("No colors selected. Please choose a color.", width/2, height/2);
         }
 
         //main window border
         stroke(0xff000000);
+        noFill();
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
     }
 
@@ -212,31 +259,32 @@ println(movie.time()/movie.duration());
 
         switch(eventName) {
         case "openButton":
-        	File video = VideoBrowser.getVideoFile(this, currentDir);
+            File video = VideoBrowser.getVideoFile(this, currentDir);
 
             String videoPath = null;
 
             if(video != null) {
-	            try {
-					videoPath = video.getCanonicalPath();
-				} catch (IOException e) {
-					e.printStackTrace(log);
-					exit();
-				}
+                try {
+                    videoPath = video.getCanonicalPath();
+                } catch (IOException e) {
+                    e.printStackTrace(log);
+                    exit();
+                }
 
-	            currentDir = video.getParentFile();
+                currentDir = video.getParentFile();
             }
 
             if(videoPath != null) {
                 movie = new Movie(this, videoPath);
                 movie.play();
                 init = true;
+                isPlaying = false;
 
-                uic.toggleGroup();
+                uic.toggleOpenButton();
                 uic.togglePlay();
 
                 log.append("loaded ").append(videoPath).append('\n');
-				log.flush();
+                log.flush();
             }
 //test = this.loadImage("test.jpg");
             break;
@@ -276,6 +324,10 @@ println(movie.time()/movie.duration());
             if(listVal != 0 && colors.contains(listVal)) {
                 colors.remove(colors.indexOf(listVal));
 
+                if(colors.isEmpty()) {
+                    listVal = 0;
+                }
+
                 uic.clearList();
                 for(Integer rgbVal : colors) {
                     uic.addListItem(Integer.toHexString(rgbVal), rgbVal);
@@ -287,31 +339,39 @@ println(movie.time()/movie.duration());
             break;
 
         case "playButton":
-            isPlaying = !isPlaying;
+            if(!colors.isEmpty()) {
+                isPlaying = ((controlP5.Toggle)event.getController()).getState();
 
-            init = false;
+                if(init) {
+                    uic.toggleColors();
 
-            if(movie != null) {
-            	if(isPlaying) {
-            		movie.play();
-	            }
+                    init = false;
+                }
 
-            	else {
-	                movie.stop();
-	            }
+                if(movie != null) {
+                    if(isPlaying) {
+                        movie.play();
+                    }
+
+                    else {
+                        movie.stop();
+                    }
+                }
             }
 
             break;
 
         case "stopButton":
-            isPlaying = false;
+            if(isPlaying) {
+                uic.togglePlayState();
+            }
 
             if(movie/*test*/ != null) {
                 movie.stop();
                 movie/*test*/ = null;
             }
 
-            uic.toggleGroup();
+            uic.toggleColors();
             uic.togglePlay();
 
             dragBox[0] = dragBox[1] = 0f;
@@ -333,7 +393,11 @@ println(movie.time()/movie.duration());
 
         case "colorList":
             listVal = (int)event.getValue();
-println(listVal+" "+Integer.toHexString(listVal));
+
+            break;
+
+        case "pipToggle":
+            pip = !pip;
 
             break;
         }
@@ -353,6 +417,9 @@ println(listVal+" "+Integer.toHexString(listVal));
         return result;
     }
 
+    /**
+     *
+     */
     @Override
     public void exit() {
         if(log != null) {
@@ -362,25 +429,34 @@ println(listVal+" "+Integer.toHexString(listVal));
         super.exit();
     }
 
+    /**
+     *
+     */
     @Override
     public void mousePressed() {
-        if(mouseX > mainBounds[0] && mouseX < mainBounds[2] &&
-            mouseY > mainBounds[1] && mouseY < mainBounds[3] && init)
-        {
-            dragBox[0] = dragBox[2] = (mouseX-50)/700f;
-            dragBox[1] = dragBox[3] = (mouseY-50)/500f;
+        if(movie != null) {
+            if(mouseX > (width-newDims[0])/2 && mouseX < (width+newDims[0])/2 &&
+                mouseY > (height-newDims[1])/2 && mouseY < (height+newDims[1])/2 && init)
+            {
+                dragBox[0] = dragBox[2] = (float)(mouseX-(width-newDims[0])/2)/newDims[0];
+                dragBox[1] = dragBox[3] = (float)(mouseY-(height-newDims[1])/2)/newDims[1];
 
-            isDrag = true;
+                isDrag = true;
+            }
         }
     }
 
+    /**
+     *
+     */
     @Override
     public void mouseDragged() {
         if(isDrag) {
             int tmp[] = constrainMouse(mouseX, mouseY);
 
-            dragBox[2] = (tmp[0]-50)/700f;
-            dragBox[3] = (tmp[1]-50)/500f;
+            dragBox[2] = (float)(tmp[0]-(width-newDims[0])/2)/newDims[0];
+            dragBox[3] = (float)(tmp[1]-(height-newDims[1])/2)/newDims[1];
+
         }
     }
 
@@ -393,24 +469,24 @@ println(listVal+" "+Integer.toHexString(listVal));
     private int[] constrainMouse(int mouseX, int mouseY) {
         int[] result = new int[2];
 
-        if(mouseX < mainBounds[0]) {
-            result[0] = mainBounds[0];
+        if(mouseX < (width-newDims[0])/2) {
+            result[0] = (width-newDims[0])/2;
         }
 
-        else if(mouseX > mainBounds[2]) {
-            result[0] = mainBounds[2];
+        else if(mouseX > (width+newDims[0])/2) {
+            result[0] = (width+newDims[0])/2;
         }
 
         else {
             result[0] = mouseX;
         }
 
-        if(mouseY < mainBounds[1]) {
-            result[1] = mainBounds[1];
+        if(mouseY < (height-newDims[1])/2) {
+            result[1] = (height-newDims[1])/2;
         }
 
-        else if(mouseY > mainBounds[3]) {
-            result[1] = mainBounds[3];
+        else if(mouseY > (height+newDims[1])/2) {
+            result[1] = (height+newDims[1])/2;
         }
 
         else {
@@ -420,6 +496,9 @@ println(listVal+" "+Integer.toHexString(listVal));
         return result;
     }
 
+    /**
+     *
+     */
     @Override
     public void mouseReleased() {
         if(isDrag) {
@@ -428,8 +507,50 @@ println(listVal+" "+Integer.toHexString(listVal));
                 dragBox[2] = dragBox[3] = 1f;
             }
 
+            else {
+                float tmp;
+
+                if(dragBox[0] > dragBox[2]) {
+                    tmp = dragBox[0];
+                    dragBox[0] = dragBox[2];
+                    dragBox[2] = tmp;
+                }
+
+                if(dragBox[1] > dragBox[3]) {
+                    tmp = dragBox[1];
+                    dragBox[1] = dragBox[3];
+                    dragBox[3] = tmp;
+                }
+            }
+
             isDrag = false;
         }
+
+    }
+
+    /**
+     * Determines the dimensions of a PImage, scaled to fit within the display
+     *   window.
+     * @param imgWidth the width to scale
+     * @param imgHeight the height to scale
+     * @return an integer array containing the scaled dimensions
+     */
+    private int[] scaledDims(int imgWidth, int imgHeight) {
+        int[] result = new int[2];
+
+        float ratio = (float)imgWidth/imgHeight;
+
+        //scale by width
+        result[0] = width - 100;
+        result[1] = (int)(result[0]/ratio);
+
+        //scale by height
+        if(result[1] > height - 100) {
+            result[1] = height - 100;
+            result[0] = (int)(result[1]*ratio);
+        }
+
+        return result;
     }
 
     /**

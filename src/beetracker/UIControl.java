@@ -2,12 +2,13 @@
  * @file UIControl.java
  * @author Kay Choi, 909926828
  * @date 14 Feb 15
- * @description
+ * @description Manages the ControlP5 elements for BeeTracker.
  */
 
 package beetracker;
 
 import controlP5.Button;
+import controlP5.ControlFont;
 import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
 import controlP5.DropdownList;
@@ -15,12 +16,13 @@ import controlP5.Group;
 import controlP5.Toggle;
 
 public class UIControl {
-    private final Group group1, group2;
+    private final Group setupGroup, playGroup;
     private DropdownList colorList;
-    private Toggle playToggle;
+    private Toggle playToggle, selectToggle;
     private Button openButton;
 
-    private final String listLbl = "New color";
+    private static final String listLbl = "New color";
+    private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
 
     /**
      * Class constructor.
@@ -31,45 +33,46 @@ public class UIControl {
         ControlP5 cp5 = new ControlP5(parent);
         cp5.setFont(cp5.getFont().getFont(), 15);
 
-        group1 = cp5.addGroup("setup").setLabel("").setVisible(true);
-        group2 = cp5.addGroup("playback").setLabel("").setVisible(false);
-
-        openButton = cp5.addButton("openButton").setSize(120, 20);
-        openButton.setPosition(
-                (parent.width - openButton.getWidth())/2,
-                parent.height/2 -20
-            ).setCaptionLabel("Open video file")
-            .getCaptionLabel()
-            .alignX(ControlP5Constants.CENTER);
+        setupGroup = cp5.addGroup("setup").setLabel("").setVisible(false);
+        playGroup = cp5.addGroup("playback").setLabel("").setVisible(false);
 
         Button editColor = cp5.addButton("editColor").setSize(90, 20);
         editColor.setPosition(
-                (parent.width - editColor.getWidth())/2,
-                parent.height/2 + 40
+                parent.width - 270,
+                25
             ).setCaptionLabel("Edit color")
-            .setGroup(group1)
+            .setGroup(setupGroup)
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
-        colorList = cp5.addDropdownList("colorList")
-            .setCaptionLabel("Colors")
-            .actAsPulldownMenu(true)
-            .setGroup(group1)
-            .setCaptionLabel(listLbl)
-            .setBarHeight(20)
-            .setSize(90, 60);
-        colorList.setPosition(
-                (parent.width - colorList.getWidth())/2,
-                editColor.getPosition().y - 5
-            ).addItem(listLbl, 0);
-        colorList.getCaptionLabel().alignY(ControlP5Constants.CENTER);
-
         Button removeColor = cp5.addButton("removeColor").setSize(120, 20);
         removeColor.setPosition(
-                (parent.width - removeColor.getWidth())/2,
-                400
+                editColor.getPosition().x + 95,
+                editColor.getPosition().y
             ).setCaptionLabel("Remove color")
-            .setGroup(group1)
+            .setGroup(setupGroup)
+            .getCaptionLabel()
+            .alignX(ControlP5Constants.CENTER);
+
+        colorList = cp5.addDropdownList("colorList").setSize(215, 560);
+        colorList.setPosition(
+                editColor.getPosition().x,
+                editColor.getPosition().y
+            ).setCaptionLabel("Colors")
+            .actAsPulldownMenu(true)
+            .setGroup(setupGroup)
+            .setCaptionLabel(listLbl)
+            .setBarHeight(20)
+            .addItem(listLbl, 0);
+        colorList.getCaptionLabel().
+            alignY(ControlP5Constants.CENTER).
+            setPaddingX(10);
+
+        openButton = cp5.addButton("openButton").setSize(120, 50);
+        openButton.setPosition(
+                (parent.width - openButton.getWidth())/2,
+                parent.height - 150
+            ).setCaptionLabel("Open video file")
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
@@ -77,7 +80,7 @@ public class UIControl {
             .setCaptionLabel("")
             .setPosition(50, parent.height - 40)
             .setSize(30, 30)
-            .setGroup(group2)
+            .setGroup(playGroup)
             .setImages(
                 parent.loadImage("data/img/playbutton.png"),
                 null,
@@ -88,29 +91,37 @@ public class UIControl {
             .setCaptionLabel("")
             .setPosition(90, parent.height - 40)
             .setSize(30, 30)
-            .setGroup(group2)
+            .setGroup(playGroup)
             .setImage(parent.loadImage("data/img/fastforward.png"));
 
         cp5.addButton("stopButton")
             .setCaptionLabel("")
             .setPosition(130, parent.height - 40)
             .setSize(30, 30)
-            .setGroup(group2)
+            .setGroup(playGroup)
             .setImage(parent.loadImage("data/img/stopbutton.png"));
 
         Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
-        pipToggle.setCaptionLabel(" Zoom")
-            .setGroup(group2)
-            .setPosition(170, parent.height - 30)
+        pipToggle.setCaptionLabel("Inset Zoom")
+            .setGroup(setupGroup)
+            .setPosition(parent.width - 80, parent.height - 20)
             .getCaptionLabel()
-            .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER);
-    }
+            .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
+            .setPaddingX(5);
 
-    /**
-     * TODO add method header
-     */
-    public void toggleColors() {
-        group1.setVisible(!group1.isVisible());
+        cp5.addTextarea("selectLbl")
+            .setPosition(parent.width - 270, parent.height - 40)
+            .setGroup(setupGroup)
+            .setText("SELECT MODE - ");
+
+        selectToggle = cp5.addToggle("selectToggle").setSize(30, 15);
+        selectToggle.setMode(ControlP5Constants.SWITCH)
+            .setPosition(parent.width - 80, parent.height - 40)
+            .setCaptionLabel(selectMode[0])
+            .setGroup(setupGroup)
+            .getCaptionLabel()
+            .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
+            .setPaddingX(5);
     }
 
     /**
@@ -136,7 +147,7 @@ public class UIControl {
      * TODO add method header
      */
     public void togglePlay() {
-        group2.setVisible(!group2.isVisible());
+        playGroup.setVisible(!playGroup.isVisible());
     }
 
     /**
@@ -159,9 +170,27 @@ public class UIControl {
 
     /**
      * TODO add method header
+     * @param state
      */
-    public void togglePlayState() {
-        playToggle.toggle();
+    public void setPlayState(boolean state) {
+        if(playToggle.getState() != state) {
+            playToggle.toggle();
+        }
+    }
+
+    /**
+     * TODO add method header
+     * @param state
+     */
+    public void updateSelectLbl(boolean state) {
+        selectToggle.setCaptionLabel(selectMode[(selectToggle.getState()?1:0)]);
+    }
+
+    /**
+     * TODO add method header
+     */
+    public void toggleSetup() {
+        setupGroup.setVisible(!setupGroup.isVisible());
     }
 
     /**

@@ -2,8 +2,7 @@
  * @file VideoBrowser.java
  * @author Kay Choi, 909926828
  * @date 29 Jan 15
- * @description Uses a Java Swing file selector to retrieves the full path of
- *   a video file.
+ * @description Uses a Java Swing file selector to retrieve a video file.
  */
 
 package beetracker;
@@ -17,10 +16,10 @@ import processing.core.PApplet;
 
 public class VideoBrowser {
     /**
-     * TODO add method header
-     * @param parent
-     * @param currentDir
-     * @return
+     * Displays a file browser that filters for video files.
+     * @param parent the invoking PApplet
+     * @param currentDir the initial directory to browse from
+     * @return a Java File object
      */
     public static File getVideoFile(PApplet parent, File currentDir) {
         File result = null;

@@ -25,19 +25,20 @@ public class BeeTracker extends PApplet {
     private ArrayList<Integer> colors;
     private ArrayList<Integer> departureCount;
     private ArrayList<Integer> returnCount;
-    private boolean isPlaying = false, init = false, pip = false;
+    private boolean isPlaying = false, init = false;
+    private boolean pip = false, selectExit = false;
     private static final int[] mainBounds = {50, 50, 750, 550};
     private short playbackSpeed = 1;
     private int listVal = 0;
-    private int[] newDims;
+    private int[] movieDims, zoomDims;
 
     private File currentDir = null;
 
-    private float[] dragBox;
+    private float[] insetBox, exitRadial;
     private boolean isDrag = false;
 
     private Movie movie = null;
-private PImage test = null;
+
     private PImage blobImg;
 
     private BlobDetectionUtils bdu;
@@ -46,11 +47,12 @@ private PImage test = null;
 
     private UIControl uic;
 
-    private ArrayList<ArrayList<int[]>> clusters;
+    private ArrayList<Cluster> clusters;
 
     private PrintStream log = null;
 
     private processing.core.PFont font;
+    private PImage title;
 
     /**
      *
@@ -103,15 +105,19 @@ private PImage test = null;
 
         background(0x444444);
 
-        blobImg = createImage(width/4, height/4, RGB);
+        blobImg = createImage(width/2, width/2, RGB);
 
-        bdu = new BlobDetectionUtils(width/4, height/4);
+        bdu = new BlobDetectionUtils(width/2, height/2);
 
-        dragBox = new float[4];
-        dragBox[0] = dragBox[1] = 0f;
-        dragBox[2] = dragBox[3] = 1f;
+        insetBox = new float[4];
+        insetBox[0] = insetBox[1] = 0f;
+        insetBox[2] = insetBox[3] = 1f;
+
+        exitRadial = new float[4];
+        exitRadial[0] = exitRadial[1] = exitRadial[2] = exitRadial[3] = 0f;
 
         font = this.createDefaultFont(12);
+        title = loadImage("data/img/title.png");
     }
 
     /**
@@ -129,7 +135,8 @@ private PImage test = null;
         textFont(font);
         fill(0xFFFF0099);
 
-        if(movie/*test*/ != null) {
+        if(movie != null) {
+
             if((isPlaying || init) && movie.available()) {
                 movie.read();
 
@@ -139,20 +146,21 @@ private PImage test = null;
             }
 
             imageMode(CENTER);
-            newDims = scaledDims(movie/*test*/.width, movie/*test*/.height);
-            image(movie/*test*/, width/2, height/2, newDims[0], newDims[1]);
+            movieDims = scaledDims(
+        		movie.width,
+        		movie.height,
+        		width - 100,
+        		height - 100
+    		);
+            image(movie, width/2, height/2, movieDims[0], movieDims[1]);
 
-            if(!init) {
-                blobImg.resize(
-                    (int)(movie/*test*/.width*(dragBox[2] - dragBox[0])),
-                    (int)(movie/*test*/.height*(dragBox[3] - dragBox[1]))
-                );
-                blobImg.copy(
-                    movie/*test*/,
-                    (int)(movie/*test*/.width*dragBox[0]),
-                    (int)(movie/*test*/.height*dragBox[1]),
-                    (int)(movie/*test*/.width*(dragBox[2] - dragBox[0])),
-                    (int)(movie/*test*/.height*(dragBox[3] - dragBox[1])),
+            if(!init) {            	
+            	blobImg.copy(
+                    movie,
+                    (int)(movie.width*insetBox[0]),
+                    (int)(movie.height*insetBox[1]),
+                    (int)(movie.width*(insetBox[2] - insetBox[0])),
+                    (int)(movie.height*(insetBox[3] - insetBox[1])),
                     0, 0, blobImg.width, blobImg.height
                 );
 
@@ -162,27 +170,27 @@ private PImage test = null;
 
                 if(pip) {
                     blobImg.copy(
-                        movie/*test*/,
-                        (int)(movie/*test*/.width*dragBox[0]),
-                        (int)(movie/*test*/.height*dragBox[1]),
-                        (int)(movie/*test*/.width*(dragBox[2] - dragBox[0])),
-                        (int)(movie/*test*/.height*(dragBox[3] - dragBox[1])),
+                        movie,
+                        (int)(movie.width*insetBox[0]),
+                        (int)(movie.height*insetBox[1]),
+                        (int)(movie.width*(insetBox[2] - insetBox[0])),
+                        (int)(movie.height*(insetBox[3] - insetBox[1])),
                         0, 0, blobImg.width, blobImg.height
                     );
-                    newDims = scaledDims(blobImg.width, blobImg.height);
-                    image(blobImg, width/2, height/2, newDims[0], newDims[1]);
-
-                    stroke(0xffff0505);
-                    rectMode(CENTER);
-                    noFill();
-                    rect(width/2, height/2, newDims[0], newDims[1]);
+                    zoomDims = scaledDims(
+                		movieDims[0]*(insetBox[2] - insetBox[0]),
+                		movieDims[1]*(insetBox[3] - insetBox[1]),
+                		width -100/*movieDims[0]*/,
+                		height-100/*movieDims[1]*/
+    				);
+                    image(blobImg, width/2, height/2, zoomDims[0], zoomDims[1]);
                 }
 
-                bdu.drawEdges(this, pip, dragBox);
+                bdu.drawEdges(this, pip, insetBox);
 
                 clusters = dmu.getClusters(bdu.getCentroids());
 
-                dmu.updateCentroids(blobImg, clusters);
+    //            dmu.updateCentroids(blobImg, clusters);
 
                 textSize(32);
                 textAlign(CENTER, CENTER);
@@ -193,14 +201,17 @@ private PImage test = null;
             }
 
             else {
-                textSize(16);
+                textSize(24);
+                textAlign(LEFT, CENTER);
+                text("Setup Mode", 50, 25);
+                
                 textAlign(CENTER, CENTER);
-                text(
-                    "Drag the mouse to define the area to process.\n" +
-                    "The entire image will be processed by default.",
-                    width/2, 25
-                );
                 text("Press play to begin.", width/2, 575);
+
+                if(colors.isEmpty()) {
+                    textSize(28);
+                    text("No colors selected. Please choose a color.", width/2, height/2);
+                }
             }
 
             strokeWeight(1);
@@ -208,45 +219,76 @@ private PImage test = null;
 
             //inset box
             stroke(0xffff0505);
-            rectMode(CORNERS);
-
             if(!pip || init) {
+            	rectMode(CORNERS);
                 rect(
-                    dragBox[0]*newDims[0]+(width-newDims[0])/2,
-                    dragBox[1]*newDims[1]+(height-newDims[1])/2,
-                    dragBox[2]*newDims[0]+(width-newDims[0])/2,
-                    dragBox[3]*newDims[1]+(height-newDims[1])/2
+                    insetBox[0]*movieDims[0]+(width-movieDims[0])/2,
+                    insetBox[1]*movieDims[1]+(height-movieDims[1])/2,
+                    insetBox[2]*movieDims[0]+(width-movieDims[0])/2,
+                    insetBox[3]*movieDims[1]+(height-movieDims[1])/2
                 );
+
+                ellipseMode(RADIUS);
+                ellipse(
+            		exitRadial[0]*movieDims[0]+(width-movieDims[0])/2,
+                    exitRadial[1]*movieDims[1]+(height-movieDims[1])/2,
+                    exitRadial[2]*movieDims[0],
+                    exitRadial[3]*movieDims[1]
+        		);
             }
+            
+            else {
+            	rectMode(CENTER);
+            	rect(width/2, height/2, zoomDims[0], zoomDims[1]);
+            }
+                
             if(isDrag) {
-                line(
-                    dragBox[0]*newDims[0]+(width-newDims[0])/2,
-                    dragBox[1]*newDims[1]+(height-newDims[1])/2,
-                    dragBox[2]*newDims[0]+(width-newDims[0])/2,
-                    dragBox[3]*newDims[1]+(height-newDims[1])/2
-                );
-                line(
-                    dragBox[0]*newDims[0]+(width-newDims[0])/2,
-                    dragBox[3]*newDims[1]+(height-newDims[1])/2,
-                    dragBox[2]*newDims[0]+(width-newDims[0])/2,
-                    dragBox[1]*newDims[1]+(height-newDims[1])/2
-                );
+            	if(!selectExit) {
+	                line(
+	                    insetBox[0]*movieDims[0]+(width-movieDims[0])/2,
+	                    insetBox[1]*movieDims[1]+(height-movieDims[1])/2,
+	                    insetBox[2]*movieDims[0]+(width-movieDims[0])/2,
+	                    insetBox[3]*movieDims[1]+(height-movieDims[1])/2
+	                );
+	                line(
+	                    insetBox[0]*movieDims[0]+(width-movieDims[0])/2,
+	                    insetBox[3]*movieDims[1]+(height-movieDims[1])/2,
+	                    insetBox[2]*movieDims[0]+(width-movieDims[0])/2,
+	                    insetBox[1]*movieDims[1]+(height-movieDims[1])/2
+	                );
+            	}
+
+            	else {
+            		line(
+	            		exitRadial[0]*movieDims[0]+(width-movieDims[0])/2,
+	                    exitRadial[1]*movieDims[1]+(height-movieDims[1])/2-exitRadial[3]*movieDims[1],
+	            		exitRadial[0]*movieDims[0]+(width-movieDims[0])/2,
+	                    exitRadial[1]*movieDims[1]+(height-movieDims[1])/2+exitRadial[3]*movieDims[1]
+    				);
+            		line(
+                        exitRadial[0]*movieDims[0]+(width-movieDims[0])/2-exitRadial[2]*movieDims[0],
+                        exitRadial[1]*movieDims[1]+(height-movieDims[1])/2,
+                        exitRadial[0]*movieDims[0]+(width-movieDims[0])/2+exitRadial[2]*movieDims[0],
+                        exitRadial[1]*movieDims[1]+(height-movieDims[1])/2
+    				);
+            	}
             }
         }
 
         else {
-            //TODO title elements
-        }
+        	imageMode(CENTER);
+            image(title, width/2, height/2-50);
 
-        if(colors.isEmpty()) {
-            textSize(28);
-            textAlign(CENTER, CENTER);
-            text("No colors selected. Please choose a color.", width/2, height/2);
+            textSize(50);
+            textAlign(LEFT, CENTER);
+            text("Bee", width/2 - 120, height/2);
+            text("Tracker", width/2 - 70, height/2 + 50);
         }
 
         //main window border
         stroke(0xff000000);
         noFill();
+        rectMode(CORNERS);
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
     }
 
@@ -280,13 +322,14 @@ private PImage test = null;
                 init = true;
                 isPlaying = false;
 
+                uic.toggleSetup();
                 uic.toggleOpenButton();
                 uic.togglePlay();
 
                 log.append("loaded ").append(videoPath).append('\n');
                 log.flush();
             }
-//test = this.loadImage("test.jpg");
+
             break;
 
         case "editColor":
@@ -343,7 +386,7 @@ private PImage test = null;
                 isPlaying = ((controlP5.Toggle)event.getController()).getState();
 
                 if(init) {
-                    uic.toggleColors();
+                    uic.toggleSetup();
 
                     init = false;
                 }
@@ -363,19 +406,26 @@ private PImage test = null;
 
         case "stopButton":
             if(isPlaying) {
-                uic.togglePlayState();
+            	isPlaying = !isPlaying;
+                uic.setPlayState(isPlaying);
             }
 
-            if(movie/*test*/ != null) {
+            if(movie != null) {
                 movie.stop();
-                movie/*test*/ = null;
+                movie = null;
             }
 
-            uic.toggleColors();
+            uic.toggleOpenButton();
             uic.togglePlay();
 
-            dragBox[0] = dragBox[1] = 0f;
-            dragBox[2] = dragBox[3] = 1f;
+            if(init) {
+            	uic.toggleSetup();
+            }
+
+            insetBox[0] = insetBox[1] = 0f;
+            insetBox[2] = insetBox[3] = 1f;
+
+            exitRadial[0] = exitRadial[1] = exitRadial[2] = exitRadial[3] = 0f;
 
             break;
 
@@ -400,6 +450,12 @@ private PImage test = null;
             pip = !pip;
 
             break;
+
+        case "selectToggle":
+        	selectExit = !selectExit;
+        	uic.updateSelectLbl(selectExit);
+
+        	break;
         }
     }
 
@@ -435,11 +491,24 @@ private PImage test = null;
     @Override
     public void mousePressed() {
         if(movie != null) {
-            if(mouseX > (width-newDims[0])/2 && mouseX < (width+newDims[0])/2 &&
-                mouseY > (height-newDims[1])/2 && mouseY < (height+newDims[1])/2 && init)
-            {
-                dragBox[0] = dragBox[2] = (float)(mouseX-(width-newDims[0])/2)/newDims[0];
-                dragBox[1] = dragBox[3] = (float)(mouseY-(height-newDims[1])/2)/newDims[1];
+            if(
+        		mouseX > (width-movieDims[0])/2 && 
+        		mouseX < (width+movieDims[0])/2 &&
+                mouseY > (height-movieDims[1])/2 &&
+                mouseY < (height+movieDims[1])/2 && init
+            ) {
+            	if(!selectExit) {
+	                insetBox[0] = insetBox[2] =
+                		(float)(mouseX-(width-movieDims[0])/2)/movieDims[0];
+	                insetBox[1] = insetBox[3] =
+                		(float)(mouseY-(height-movieDims[1])/2)/movieDims[1];
+            	}
+            	
+            	else {
+            		exitRadial[0] = (float)(mouseX-(width-movieDims[0])/2)/movieDims[0];
+            		exitRadial[1] = (float)(mouseY-(height-movieDims[1])/2)/movieDims[1];
+            		exitRadial[2] = exitRadial[3] = 0f;
+            	}
 
                 isDrag = true;
             }
@@ -452,47 +521,111 @@ private PImage test = null;
     @Override
     public void mouseDragged() {
         if(isDrag) {
-            int tmp[] = constrainMouse(mouseX, mouseY);
+            if(!selectExit) {
+            	int tmp[] = constrainMousePosition(mouseX, mouseY);
 
-            dragBox[2] = (float)(tmp[0]-(width-newDims[0])/2)/newDims[0];
-            dragBox[3] = (float)(tmp[1]-(height-newDims[1])/2)/newDims[1];
+            	insetBox[2] = (float)(tmp[0]-(width-movieDims[0])/2)/movieDims[0];
+	            insetBox[3] = (float)(tmp[1]-(height-movieDims[1])/2)/movieDims[1];
+            }
 
+            else {
+            	float tmp2[] = constrainRadius(mouseX, mouseY);
+
+            	exitRadial[2] = tmp2[0];
+        		exitRadial[3] = tmp2[1];
+            }
         }
     }
 
     /**
-     * Constrains the mouse coordinates within the item window.
+     * Constrains the selection circle within the view window.
+     * @param mouseX the x-coordinate of the mouse
+     * @param mouseY the y-coordinate of the mouse
+     * @return a float array containing the normalized circle radius
+     */
+    private float[] constrainRadius(int mouseX, int mouseY) {
+    	int[] tmp = constrainMousePosition(mouseX, mouseY);
+
+    	float[] result = new float[2];
+    	//semi-major axis (x)
+    	result[0] = exitRadial[0]*movieDims[0] + (width-movieDims[0])/2 - tmp[0];
+    	//semi-major axis (y)
+    	result[1] = exitRadial[1]*movieDims[1] + (height-movieDims[1])/2 - tmp[1];
+
+		result[0] = result[1] = (float)Math.pow((Math.pow(result[0], 2) + Math.pow(result[1], 2)), .5);
+
+		//constrain semi-major axis (x)
+    	if(result[0] > exitRadial[0]*movieDims[0]) {
+    		result[0] = exitRadial[0]*movieDims[0];
+    	}
+    	
+    	if(result[0] > movieDims[0]-exitRadial[0]*movieDims[0]) {
+    		result[0] = movieDims[0]-exitRadial[0]*movieDims[0];
+    	}
+
+		//constrain semi-major axis (y)
+    	if(result[1] > exitRadial[1]*movieDims[1]) {
+    		result[1] = exitRadial[1]*movieDims[1];
+    	}
+    	
+    	if(result[1] > movieDims[1]-exitRadial[1]*movieDims[1]) {
+    		result[1] = movieDims[1]-exitRadial[1]*movieDims[1];
+    	}
+
+    	//choose smaller axis
+    	result[0] = (result[0] < result[1] ? result[0] : result[1]);
+
+    	//normalize radii
+		result[0] /= movieDims[0];
+		result[1] /= movieDims[1];
+
+    	return result;
+    }
+    
+    /**
+     * Constrains the mouse coordinates within the view window.
      * @param mouseX the x-coordinate of the mouse
      * @param mouseY the y-coordinate of the mouse
      * @return an integer array containing the adjusted coordinates
      */
-    private int[] constrainMouse(int mouseX, int mouseY) {
-        int[] result = new int[2];
+    private int[] constrainMousePosition(int mouseX, int mouseY) {
+        int[] result = {mouseX, mouseY};
 
-        if(mouseX < (width-newDims[0])/2) {
-            result[0] = (width-newDims[0])/2;
+        if(mouseX < (width-movieDims[0])/2) {
+            result[0] = (width-movieDims[0])/2;
+        }
+        
+        else if (mouseX > (width+movieDims[0])/2) {
+            result[0] = (width+movieDims[0])/2;
         }
 
-        else if(mouseX > (width+newDims[0])/2) {
-            result[0] = (width+newDims[0])/2;
+        if(mouseY < (height-movieDims[1])/2) {
+            result[1] = (height-movieDims[1])/2;
         }
-
-        else {
-            result[0] = mouseX;
+        
+        else if(mouseY > (height+movieDims[1])/2) {
+            result[1] = (height+movieDims[1])/2;
         }
+        
+        /*else {
+        	int radius = (int);
+    		if(mouseX - (width-movieDims[0])/2 > 2*((int)(exitRadial[0]*movieDims[0]))) {
+    			result[0] = 2*((int)(exitRadial[0]*movieDims[0]))+(width-movieDims[0])/2;
+    		}
 
-        if(mouseY < (height-newDims[1])/2) {
-            result[1] = (height-newDims[1])/2;
+    		else if(mouseX < (int)(exitRadial[0]*movieDims[0] - width/2 - 3*movieDims[0]/2)) {
+    			mouseX = (int)(exitRadial[0]*movieDims[0] - width/2 - 3*movieDims[0]/2);
+        	}
+	
+	        if(mouseY -(height-movieDims[1])/2 > 2*((int)(exitRadial[1]*movieDims[1]))) {
+	            result[1] =  2*((int)(exitRadial[1]*movieDims[1]))+(height-movieDims[1])/2;
+	        }
+	
+	        else if(!selectExit && mouseY > (height+movieDims[1])/2) {
+	            result[1] = (height+movieDims[1])/2;
+	        }
         }
-
-        else if(mouseY > (height+newDims[1])/2) {
-            result[1] = (height+newDims[1])/2;
-        }
-
-        else {
-            result[1] = mouseY;
-        }
-
+*/
         return result;
     }
 
@@ -502,25 +635,27 @@ private PImage test = null;
     @Override
     public void mouseReleased() {
         if(isDrag) {
-            if(dragBox[0] == dragBox[2] || dragBox[1] == dragBox[3]) {
-                dragBox[0] = dragBox[1] = 0f;
-                dragBox[2] = dragBox[3] = 1f;
-            }
-
-            else {
-                float tmp;
-
-                if(dragBox[0] > dragBox[2]) {
-                    tmp = dragBox[0];
-                    dragBox[0] = dragBox[2];
-                    dragBox[2] = tmp;
-                }
-
-                if(dragBox[1] > dragBox[3]) {
-                    tmp = dragBox[1];
-                    dragBox[1] = dragBox[3];
-                    dragBox[3] = tmp;
-                }
+        	if(!selectExit) {
+	            if(insetBox[0] == insetBox[2] || insetBox[1] == insetBox[3]) {
+	                insetBox[0] = insetBox[1] = 0f;
+	                insetBox[2] = insetBox[3] = 1f;
+	            }
+	
+	            else {
+	                float tmp;
+	
+	                if(insetBox[0] > insetBox[2]) {
+	                    tmp = insetBox[0];
+	                    insetBox[0] = insetBox[2];
+	                    insetBox[2] = tmp;
+	                }
+	
+	                if(insetBox[1] > insetBox[3]) {
+	                    tmp = insetBox[1];
+	                    insetBox[1] = insetBox[3];
+	                    insetBox[3] = tmp;
+	                }
+	            }
             }
 
             isDrag = false;
@@ -535,18 +670,23 @@ private PImage test = null;
      * @param imgHeight the height to scale
      * @return an integer array containing the scaled dimensions
      */
-    private int[] scaledDims(int imgWidth, int imgHeight) {
+    private int[] scaledDims(
+		float imgWidth,
+		float imgHeight,
+		int maxWidth,
+		int maxHeight
+	) {
         int[] result = new int[2];
 
-        float ratio = (float)imgWidth/imgHeight;
+        float ratio = imgWidth/imgHeight;
 
         //scale by width
-        result[0] = width - 100;
+        result[0] = maxWidth;
         result[1] = (int)(result[0]/ratio);
 
         //scale by height
-        if(result[1] > height - 100) {
-            result[1] = height - 100;
+        if(result[1] > maxHeight) {
+            result[1] = maxHeight;
             result[0] = (int)(result[1]*ratio);
         }
 

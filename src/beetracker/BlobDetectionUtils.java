@@ -2,7 +2,7 @@
  * @file BlobDetectionUtils.java
  * @author Kay Choi, 909926828
  * @date 29 Jan 15
- * @description Handles all blob-related operations.
+ * @description Handles all BeeTracker blob-related operations.
  */
 
 package beetracker;
@@ -23,9 +23,9 @@ public class BlobDetectionUtils {
     private BlobDetection bd;
 
     /**
-     * TODO add method header
-     * @param width
-     * @param height
+     * Class constructor.
+     * @param width the width of the images to process
+     * @param height the height of the images to process
      */
     public BlobDetectionUtils(int width, int height) {
         bd = new BlobDetection(width, height);
@@ -92,8 +92,9 @@ public class BlobDetectionUtils {
      * Draws the edges of the currently detected blobs. Blobs with a bounding
      * box of less than 1% of the total image area are ignored as noise.
      * @param parent the calling PApplet
-     * @param pip
-     * @param box
+     * @param pip whether or not the display window should zoom into the inset
+     * @param box an array containing the normalized coordinates (0,1) of the
+     *   selection box corners
      */
     public void drawEdges(PApplet parent, boolean pip, float[] box) {
         parent.noFill();

@@ -1,8 +1,8 @@
 /**
- * @file DataMiner.java
+ * @file DataMinerUtils.java
  * @author Kay Choi, 909926828
  * @date 14 Feb 15
- * @description
+ * @description Handles all BeeTracker clustering-related operations.
  */
 
 package beetracker;
@@ -20,7 +20,7 @@ import weka.core.Instances;
 import weka.core.SparseInstance;
 
 public class DataMinerUtils {
-    private Hashtable<Float, Centroid> centroids;
+    private Hashtable<Float, Cluster> centroids;
 
     private PrintStream log;
 
@@ -60,7 +60,7 @@ public class DataMinerUtils {
             parent.exit();
         }
 
-        centroids = new Hashtable<Float, Centroid>();
+        centroids = new Hashtable<Float, Cluster>();
 
         ArrayList<Float> hues = new ArrayList<Float>(colors.size());
 
@@ -78,8 +78,8 @@ public class DataMinerUtils {
      * @return an ArrayList of clusters, where each cluster is an ArrayList of
      *   integer coordinates
      */
-    public ArrayList<ArrayList<int[]>> getClusters(ArrayList<float[]> points) {
-        ArrayList<ArrayList<int[]>> result = new ArrayList<ArrayList<int[]>>();
+    public ArrayList<Cluster> getClusters(ArrayList<float[]> points) {
+        ArrayList<Cluster> result = new ArrayList<Cluster>();
         Instance row;
         float[] point;
         int[] tmp;
@@ -107,7 +107,7 @@ public class DataMinerUtils {
 
                 //populate list of clusters
                 for(i = 0; i < clusterer.numberOfClusters(); i++) {
-                    result.add(new ArrayList<int[]>());
+                    result.add(new Cluster());
                 }
             }
             result.trimToSize();
@@ -119,7 +119,11 @@ public class DataMinerUtils {
                 tmp = new int[2];
                 tmp[0] = (int)row.value(0);
                 tmp[1] = (int)row.value(1);
-                result.get(clusterer.clusterInstance(row)).add(tmp);
+                result.get(clusterer.clusterInstance(row)).addPoint(tmp);
+            }
+
+            for(Cluster c : result) {
+            	c.calcBounds();
             }
         } catch (Exception e) {
             e.printStackTrace(log);
@@ -134,12 +138,12 @@ public class DataMinerUtils {
      * @param blobImg
      * @param clusters
      */
-    public void updateCentroids(processing.core.PImage blobImg, ArrayList<ArrayList<int[]>> clusters) {
+    public void updateCentroids(processing.core.PImage blobImg, ArrayList<Cluster> clusters) {
         int pixel;
         float hueVal = -1;
-        Centroid centroid;
+        Cluster centroid;
         double[] point;
-        ArrayList<int[]> cluster;
+        Cluster cluster;
         Instances centers = clusterer.getClusterCenters();
         Instance center;
 
@@ -162,10 +166,11 @@ public class DataMinerUtils {
                 ];
                 //-case: centroid is not in a blob (pixel is black)
                 if(parent.brightness(pixel) == 0) {
-                    cluster = clusters.get(i);
+                    //TODO need to handle case where #clusters!=#centers
+                	cluster = clusters.get(i);
 
                     //iterate through cluster centroids for valid hue
-                    for(int[] tmp : cluster) {
+                    for(int[] tmp : cluster.getPoints()) {
                         hueVal = (int)(((float)(tmp[1]))*blobImg.height*
                             blobImg.width/parent.height) +
                             (int)(((float)(tmp[0]))*blobImg.width/parent.width);
@@ -185,11 +190,11 @@ public class DataMinerUtils {
                 //update centroid position
                 centroid = centroids.get(hueVal);
                 if(centroid == null) {
-                    centroid = new Centroid();
+                    centroid = new Cluster();
                     centroids.put(hueVal, centroid);
                 }
-                centroid.x = (int)(point[0]*parent.width);
-                centroid.y = (int)(point[1]*parent.height);
+                centroid.setX((int)(point[0]*parent.width));
+                centroid.setY((int)(point[1]*parent.height));
             }
         }
     }
@@ -202,17 +207,7 @@ public class DataMinerUtils {
         centroids.clear();
 
         for(Float color: colors) {
-            centroids.put(color, new Centroid());
+            centroids.put(color, new Cluster());
         }
-    }
-
-    /**
-     * TODO add class header
-     * @author Kay Choi
-     *
-     */
-    private class Centroid {
-        float x, y;
-        boolean updated = false;
     }
 }

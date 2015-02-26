@@ -7,7 +7,7 @@
 
 package beetracker;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import blobDetection.Blob;
 import blobDetection.BlobDetection;
@@ -16,11 +16,12 @@ import blobDetection.EdgeVertex;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PImage;
+import processing.data.IntList;
 
 public class BlobDetectionUtils {
     final static int hueThreshold = 10, satThreshold = 100;
     private static final float noise = 0.0001f;
-    private BlobDetection bd;
+    private final BlobDetection bd;
 
     /**
      * Class constructor.
@@ -39,26 +40,23 @@ public class BlobDetectionUtils {
      *   all other pixels are set to 0x000000.
      * @param parent the calling PApplet
      * @param img the PImage to preprocess
-     * @param colors
+     * @param colors a list of the integer RGB values to scan for
      */
-    public static void preProcessImg(
-        PApplet parent,
-        PImage img,
-        ArrayList<Integer> colors
-    ) {
-        short j;
+    public static void preProcessImg(PApplet parent, PImage img,
+        IntList colors)
+    {
         boolean match;
         float tmp, hue;
 
         img.loadPixels();
 
         parent.colorMode(PConstants.HSB, 255);
-        for(int i = 0; i < img.pixels.length; i++) {
+        for(int i = 0; i <img.pixels.length; i++) {
             match = false;
             tmp = parent.hue(img.pixels[i]);
 
-            for(j = 0; j < (short)colors.size(); j++) {
-                hue = parent.hue(colors.get(j));
+            for(int color : colors) {
+                hue = parent.hue(color);
 
                 if(tmp > hue - hueThreshold &&
                     tmp < hue + hueThreshold &&
@@ -84,44 +82,30 @@ public class BlobDetectionUtils {
      * Computes the blobs in an image.
      * @param pixels an array containing the current color values of an image.
      */
-    public void computeBlobs(int[] pixels) {
-        bd.computeBlobs(pixels);
+    public void computeBlobs(PImage img) {
+        img.loadPixels();
+        bd.computeBlobs(img.pixels);
     }
 
     /**
-     * Draws the edges of the currently detected blobs. Blobs with a bounding
-     * box of less than 1% of the total image area are ignored as noise.
+     * Draws the currently detected blobs. Blobs with a bounding box of less
+     *   than 1% of the total image area are ignored as noise.
      * @param parent the calling PApplet
-     * @param pip whether or not the display window should zoom into the inset
-     * @param box an array containing the normalized coordinates (0,1) of the
-     *   selection box corners
+     * @param frameDims the dimensions of the image frame for which blob
+     *   detection is being performed, in pixels
+     * @param offset the xy coordinates of the image frame, in pixels
      */
-    public void drawEdges(PApplet parent, boolean pip, float[] box) {
+    public void drawBlobs(PApplet parent, int[] frameDims, int[] offset) {
         parent.noFill();
         Blob b;
         EdgeVertex eA,eB;
-        int[] offset = new int[2];
-        int[] dims = new int[2];
 
-        if(pip) {
-            offset[0] = offset[1] = 50;
-            dims[0] = parent.width-100;
-            dims[1] = parent.height-100;
-        }
-
-        else {
-            offset[0] = 50 + (int)(box[0]*(parent.width-100));
-            offset[1] = 50 + (int)(box[1]*(parent.height-100));
-            dims[0] = (int)(Math.abs(box[2]-box[0])*(parent.width-100));
-            dims[1] = (int)(Math.abs(box[3]-box[1])*(parent.height-100));
-        }
-
+        parent.strokeWeight(1);
         for (int n = 0; n < bd.getBlobNb(); n++) {
             b = bd.getBlob(n);
             if (b != null) {
                 if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
                     // Edges
-                    parent.strokeWeight(2);
                     parent.stroke(0xFFFF00AA);
                     for (int m = 0; m < b.getEdgeNb(); m++) {
                         eA = b.getEdgeVertexA(m);
@@ -129,23 +113,22 @@ public class BlobDetectionUtils {
 
                         if (eA !=null && eB !=null) {
                             parent.line(
-                                eA.x*dims[0] + offset[0],
-                                eA.y*dims[1] + offset[1],
-                                eB.x*dims[0] + offset[0],
-                                eB.y*dims[1] + offset[1]
+                                eA.x*frameDims[0] + offset[0],
+                                eA.y*frameDims[1] + offset[1],
+                                eB.x*frameDims[0] + offset[0],
+                                eB.y*frameDims[1] + offset[1]
                             );
                         }
                     }
 
                     //bounding boxes
-                    parent.strokeWeight(1);
                     parent.stroke(0xFF00FFAA);
                     parent.rectMode(PConstants.CORNER);
                     parent.rect(
-                        b.xMin*dims[0] + offset[0],
-                        b.yMin*dims[1] + offset[1],
-                        b.w*dims[0],
-                        b.h*dims[1]
+                        b.xMin*frameDims[0] + offset[0],
+                        b.yMin*frameDims[1] + offset[1],
+                        b.w*frameDims[0],
+                        b.h*frameDims[1]
                     );
                 }
             }
@@ -154,13 +137,13 @@ public class BlobDetectionUtils {
 
     /**
      * Retrieves the centroids of the currently detected blobs. Blobs with a
-     * bounding box of less than 1% of the total image area are ignored as
-     * noise.
-     * @return an ArrayList containing the normalized xy coordinates of the
+     *   bounding box of less than 1% of the total image area are ignored as
+     *   noise.
+     * @return an LinkedList containing the normalized xy coordinates of the
      *  detected blob centroids
      */
-    public ArrayList<float[]> getCentroids() {
-        ArrayList<float[]> result = new ArrayList<float[]>();
+    public LinkedList<float[]> getCentroids() {
+        LinkedList<float[]> result = new LinkedList<float[]>();
         float[] tmp;
         Blob b;
 

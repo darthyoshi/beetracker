@@ -17,12 +17,17 @@ public class ColorPicker {
     /**
      * Displays a color picker.
      * @param parent the instantiating PApplet
-     * @return the hexadecimal RGB value of the selected color or 0 for a non-
-     *   valid selection
+     * @return the six-digit hexadecimal RGB value of the selected color or 0
+     *   for a non-valid selection
      */
     public static int getColor(PApplet parent) {
         Color newColor = JColorChooser.showDialog(null, "Select Color", Color.BLACK);
+        int result = 0;
 
-        return (newColor != null ? newColor.getRGB() : 0);
+        if(newColor != null) {
+            result = newColor.getRed()*256*256 + newColor.getGreen()*256 + newColor.getBlue();
+        }
+
+        return result;
     }
 }

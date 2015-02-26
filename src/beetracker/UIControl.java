@@ -8,25 +8,26 @@
 package beetracker;
 
 import controlP5.Button;
-import controlP5.ControlFont;
 import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
 import controlP5.DropdownList;
 import controlP5.Group;
 import controlP5.Toggle;
 
+import processing.core.PImage;
+
 public class UIControl {
     private final Group setupGroup, playGroup;
-    private DropdownList colorList;
-    private Toggle playToggle, selectToggle;
-    private Button openButton;
+    private final DropdownList colorList;
+    private final Toggle selectToggle;
+    private final Button playButton, openButton;
+    private final PImage[] playIcons;
 
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
 
     /**
      * Class constructor.
-     * TODO move color editing components
      * @param parent the instantiating PApplet object
      */
     public UIControl(processing.core.PApplet parent) {
@@ -76,15 +77,18 @@ public class UIControl {
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
-        playToggle = new NewToggle(cp5, "playButton")
+        playIcons = new PImage[2];
+        playIcons[0] = parent.loadImage("data/img/playbutton.png");
+        playIcons[1] = parent.loadImage("data/img/pausebutton.png");
+        playButton = cp5.addButton("playButton")//new NewToggle(cp5, "playButton")
             .setCaptionLabel("")
             .setPosition(50, parent.height - 40)
             .setSize(30, 30)
             .setGroup(playGroup)
-            .setImages(
+            .setImage( playIcons[0]/*s(
                 parent.loadImage("data/img/playbutton.png"),
                 null,
-                parent.loadImage("data/img/pausebutton.png")
+                parent.loadImage("data/img/pausebutton.png")*/
             );
 
         cp5.addButton("fastForward")
@@ -103,7 +107,7 @@ public class UIControl {
 
         Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
         pipToggle.setCaptionLabel("Inset Zoom")
-            .setGroup(setupGroup)
+            .setGroup(playGroup)
             .setPosition(parent.width - 80, parent.height - 20)
             .getCaptionLabel()
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
@@ -117,11 +121,65 @@ public class UIControl {
         selectToggle = cp5.addToggle("selectToggle").setSize(30, 15);
         selectToggle.setMode(ControlP5Constants.SWITCH)
             .setPosition(parent.width - 80, parent.height - 40)
-            .setCaptionLabel(selectMode[0])
+            .setCaptionLabel(selectMode[1])
             .setGroup(setupGroup)
             .getCaptionLabel()
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
+    }
+
+    /**
+     * Toggles the visibility of the playback controls.
+     */
+    public void togglePlay() {
+        playGroup.setVisible(!playGroup.isVisible());
+    }
+
+    /**
+     * Adds a new item to the color selection list.
+     * @param label the item label
+     * @param val the integer color value
+     */
+    public void addListItem(String label, int val) {
+        colorList.addItem(label, val);
+    }
+
+    /**
+     * Clears the color selection list.
+     */
+    public void clearList() {
+        colorList.clear();
+        colorList.addItem(listLbl, 0);
+        colorList.setCaptionLabel(listLbl);
+    }
+
+    /**
+     * Sets the state of the play/pause button.
+     * @param state the new play state
+     */
+    public void setPlayState(boolean state) {
+        playButton.setImage(playIcons[(state ? 1 : 0)]);
+    }
+
+    /**
+     * Updates the label of the selection mode switch.
+     */
+    public void toggleSelectLbl() {
+        selectToggle.setCaptionLabel(selectMode[(selectToggle.getState()?0:1)]);
+    }
+
+    /**
+     * Toggles the visibility of the setup mode components.
+     */
+    public void toggleSetup() {
+        setupGroup.setVisible(!setupGroup.isVisible());
+    }
+
+    /**
+     * Toggles the visibility of the "open video" button.
+     */
+    public void toggleOpenButton() {
+        openButton.setVisible(!openButton.isVisible());
     }
 
     /**
@@ -141,62 +199,5 @@ public class UIControl {
 
         @Override
         public void onEnter() {}
-    }
-
-    /**
-     * TODO add method header
-     */
-    public void togglePlay() {
-        playGroup.setVisible(!playGroup.isVisible());
-    }
-
-    /**
-     * TODO add method header
-     * @param color
-     * @param val
-     */
-    public void addListItem(String color, int val) {
-        colorList.addItem(color, val);
-    }
-
-    /**
-     * TODO add method header
-     */
-    public void clearList() {
-        colorList.clear();
-        colorList.addItem(listLbl, 0);
-        colorList.setCaptionLabel(listLbl);
-    }
-
-    /**
-     * TODO add method header
-     * @param state
-     */
-    public void setPlayState(boolean state) {
-        if(playToggle.getState() != state) {
-            playToggle.toggle();
-        }
-    }
-
-    /**
-     * TODO add method header
-     * @param state
-     */
-    public void updateSelectLbl(boolean state) {
-        selectToggle.setCaptionLabel(selectMode[(selectToggle.getState()?1:0)]);
-    }
-
-    /**
-     * TODO add method header
-     */
-    public void toggleSetup() {
-        setupGroup.setVisible(!setupGroup.isVisible());
-    }
-
-    /**
-     * TODO add method header
-     */
-    public void toggleOpenButton() {
-        openButton.setVisible(!openButton.isVisible());
     }
 }

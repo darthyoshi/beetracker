@@ -9,7 +9,6 @@ package beetracker;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +52,7 @@ public class DataMinerUtils {
             clusterer.setOptions(options);
 
             dataSet = new Instances(new java.io.BufferedReader(
-                new java.io.FileReader("header.arff"))
+                new java.io.FileReader("data/header.arff"))
             );
         } catch(Exception e) {
             e.printStackTrace(log);

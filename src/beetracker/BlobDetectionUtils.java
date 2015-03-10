@@ -20,7 +20,7 @@ import processing.data.IntList;
 
 public class BlobDetectionUtils {
     final static int hueThreshold = 10, satThreshold = 100;
-    private static final float noise = 0.0001f;
+    private static final float noise = 0.001f;
     private final BlobDetection bd;
 
     /**
@@ -80,7 +80,7 @@ public class BlobDetectionUtils {
 
     /**
      * Computes the blobs in an image.
-     * @param pixels an array containing the current color values of an image.
+     * @param img the PImage to process
      */
     public void computeBlobs(PImage img) {
         img.loadPixels();

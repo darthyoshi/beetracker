@@ -85,11 +85,7 @@ public class UIControl {
             .setPosition(50, parent.height - 40)
             .setSize(30, 30)
             .setGroup(playGroup)
-            .setImage( playIcons[0]/*s(
-                parent.loadImage("data/img/playbutton.png"),
-                null,
-                parent.loadImage("data/img/pausebutton.png")*/
-            );
+            .setImage(playIcons[0]);
 
         cp5.addButton("fastForward")
             .setCaptionLabel("")
@@ -180,24 +176,5 @@ public class UIControl {
      */
     public void toggleOpenButton() {
         openButton.setVisible(!openButton.isVisible());
-    }
-
-    /**
-     * An extension of the ControlP5 Toggle class that does not react in
-     *   response to mouse onEnter events.
-     * @author Kay Choi
-     */
-    private class NewToggle extends Toggle {
-        /**
-         * Class constructor.
-         * @param control the instantiating ControlP5 object
-         * @param label the label for the NewToggle
-         */
-        private NewToggle(ControlP5 control, String label) {
-            super(control, label);
-        }
-
-        @Override
-        public void onEnter() {}
     }
 }

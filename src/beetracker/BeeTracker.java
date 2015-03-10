@@ -11,9 +11,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
+import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 
@@ -73,9 +76,9 @@ public class BeeTracker extends PApplet {
         }
 
         try {
-            log = new PrintStream(new File("Console.log"));
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
+            log = new PrintStream(new File("Console.log"), "UTF-8");
+        } catch (FileNotFoundException | UnsupportedEncodingException ex) {
+            Logger.getLogger(BeeTracker.class.getName()).log(Level.SEVERE, null, ex);
             exit();
         }
 
@@ -84,9 +87,8 @@ public class BeeTracker extends PApplet {
         colors = new IntList();
         insetBox = new float[4];
         exitRadial = new float[4];
-        JSONObject jsonSettings = null;
         try {
-            jsonSettings = loadJSONObject("settings.json");
+            JSONObject jsonSettings = loadJSONObject("settings.json");
             int tmp;
             String jsonKey;
             JSONObject json;
@@ -132,7 +134,6 @@ public class BeeTracker extends PApplet {
                     tmp = Integer.parseInt(jsonKey);
 
                     exitRadial[tmp] = json.getFloat(jsonKey, 0f);
-                    println(tmp+" "+exitRadial[tmp]);
                 }
             } catch(Exception e3) {
                 exitRadial[0] = exitRadial[1] = 0f;
@@ -176,7 +177,6 @@ public class BeeTracker extends PApplet {
         fill(0xFFFF0099);
 
         if(movie != null) {
-
             if((isPlaying || init) && movie.available()) {
                 movie.read();
 
@@ -201,19 +201,7 @@ public class BeeTracker extends PApplet {
             image(movie, width/2, height/2, movieDims[0], movieDims[1]);
 
             if(!init) {
-                blobImg.resize(
-                    (int)(movie.width*(insetBox[2] - insetBox[0])),
-                    (int)(movie.height*(insetBox[3] - insetBox[1]))
-                );
-                blobImg.copy(
-                    movie,
-                    (int)(movie.width*insetBox[0]),
-                    (int)(movie.height*insetBox[1]),
-                    (int)(movie.width*(insetBox[2] - insetBox[0])),
-                    (int)(movie.height*(insetBox[3] - insetBox[1])),
-                    0, 0, blobImg.width, blobImg.height
-                );
-                blobImg.resize(width, height);
+                copyInsetFrame();
 
                 BlobDetectionUtils.preProcessImg(this, blobImg, colors);
 
@@ -224,19 +212,7 @@ public class BeeTracker extends PApplet {
                 dmu.updateBeePositions(blobImg, clusters, colors, bees, exitRadial);
 
                 if(pip) {
-                    blobImg.resize(
-                        (int)(movie.width*(insetBox[2] - insetBox[0])),
-                        (int)(movie.height*(insetBox[3] - insetBox[1]))
-                    );
-                    blobImg.copy(
-                        movie,
-                        (int)(movie.width*insetBox[0]),
-                        (int)(movie.height*insetBox[1]),
-                        (int)(movie.width*(insetBox[2] - insetBox[0])),
-                        (int)(movie.height*(insetBox[3] - insetBox[1])),
-                        0, 0, blobImg.width, blobImg.height
-                    );
-                    blobImg.resize(width, height);
+                    copyInsetFrame();
 
                     zoomDims = scaledDims(
                         movieDims[0]*(insetBox[2] - insetBox[0]),
@@ -338,6 +314,55 @@ public class BeeTracker extends PApplet {
                     );
                 }
             }
+
+            //end of movie reached
+            if(movie.time() >= movie.duration()) {
+                JSONObject stats = new JSONObject();
+                JSONObject beeStat, tmp;
+                Bee bee;
+                List<Float> departure, arrival;
+                int i;
+                for(int color : colors) {
+                    bee = bees.get(hue(color));
+                    departure = bee.getDepartureTimes();
+                    arrival = bee.getArrivalTimes();
+
+                    beeStat = new JSONObject();
+
+                    tmp = new JSONObject();
+                    i = 0;
+                    for(Float arrive : arrival) {
+                        tmp.setFloat(String.valueOf(i), arrive);
+                        i++;
+                    }
+                    beeStat.setJSONObject("arrivals", tmp);
+
+                    tmp = new JSONObject();
+                    i = 0;
+                    for(Float depart : departure) {
+                        tmp.setFloat(String.valueOf(i), depart);
+                        i++;
+                    }
+                    beeStat.setJSONObject("arrivals", tmp);
+
+                    stats.setJSONObject(Integer.toHexString(color), beeStat);
+                }
+
+                Calendar date = Calendar.getInstance();
+                String dateTime = String.format("%02d%02d%d-%02d:%02d.json",
+                    date.get(Calendar.DAY_OF_MONTH),
+                    date.get(Calendar.MONTH)+1,
+                    date.get(Calendar.YEAR),
+                    date.get(Calendar.HOUR_OF_DAY),
+                    date.get(Calendar.MINUTE)
+                );
+
+                saveJSONObject(stats, dateTime);
+
+                //TODO: display message that video has ended (maybe video statistics too?)
+
+                stopPlayback();
+            }
         }
 
         else {
@@ -350,6 +375,25 @@ public class BeeTracker extends PApplet {
         noFill();
         rectMode(CORNERS);
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
+    }
+
+    /**
+     * Copies the inset frame for image processing and blob detection.
+     */
+    private void copyInsetFrame() {
+        blobImg.resize(
+            (int)(movie.width*(insetBox[2] - insetBox[0])),
+            (int)(movie.height*(insetBox[3] - insetBox[1]))
+        );
+        blobImg.copy(
+            movie,
+            (int)(movie.width*insetBox[0]),
+            (int)(movie.height*insetBox[1]),
+            (int)(movie.width*(insetBox[2] - insetBox[0])),
+            (int)(movie.height*(insetBox[3] - insetBox[1])),
+            0, 0, blobImg.width, blobImg.height
+        );
+        blobImg.resize(width, height);
     }
 
     /**
@@ -477,27 +521,15 @@ public class BeeTracker extends PApplet {
             break;
 
         case "stopButton":
-            if(isPlaying) {
-                isPlaying = !isPlaying;
-                uic.setPlayState(isPlaying);
+            if(JOptionPane.showConfirmDialog(
+                    this,
+                    "Cancel playback? Current video statistics will not be saved.",
+                    "Warning",
+                    JOptionPane.YES_NO_OPTION
+                ) == JOptionPane.YES_OPTION
+            ) {
+                stopPlayback();
             }
-
-            if(movie != null) {
-                movie.stop();
-                movie = null;
-            }
-
-            uic.toggleOpenButton();
-            uic.togglePlay();
-
-            if(init) {
-                uic.toggleSetup();
-            }
-
-            insetBox[0] = insetBox[1] = 0f;
-            insetBox[2] = insetBox[3] = 1f;
-
-            exitRadial[0] = exitRadial[1] = exitRadial[2] = exitRadial[3] = 0f;
 
             break;
 
@@ -529,6 +561,33 @@ public class BeeTracker extends PApplet {
 
             break;
         }
+    }
+
+    /**
+     * Handles all operations necessary for stopping video playback.
+     */
+    private void stopPlayback() {
+        if(isPlaying) {
+            isPlaying = !isPlaying;
+            uic.setPlayState(isPlaying);
+        }
+
+        if(movie != null) {
+            movie.stop();
+            movie = null;
+        }
+
+        uic.toggleOpenButton();
+        uic.togglePlay();
+
+        if(init) {
+            uic.toggleSetup();
+        }
+
+        insetBox[0] = insetBox[1] = 0f;
+        insetBox[2] = insetBox[3] = 1f;
+
+        exitRadial[0] = exitRadial[1] = exitRadial[2] = exitRadial[3] = 0f;
     }
 
     /**

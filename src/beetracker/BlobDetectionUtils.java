@@ -19,7 +19,7 @@ import processing.core.PImage;
 import processing.data.IntList;
 
 public class BlobDetectionUtils {
-    final static int hueThreshold = 10, satThreshold = 100;
+    final static int hueThreshold = 10, satThreshold = 100, lumThreshold = 10;
     private static final float noise = 0.001f;
     private final BlobDetection bd;
 
@@ -60,7 +60,8 @@ public class BlobDetectionUtils {
 
                 if(tmp > hue - hueThreshold &&
                     tmp < hue + hueThreshold &&
-                    parent.saturation(img.pixels[i]) > satThreshold)
+                    parent.saturation(img.pixels[i]) > satThreshold &&
+                    parent.brightness(img.pixels[i]) > lumThreshold)
                 {
                     img.pixels[i] = parent.color(hue, 255, 255);
 

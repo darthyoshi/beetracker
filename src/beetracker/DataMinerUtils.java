@@ -40,9 +40,10 @@ public class DataMinerUtils {
     /**
      * Class constructor.
      * @param parent the instantiating PApplet
-     * @param log a PrintStream object pointing to the output log
+     * @param log the output log
+     * @param header the File object containing the Weka header definitions  
      */
-    public DataMinerUtils(PApplet parent, PrintStream log) {
+    public DataMinerUtils(PApplet parent, PrintStream log, java.io.File header) {
         this.parent = parent;
         this.log = log;
 
@@ -52,7 +53,7 @@ public class DataMinerUtils {
             clusterer.setOptions(options);
 
             dataSet = new Instances(new java.io.BufferedReader(
-                new java.io.FileReader("data/header.arff"))
+                new java.io.FileReader(header))
             );
         } catch(Exception e) {
             e.printStackTrace(log);

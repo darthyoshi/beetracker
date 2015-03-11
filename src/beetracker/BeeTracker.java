@@ -84,11 +84,13 @@ public class BeeTracker extends PApplet {
 
         uic = new UIControl(this);
 
+        String workingDir = (new File(".")).getAbsolutePath()+File.separatorChar;
+        
         colors = new IntList();
         insetBox = new float[4];
         exitRadial = new float[4];
         try {
-            JSONObject jsonSettings = loadJSONObject("settings.json");
+            JSONObject jsonSettings = loadJSONObject(workingDir+"settings.json");
             int tmp;
             String jsonKey;
             JSONObject json;
@@ -149,7 +151,7 @@ public class BeeTracker extends PApplet {
             bees.put(hue(color), new Bee());
         }
 
-        dmu = new DataMinerUtils(this, log);
+        dmu = new DataMinerUtils(this, log, new File("header.arff"));
 
         background(0x444444);
 
@@ -317,47 +319,7 @@ public class BeeTracker extends PApplet {
 
             //end of movie reached
             if(movie.time() >= movie.duration()) {
-                JSONObject stats = new JSONObject();
-                JSONObject beeStat, tmp;
-                Bee bee;
-                List<Float> departure, arrival;
-                int i;
-                for(int color : colors) {
-                    bee = bees.get(hue(color));
-                    departure = bee.getDepartureTimes();
-                    arrival = bee.getArrivalTimes();
-
-                    beeStat = new JSONObject();
-
-                    tmp = new JSONObject();
-                    i = 0;
-                    for(Float arrive : arrival) {
-                        tmp.setFloat(String.valueOf(i), arrive);
-                        i++;
-                    }
-                    beeStat.setJSONObject("arrivals", tmp);
-
-                    tmp = new JSONObject();
-                    i = 0;
-                    for(Float depart : departure) {
-                        tmp.setFloat(String.valueOf(i), depart);
-                        i++;
-                    }
-                    beeStat.setJSONObject("arrivals", tmp);
-
-                    stats.setJSONObject(Integer.toHexString(color), beeStat);
-                }
-
-                Calendar date = Calendar.getInstance();
-                String dateTime = String.format("%02d%02d%d-%02d:%02d.json",
-                    date.get(Calendar.DAY_OF_MONTH),
-                    date.get(Calendar.MONTH)+1,
-                    date.get(Calendar.YEAR),
-                    date.get(Calendar.HOUR_OF_DAY),
-                    date.get(Calendar.MINUTE)
-                );
-
-                saveJSONObject(stats, dateTime);
+                saveResults();
 
                 //TODO: display message that video has ended (maybe video statistics too?)
 
@@ -375,6 +337,56 @@ public class BeeTracker extends PApplet {
         noFill();
         rectMode(CORNERS);
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
+    }
+
+    /**
+     * Saves the statistics of the current video to file.
+     */
+    private void saveResults() {
+        JSONObject stats = new JSONObject();
+        JSONObject beeStat, tmp;
+
+        stats.setString("file", /*movie.filename*/"null");
+
+        Bee bee;
+        List<Float> departure, arrival;
+        int i;
+        for(int color : colors) {
+            bee = bees.get(hue(color));
+            departure = bee.getDepartureTimes();
+            arrival = bee.getArrivalTimes();
+
+            beeStat = new JSONObject();
+
+            tmp = new JSONObject();
+            i = 0;
+            for(Float arrive : arrival) {
+                tmp.setFloat(String.valueOf(i), arrive);
+                i++;
+            }
+            beeStat.setJSONObject("arrivals", tmp);
+
+            tmp = new JSONObject();
+            i = 0;
+            for(Float depart : departure) {
+                tmp.setFloat(String.valueOf(i), depart);
+                i++;
+            }
+            beeStat.setJSONObject("departures", tmp);
+
+            stats.setJSONObject(Integer.toHexString(color), beeStat);
+        }
+
+        Calendar date = Calendar.getInstance();
+        String dateTime = String.format("%02d%02d%d-%02d:%02d.json",
+            date.get(Calendar.DAY_OF_MONTH),
+            date.get(Calendar.MONTH)+1,
+            date.get(Calendar.YEAR),
+            date.get(Calendar.HOUR_OF_DAY),
+            date.get(Calendar.MINUTE)
+        );
+
+        saveJSONObject(stats, dateTime);
     }
 
     /**

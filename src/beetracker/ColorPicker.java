@@ -12,7 +12,6 @@ import java.awt.Color;
 import javax.swing.JColorChooser;
 import processing.core.PApplet;
 
-
 public class ColorPicker {
     /**
      * Displays a color picker.

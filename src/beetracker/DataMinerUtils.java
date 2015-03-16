@@ -41,7 +41,7 @@ public class DataMinerUtils {
      * Class constructor.
      * @param parent the instantiating PApplet
      * @param log the output log
-     * @param header the File object containing the Weka header definitions  
+     * @param header the File object containing the Weka header definitions
      */
     public DataMinerUtils(PApplet parent, PrintStream log, java.io.File header) {
         this.parent = parent;
@@ -136,25 +136,39 @@ public class DataMinerUtils {
      *   normalized y coordinate of the exit center,
      *   normalized horizontal semi-major axis of the exit,
      *   normalized vertical semi-major axis of the exit
+     * @param dims
+     * @param offset
+     * @param time timestamp of the current frame
      */
     public void updateBeePositions(
         processing.core.PImage blobImg,
         List<Cluster> clusters,
         processing.data.IntList colors,
         HashMap<Float, Bee> bees,
-        float[] exitRadial
+        float[] exitRadial,
+        int[] dims,
+        int[] offset,
+        float time
     ) {
         Instances centers = clusterer.getClusterCenters();
 
         //data set can be clustered
         if(centers != null) {
-            int pixel;
+            int pixel, beeX, beeY;
             float hueVal = -1f;
             Bee bee;
             double[] point;
             Cluster cluster;
             Instance center;
 
+            float[] exitXY = new float[2];
+            exitXY[0] = exitRadial[0]*dims[0] + offset[0];
+            exitXY[1] = exitRadial[1]*dims[1] + offset[1];
+            float[] semiMajAxes = new float[2];
+            semiMajAxes[0] = exitRadial[2]*dims[0];
+            semiMajAxes[1] = exitRadial[3]*dims[1];
+
+            //list of bees that are not in the current frame
             List<Float> invisBees = new java.util.LinkedList<Float>();
             for(int col : colors) {
                 invisBees.add(parent.hue(col));
@@ -209,24 +223,48 @@ public class DataMinerUtils {
 
                 invisBees.remove(hueVal);
 
-                //update centroid position
                 bee = bees.get(hueVal);
                 if(bee == null) {
                     bee = new Bee();
                     bees.put(hueVal, bee);
                 }
-                //TODO check current bee position
-                //if within exit, read last known position
-                //if last known position was Integer.MIN_VALUE, increment departure
-                bee.setX((int)(point[0]*parent.width));
-                bee.setY((int)(point[1]*parent.height));
+
+                //if current bee position within exit
+                beeX = (int)(point[0]*parent.width);
+                beeY = (int)(point[1]*parent.height);
+                if(
+                    Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
+                    Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[0], 2)
+                ) {
+                    //if last known position was Integer.MIN_VALUE,
+                    //bee was not previously visible and bee has left hive
+                    if(bee.getX() == Integer.MIN_VALUE && bee.getY() == Integer.MIN_VALUE) {
+                        bee.addDepartureTime(time);
+                    }
+                }
+
+                //update bee position
+                bee.setX(beeX);
+                bee.setY(beeY);
             }
 
+            //check tracked bees that are not in current frame
             for(Float hue : invisBees) {
                 bee = bees.get(hue);
-                //TODO read last known position
-                //if within exit, increment arrival
-                //set new position as Integer.MIN_VALUE
+                beeX = bee.getX();
+                beeY = bee.getY();
+
+                //if last known position within exit, bee has entered hive
+                if(
+                    Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
+                    Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[0], 2)
+                ) {
+                    bee.addArrivalTime(time);
+                }
+
+                //update bee position
+                bee.setX(Integer.MIN_VALUE);
+                bee.setY(Integer.MIN_VALUE);
             }
         }
     }

@@ -121,7 +121,7 @@ public class BlobDetectionUtils {
                             );
                         }
                     }
-
+/*
                     //bounding boxes
                     parent.stroke(0xFF00FFAA);
                     parent.rectMode(PConstants.CORNER);
@@ -130,7 +130,7 @@ public class BlobDetectionUtils {
                         b.yMin*frameDims[1] + offset[1],
                         b.w*frameDims[0],
                         b.h*frameDims[1]
-                    );
+                    );*/
                 }
             }
         }

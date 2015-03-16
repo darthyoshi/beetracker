@@ -64,7 +64,7 @@ public class UIControl {
             .setGroup(setupGroup)
             .setCaptionLabel(listLbl)
             .setBarHeight(20)
-            .addItem(listLbl, 0);
+            .addItem(listLbl, -1);
         colorList.getCaptionLabel().
             alignY(ControlP5Constants.CENTER).
             setPaddingX(10);
@@ -122,7 +122,7 @@ public class UIControl {
             .getCaptionLabel()
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
-    }
+	}
 
     /**
      * Toggles the visibility of the playback controls.
@@ -134,19 +134,44 @@ public class UIControl {
     /**
      * Adds a new item to the color selection list.
      * @param label the item label
-     * @param val the integer color value
      */
-    public void addListItem(String label, int val) {
-        colorList.addItem(label, val);
+    public void addListItem(String label) {
+        colorList.addItem(label, colorList.getListBoxItems().length-1);
     }
 
     /**
-     * Clears the color selection list.
+     * Removes an item from the color selection list.
+     * @param lbl the label of the item to remove
      */
-    public void clearList() {
-        colorList.clear();
-        colorList.addItem(listLbl, 0);
+    public void removeListItem(String lbl) {
+    	String[][] oldLbls = colorList.getListBoxItems();
+    	String[] newLbls = new String[oldLbls.length-1];
+    	
+    	int j = 0;
+
+    	for(int i = 0; i < oldLbls.length && j < newLbls.length; i++) {
+    		if(!oldLbls[i][0].equalsIgnoreCase(lbl)) {
+    			newLbls[j] = oldLbls[i][0];
+    			j++;
+    		}
+		}
+
+    	colorList.clear();
+    	
+    	for(j = 0; j < newLbls.length; j++) {
+    		colorList.addItem(newLbls[j], j-1);
+    	}
         colorList.setCaptionLabel(listLbl);
+    }
+
+    /**
+     * Sets the label of a color selection list item.
+     * @param newLbl the new label of the item
+     * @param index the index of the item
+     */
+    public void setListItem(String newLbl, int index) {
+        colorList.getItem(index+1).setText(newLbl);
+        colorList.setCaptionLabel(newLbl);
     }
 
     /**

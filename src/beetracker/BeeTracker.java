@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.JOptionPane;
-
 import controlP5.ControlEvent;
 import processing.core.PApplet;
 import processing.core.PImage;
@@ -29,19 +27,20 @@ import processing.video.Movie;
 
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
+    private static final int[] mainBounds = {50, 50, 750, 550};
+    private static final String months[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
     private IntList colors;
     private HashMap<Float, Bee> bees;
-    private boolean isPlaying = false, init = false;
-    private boolean pip = false, selectExit = true;
-    private static final int[] mainBounds = {50, 50, 750, 550};
-    private short playbackSpeed = 1;
-    private int listVal = 0;
     private int[] movieDims, zoomDims;
 
-    private static final String errorMsg[] = {
-        "No colors have been selected.\n",
-        "No hive exit has been defined.\n"
-    };
+    private boolean isPlaying = false, init = false;
+    private boolean pip = false, selectExit = true;
+    private short playbackSpeed = 1;
+    private int listVal = -1;
 
     private File currentDir = null;
 
@@ -85,7 +84,7 @@ public class BeeTracker extends PApplet {
         uic = new UIControl(this);
 
         String workingDir = (new File(".")).getAbsolutePath()+File.separatorChar;
-        
+
         colors = new IntList();
         insetBox = new float[4];
         exitRadial = new float[4];
@@ -100,11 +99,9 @@ public class BeeTracker extends PApplet {
                 json = jsonSettings.getJSONObject("colors");
                 jsonIter = json.keyIterator();
                 while(jsonIter.hasNext()) {
-                    jsonKey = json.getString((String) jsonIter.next());
+                    tmp = (int)Long.parseLong(json.getString((String) jsonIter.next()), 16);
 
-                    tmp = (int)Long.parseLong(jsonKey, 16);
-
-                    uic.addListItem(jsonKey, tmp);
+                    uic.addListItem(String.format("%06x", tmp));
 
                     colors.append(tmp);
                 }
@@ -170,7 +167,6 @@ public class BeeTracker extends PApplet {
     public void draw() {
         background(0x222222);
 
-        noStroke();
         fill(0xff444444);
         rectMode(CORNERS);
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
@@ -211,7 +207,8 @@ public class BeeTracker extends PApplet {
 
                 List<Cluster> clusters = dmu.getClusters(bdu.getCentroids());
 
-                dmu.updateBeePositions(blobImg, clusters, colors, bees, exitRadial);
+                dmu.updateBeePositions(blobImg, clusters, colors, bees,
+                    exitRadial, movieDims, offset, movie.time());
 
                 if(pip) {
                     copyInsetFrame();
@@ -229,26 +226,73 @@ public class BeeTracker extends PApplet {
 
                 bdu.drawBlobs(this, frameDims, frameOffset);
 
-                textSize(32);
-                textAlign(CENTER, CENTER);
-                text("#bees: " + clusters.size(), width/2, 25);
+                //draw cluster box
+                rectMode(CENTER);
+                if(pip) {
+                    for(Cluster c : clusters) {
+                        rect(
+                            (float)c.getX()*frameDims[0] + frameOffset[0],
+                            (float)c.getY()*frameDims[0] + frameOffset[0],
+                            (float)c.getWidth()*frameDims[0],
+                            (float)c.getHeight()*frameDims[1]
+                        );
+                    }
+                }
 
-                textAlign(RIGHT, CENTER);
-                text("current speed: "+/*playbackSpeed*/movie.frameRate+'x', 750, 575);
+                else {
+                    for(Cluster c : clusters) {
+                        rect(
+                            (float)c.getX()*movieDims[0] + offset[0],
+                            (float)c.getY()*movieDims[0] + offset[0],
+                            (float)c.getWidth()*movieDims[0],
+                            (float)c.getHeight()*movieDims[1]
+                        );
+                    }
+                }
+
+                textAlign(CENTER, CENTER);
+
+                //status box
+                textSize(24);
+                text(
+            		String.format(
+                		"%02d:%02d - %02d:%02d",
+                		(int)movie.time()/60,
+                		(int)movie.time()%60,
+                		(int)movie.duration()/60,
+                		(int)movie.duration()%60
+            		), 275, 25
+        		);
+
+                //bee count
+                rectMode(CENTER);
+                stroke(0);
+                rect(627, 25, 240, 40);
+
+                textAlign(CENTER, CENTER);
+                text("current #bees: " + clusters.size(), 627, 25);
+
+                text("current speed: "+playbackSpeed+'x', width/2, 575);
             }
 
             else {
                 textSize(24);
-                textAlign(LEFT, CENTER);
-                text("Setup Mode", 50, 25);
 
+                //status box
                 textAlign(CENTER, CENTER);
+                text("Setup Mode", 275, 25);
+
                 text("Press play to begin.", width/2, 575);
             }
 
+            //status box boundary
             strokeWeight(1);
-            stroke(0xffffa600);
             noFill();
+            stroke(0);
+            rectMode(CENTER);
+            rect(275, 25, 450, 40);
+            
+            stroke(0xffffa600);
             ellipseMode(RADIUS);
 
             //inset box
@@ -319,9 +363,13 @@ public class BeeTracker extends PApplet {
 
             //end of movie reached
             if(movie.time() >= movie.duration()) {
-                saveResults();
+            	StringBuilder msg = new StringBuilder("End of video reached. ");
+            	msg.append("Video statistics have been saved to \"")
+            		.append(resultsToJSON())
+            		.append('\"');
 
-                //TODO: display message that video has ended (maybe video statistics too?)
+                //TODO maybe video statistics too?
+                MessageDialogue.endVideoMessage(this, msg.toString());
 
                 stopPlayback();
             }
@@ -341,12 +389,13 @@ public class BeeTracker extends PApplet {
 
     /**
      * Saves the statistics of the current video to file.
+     * @return the name of the new file in the format "dd.mmm.yyyy-hhmm.json" 
      */
-    private void saveResults() {
+    private String resultsToJSON() {
         JSONObject stats = new JSONObject();
         JSONObject beeStat, tmp;
 
-        stats.setString("file", /*movie.filename*/"null");
+        stats.setString("file", movie.filename);
 
         Bee bee;
         List<Float> departure, arrival;
@@ -374,19 +423,21 @@ public class BeeTracker extends PApplet {
             }
             beeStat.setJSONObject("departures", tmp);
 
-            stats.setJSONObject(Integer.toHexString(color), beeStat);
+            stats.setJSONObject(String.format("%06x", color), beeStat);
         }
 
         Calendar date = Calendar.getInstance();
-        String dateTime = String.format("%02d%02d%d-%02d:%02d.json",
+        String fileName = String.format("%02d.%s.%d-%02d%02d.json",
             date.get(Calendar.DAY_OF_MONTH),
-            date.get(Calendar.MONTH)+1,
+            months[date.get(Calendar.MONTH)],
             date.get(Calendar.YEAR),
             date.get(Calendar.HOUR_OF_DAY),
             date.get(Calendar.MINUTE)
         );
 
-        saveJSONObject(stats, dateTime);
+        saveJSONObject(stats, fileName);
+        
+        return fileName;
     }
 
     /**
@@ -451,41 +502,30 @@ public class BeeTracker extends PApplet {
         case "editColor":
             int editColor = ColorPicker.getColor(this);
 
-            if(listVal == 0) {
+            if(listVal < 0) {
                 if(!colors.hasValue(editColor)) {
+                    String code = String.format("%06x", editColor);
+
+                    uic.addListItem(code);
+
                     colors.append(editColor);
-
-                    String code = Integer.toHexString(editColor);
-                    if(code.length() > 6) {
-                        code = code.substring(code.length()-6, code.length());
-                    }
-
-                    uic.addListItem(code, editColor);
                 }
             }
 
-            else if(colors.hasValue(listVal)) {
-                colors.set(colors.index(listVal), editColor);
+            else {
+                colors.set(listVal, editColor);
 
-                uic.clearList();
-                for(Integer rgbVal : colors) {
-                    uic.addListItem(Integer.toHexString(rgbVal), rgbVal);
-                }
+                uic.setListItem(String.format("%06x", editColor), listVal);
             }
 
             break;
 
         case "removeColor":
-            if(listVal != 0 && colors.hasValue(listVal)) {
-                colors.remove(colors.index(listVal));
+            if(listVal >= 0) {
+                uic.removeListItem(String.format("%06x", colors.remove(listVal)));
 
                 if(colors.size() == 0) {
-                    listVal = 0;
-                }
-
-                uic.clearList();
-                for(Integer rgbVal : colors) {
-                    uic.addListItem(Integer.toHexString(rgbVal), rgbVal);
+                    listVal = -1;
                 }
             }
 
@@ -516,30 +556,16 @@ public class BeeTracker extends PApplet {
             }
 
             else {
-                StringBuilder msg = new StringBuilder();
-
-                if(colors.size() == 0) {
-                    msg.append(errorMsg[0]);
-                }
-
-                if(exitRadial[2] == 0f) {
-                    msg.append(errorMsg[1]);
-                }
-
-                JOptionPane.showMessageDialog(this, msg.toString(), "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            	boolean[] errors = {(colors.size() == 0), (exitRadial[2] <= 0f)};
+            	MessageDialogue.playButtonError(this, errors);
             }
 
             break;
 
         case "stopButton":
-            if(JOptionPane.showConfirmDialog(
-                    this,
-                    "Cancel playback? Current video statistics will not be saved.",
-                    "Warning",
-                    JOptionPane.YES_NO_OPTION
-                ) == JOptionPane.YES_OPTION
-            ) {
+            if(MessageDialogue.stopButtonWarning(this) ==
+                javax.swing.JOptionPane.YES_OPTION)
+            {
                 stopPlayback();
             }
 
@@ -559,6 +585,7 @@ public class BeeTracker extends PApplet {
 
         case "colorList":
             listVal = (int)event.getValue();
+//            println(String.format("%d %s", listVal, (listVal>-1?String.format("%06x",colors.get(listVal)):"new color")));
 
             break;
 
@@ -620,7 +647,7 @@ public class BeeTracker extends PApplet {
     @Override
     public void mousePressed() {
         if(
-            movie != null && init &&
+            movieDims != null && init &&
             mouseX > (width-movieDims[0])/2 &&
             mouseX < (width+movieDims[0])/2 &&
             mouseY > (height-movieDims[1])/2 &&

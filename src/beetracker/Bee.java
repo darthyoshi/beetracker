@@ -18,8 +18,8 @@ public class Bee {
      */
     public Bee() {
         x = y = Integer.MIN_VALUE;
-        departureTimes = new LinkedList<Float>();
-        arrivalTimes = new LinkedList<Float>();
+        departureTimes = new LinkedList<>();
+        arrivalTimes = new LinkedList<>();
     }
 
     /**

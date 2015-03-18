@@ -17,7 +17,7 @@ public final class Cluster {
      * Class constructor.
      */
     public Cluster() {
-        points = new LinkedList<double[]>();
+        points = new LinkedList<>();
         x = y = width = height = 0f;
     }
 
@@ -29,79 +29,63 @@ public final class Cluster {
     }
 
     /**
-     * @return the x coordinate of the Cluster centroid
+     * @return the normalized x coordinate of the Cluster centroid
      */
     public double getX() {
         return x;
     }
 
     /**
-     * Sets the x coordinate of the Cluster centroid.
-     * @param x the new x coordinate
+     * Sets the normalized x coordinate of the Cluster centroid.
+     * @param x the new normalized x coordinate
      */
     public void setX(double x) {
         this.x = x;
     }
 
     /**
-     * @return the y coordinate of the Cluster centroid
+     * @return the normalized y coordinate of the Cluster centroid
      */
     public double getY() {
         return y;
     }
 
     /**
-     * Sets the y coordinate of the Cluster centroid.
-     * @param y the new y coordinate
+     * Sets the normalized y coordinate of the Cluster centroid.
+     * @param y the new normalized y coordinate
      */
     public void setY(double y) {
         this.y = y;
     }
 
     /**
-     * @return the width of the Cluster
+     * @return the normalized width of the Cluster
      */
     public double getWidth() {
         return width;
     }
 
     /**
-     * Sets the width of the Cluster.
-     * @param width the new width
-     */
-    public void setWidth(double width) {
-        this.width = width;
-    }
-
-    /**
-     * @return the height of the Cluster
+     * @return the normalized height of the Cluster
      */
     public double getHeight() {
         return height;
     }
 
     /**
-     * Sets the height of the Cluster.
-     * @param height the new width
-     */
-    public void setHeight(double height) {
-        this.height = height;
-    }
-
-    /**
      * Adds a new point to the Cluster.
-     * @param point a float array containing the xy coordinates to add
+     * @param point a float array containing the normalized xy coordinates to add
      */
     public void addPoint(double[] point) {
         points.add(point);
     }
 
     /**
-     * Calculates the Cartesian width and height of the cluster.
+     * Calculates the normalized width and height of the cluster.
      */
-    public void calcBounds() {
-        double[] max = {Double.MIN_VALUE, Double.MIN_VALUE};
-        double[] min = {Double.MAX_VALUE, Double.MAX_VALUE};
+    public void calcDims() {
+        double[] max = {points.get(0)[0], points.get(0)[1]};
+        double[] min = {points.get(0)[0], points.get(0)[1]};
 
         for(double[] point : points) {
             if(point[0] > max[0]) {

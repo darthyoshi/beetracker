@@ -16,10 +16,14 @@ public class MessageDialogue {
         "No colors have been selected.\n",
         "No hive exit has been defined.\n"
     };
+    private static final String crashMsg[] = {
+        "The application has encountered the following error:\n",
+        "\nand will now close. Please check Console.log for details."
+    };
 
     /**
      * Displays a warning message if setup parameters have not been set.
-     * @param parent the instantiating PApplet
+     * @param parent the invoking PApplet
      * @param errors the setup error flags
      */
     public static void playButtonError(PApplet parent, boolean[] errors) {
@@ -39,8 +43,9 @@ public class MessageDialogue {
 
     /**
      * Displays a dialogue to confirm whether or not to prematurely end playback. 
-     * @param parent the instantiating PApplet
-     * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION, JOoptionPane.CANCEL_OPTION
+     * @param parent the invoking PApplet
+     * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
+     *   JOoptionPane.CANCEL_OPTION
      */
     public static int stopButtonWarning(PApplet parent) {
     	return JOptionPane.showConfirmDialog(
@@ -53,10 +58,23 @@ public class MessageDialogue {
 
     /**
      * Displays a message at the end of video playback. 
-     * @param parent the instantiating PApplet
+     * @param parent the invoking PApplet
      * @param msg the message to display
      */
-	public static void endVideoMessage(PApplet parent, String msg) {
-		JOptionPane.showMessageDialog(parent, msg);
-	}
+    public static void endVideoMessage(PApplet parent, String msg) {
+        JOptionPane.showMessageDialog(parent, msg);
+    }
+
+    /**
+     * Displays a program crash message.
+     * @param parent the invoking PApplet
+     * @param msg the cause of the crash
+     */
+    public static void crashMessage(PApplet parent, String msg) {
+        StringBuilder builder = new StringBuilder(crashMsg[0]);
+        builder.append(msg).append(crashMsg[1]);
+
+        JOptionPane.showMessageDialog(parent, builder.toString(), "Fatal Error",
+            JOptionPane.ERROR_MESSAGE);
+    }
 }

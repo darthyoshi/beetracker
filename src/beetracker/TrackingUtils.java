@@ -21,7 +21,7 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SparseInstance;
 
-public class DataMinerUtils {
+public class TrackingUtils {
     private final PrintStream log;
 
     private final BeeTracker parent;
@@ -44,7 +44,7 @@ public class DataMinerUtils {
      * @param header the File object containing the Weka header definitions
      * @param debug whether or not debug mode is enabled
      */
-    public DataMinerUtils(
+    public TrackingUtils(
         BeeTracker parent,
         PrintStream log,
         java.io.File header,
@@ -96,7 +96,7 @@ public class DataMinerUtils {
             }
 
             try {
-                if(dataSet.numInstances() > 0) {
+                if(dataSet.numInstances() > 0) {//K-means requires 1+ points
                     //invoke weka SimpleKMeans clusterer for Instances
                     clusterer.buildClusterer(dataSet);
 
@@ -159,8 +159,7 @@ public class DataMinerUtils {
      *   normalized y coordinate of the exit center,
      *   normalized horizontal semi-major axis of the exit,
      *   normalized vertical semi-major axis of the exit
-     * @param dims
-     * @param offset
+     * @param dims the dimensions of the frame
      * @param time timestamp of the current frame
      */
     public void updateBeePositions(
@@ -170,7 +169,6 @@ public class DataMinerUtils {
         HashMap<Float, Bee> bees,
         float[] exitRadial,
         int[] dims,
-        int[] offset,
         float time
     ) {
         int pixel, beeX, beeY;
@@ -180,9 +178,12 @@ public class DataMinerUtils {
         Cluster cluster;
         Instance center;
 
+        //exit center coordinates
         float[] exitXY = new float[2];
-        exitXY[0] = exitRadial[0]*dims[0] + offset[0];
-        exitXY[1] = exitRadial[1]*dims[1] + offset[1];
+        exitXY[0] = exitRadial[0]*dims[0];
+        exitXY[1] = exitRadial[1]*dims[1];
+
+        //exit axes
         float[] semiMajAxes = new float[2];
         semiMajAxes[0] = exitRadial[2]*dims[0];
         semiMajAxes[1] = exitRadial[3]*dims[1];
@@ -212,13 +213,19 @@ public class DataMinerUtils {
                 (int)(point[0]*blobImg.width/parent.width)
             ];
 
-            //-case: centroid is not in a blob (pixel is black)
-            if(parent.brightness(pixel) == 0) {
+            //case: centroid is in a blob (pixel has non-zero brightness)
+            if(parent.brightness(pixel) > 0) {
+                hueVal = parent.hue(pixel);
+            }
+
+            //case: centroid is not in a blob (pixel is black)
+            else {
                 //iterate through cluster members for valid hue
                 for(double[] tmp : cluster.getPoints()) {
-                    hueVal = (int)(tmp[1]*blobImg.height*
-                        blobImg.width/parent.height) +
-                        (int)(tmp[0]*blobImg.width/parent.width);
+                    pixel = blobImg.pixels[
+                        (int)(tmp[1]*blobImg.height*blobImg.width/parent.height) +
+                        (int)(tmp[0]*blobImg.width/parent.width)
+                    ];
 
                     if(parent.brightness(pixel) > 0) {
                         hueVal = parent.hue(pixel);
@@ -226,11 +233,8 @@ public class DataMinerUtils {
                         break;
                     }
                 }
-            }
 
-            //-case: centroid is in a blob (pixel has valid hue)
-            else {
-                hueVal = parent.hue(pixel);
+                //TODO: check for cases where no cluster members are actually within a blob?
             }
 
             invisBees.remove(hueVal);
@@ -240,10 +244,10 @@ public class DataMinerUtils {
                 bee = new Bee();
                 bees.put(hueVal, bee);
             }
+            beeX = (int)(point[0]*dims[0]);
+            beeY = (int)(point[1]*dims[1]);
 
             //if current bee position within exit
-            beeX = (int)(point[0]*parent.width);
-            beeY = (int)(point[1]*parent.height);
             if(Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
                 Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[0], 2))
             {
@@ -272,11 +276,11 @@ public class DataMinerUtils {
                 Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[0], 2))
             {
                 bee.addArrivalTime(time);
-            }
 
-            //update bee position
-            bee.setX(Integer.MIN_VALUE);
-            bee.setY(Integer.MIN_VALUE);
+                //update bee position
+                bee.setX(Integer.MIN_VALUE);
+                bee.setY(Integer.MIN_VALUE);
+            }
         }
     }
 }

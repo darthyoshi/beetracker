@@ -66,13 +66,16 @@ public class BlobDetectionUtils {
 
         parent.colorMode(PConstants.HSB, 255);
 
+        //scan every pixel in source image
         for(i = 0; i < img.pixels.length; i++) {
             tmp = parent.hue(img.pixels[i]);
 
+            //no color matches
             for(j = 0; j < pixelMatch.length; j++) {
                 pixelMatch[j] = false;
             }
 
+            //for color matches, brighten source and corresponding result pixels
             for(j = 0; j < result.length; j++) {
                 hue = parent.hue(colors.get(j));
 
@@ -88,6 +91,7 @@ public class BlobDetectionUtils {
                 }
             }
 
+            //for all other result images, darken pixels
             for(j = 0, k = 0; j < pixelMatch.length; j++) {
                 if(!pixelMatch[j]) {
                     result[j].pixels[i] = parent.color(0);
@@ -95,7 +99,8 @@ public class BlobDetectionUtils {
                     k++;
                 }
             }
-            
+
+            //if no matches found, darken source pixel
             if(k == pixelMatch.length) {
                 img.pixels[i] = parent.color(0);
             }
@@ -150,7 +155,7 @@ public class BlobDetectionUtils {
                             );
                         }
                     }
-/*
+
                     //bounding boxes
                     parent.stroke(0xFF00FFAA);
                     parent.rectMode(PConstants.CORNER);
@@ -159,7 +164,7 @@ public class BlobDetectionUtils {
                         b.yMin*frameDims[1] + offset[1],
                         b.w*frameDims[0],
                         b.h*frameDims[1]
-                    );*/
+                    );
                 }
             }
         }
@@ -184,12 +189,15 @@ public class BlobDetectionUtils {
             PApplet.println("blobs:");
         }
 
+        //each filtered image
         for(PImage img : imgs) {
+            //compute blobs in image
             img.loadPixels();
             bd.computeBlobs(img.pixels);
 
             tmp = new LinkedList<>();
 
+            //add blob centroid to list of points
             for(int i = 0; i < bd.getBlobNb(); i++) {
                 b = bd.getBlob(i);
                 if((b.xMax-b.xMin)*(b.yMax-b.yMin) > noise) {
@@ -204,6 +212,7 @@ public class BlobDetectionUtils {
                 }
             }
 
+            //add list of points for current image to result
             result.add(tmp);
         }
 
@@ -218,7 +227,7 @@ public class BlobDetectionUtils {
     }
 
     /**
-     * 
+     *
      * @return the height of the images to process
      */
     public int getImageHeight() {

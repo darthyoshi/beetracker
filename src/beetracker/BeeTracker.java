@@ -53,7 +53,7 @@ public class BeeTracker extends PApplet {
 
     private BlobDetectionUtils bdu;
 
-    private DataMinerUtils dmu;
+    private TrackingUtils tu;
 
     private UIControl uic;
 
@@ -71,11 +71,13 @@ public class BeeTracker extends PApplet {
     public void setup() {
         size(800, 600);
         frameRate(60);
+        strokeWeight(1);
 
         if(frame != null) {
             frame.setTitle("BeeTracker");
         }
 
+        //create log file
         try {
             log = new PrintStream(new File("Console.log"), "UTF-8");
         } catch (FileNotFoundException | UnsupportedEncodingException ex) {
@@ -85,6 +87,7 @@ public class BeeTracker extends PApplet {
 
         uic = new UIControl(this);
 
+        //read settings file
         colors = new IntList();
         insetBox = new float[4];
         exitRadial = new float[4];
@@ -99,6 +102,7 @@ public class BeeTracker extends PApplet {
             JSONObject json;
             java.util.Iterator<?> jsonIter;
 
+            //initialize color list
             try {
                 json = jsonSettings.getJSONObject("colors");
                 jsonIter = json.keyIterator();
@@ -115,6 +119,7 @@ public class BeeTracker extends PApplet {
                 e1.printStackTrace(log);
             }
 
+            //initialize selection box
             try {
                 json = jsonSettings.getJSONObject("insetBox");
                 jsonIter = json.keyIterator();
@@ -130,6 +135,7 @@ public class BeeTracker extends PApplet {
                 e2.printStackTrace(log);
             }
 
+            //initialize exit circle
             try {
                 json = jsonSettings.getJSONObject("exitRadial");
                 jsonIter = json.keyIterator();
@@ -153,9 +159,7 @@ public class BeeTracker extends PApplet {
             bees.put(hue(color), new Bee());
         }
 
-        dmu = new DataMinerUtils(this, log, new File("header.arff"), debug);
-
-        background(0x444444);
+        tu = new TrackingUtils(this, log, new File("header.arff"), debug);
 
         insetFrame = createImage((int)(width*.5f), (int)(height*.5f), RGB);
 
@@ -216,13 +220,15 @@ public class BeeTracker extends PApplet {
                 PImage[] filteredImgs = BlobDetectionUtils
                     .filterImg(this, insetFrame, colors);
 
-                List<Cluster> clusters = dmu.getClusters(bdu
+                List<Cluster> clusters = tu.getClusters(bdu
                     .getCentroids(filteredImgs));
 
-                dmu.updateBeePositions(insetFrame, clusters, colors, bees,
-                    exitRadial, movieDims, offset, movie.time());
+                tu.updateBeePositions(insetFrame, clusters, colors, bees,
+                    exitRadial, movieDims, movie.time());
 
+                //zoomed
                 if(pip) {
+                    //in debug mode, show filtered image
                     if(!debug) {
                         copyInsetFrame();
                     }
@@ -246,10 +252,6 @@ public class BeeTracker extends PApplet {
                 stroke(0xffffffff);
                 strokeWeight(.02f*frameDims[1]);
 
-                if(debug) {
-                    println("clusters (BeeTracker.draw()):");
-                }
-
                 float cX, cY;
                 for(Cluster c : clusters) {
                     cX = (float)c.getX()*frameDims[0] + frameOffset[0];
@@ -261,7 +263,7 @@ public class BeeTracker extends PApplet {
                         cX - .5f*(float)c.getWidth()*frameDims[0],
                         cY - .5f*(float)c.getHeight()*frameDims[1]
                     );
-                    }
+                }
 
                 textAlign(CENTER, CENTER);
 
@@ -281,6 +283,7 @@ public class BeeTracker extends PApplet {
                 //bee count
                 rectMode(CENTER);
                 stroke(0xffffffff);
+                strokeWeight(1);
                 rect(628, 25, 245, 40);
 
                 textAlign(CENTER, CENTER);
@@ -307,8 +310,9 @@ public class BeeTracker extends PApplet {
             stroke(0xffffa600);
             ellipseMode(RADIUS);
 
-            //inset box
+            //unzoomed
             if(!pip || init) {
+                //inset box
                 rectMode(CORNERS);
                 rect(
                     insetBox[0]*movieDims[0] + offset[0],
@@ -317,6 +321,7 @@ public class BeeTracker extends PApplet {
                     insetBox[3]*movieDims[1] + offset[1]
                 );
 
+                //exit circle
                 ellipse(
                     exitRadial[0]*movieDims[0] + offset[0],
                     exitRadial[1]*movieDims[1] + offset[1],
@@ -325,10 +330,13 @@ public class BeeTracker extends PApplet {
                 );
             }
 
+            //zoomed
             else {
+                //inset box
                 rectMode(CENTER);
                 rect(.5f*width, .5f*height, zoomDims[0], zoomDims[1]);
 
+                //exit circle
                 ellipse(
                     (exitRadial[0]-insetBox[0])*zoomDims[0]/
                         (insetBox[2]-insetBox[0]) + frameOffset[0],
@@ -341,6 +349,7 @@ public class BeeTracker extends PApplet {
 
             if(isDrag) {
                 if(!selectExit) {
+                    //draw selection box diagonals
                     line(
                         insetBox[0]*movieDims[0] + offset[0],
                         insetBox[1]*movieDims[1] + offset[1],
@@ -356,6 +365,7 @@ public class BeeTracker extends PApplet {
                 }
 
                 else {
+                    //draw selection circle interior lines
                     line(
                         exitRadial[0]*movieDims[0] + offset[0],
                         exitRadial[1]*movieDims[1] + offset[1] -
@@ -403,7 +413,7 @@ public class BeeTracker extends PApplet {
 
     /**
      * Saves the statistics of the current video to file.
-     * @return the name of the new file in the format "dd.mmm.yyyy-hhmm.json" 
+     * @return the name of the new file in the format "dd.mmm.yyyy-hhmm.json"
      */
     private String resultsToJSON() {
         JSONObject stats = new JSONObject();
@@ -421,6 +431,7 @@ public class BeeTracker extends PApplet {
 
             beeStat = new JSONObject();
 
+            //list arrival timestamps
             tmp = new JSONObject();
             i = 0;
             for(Float arrive : arrival) {
@@ -429,6 +440,7 @@ public class BeeTracker extends PApplet {
             }
             beeStat.setJSONObject("arrivals", tmp);
 
+            //list departure timestamps
             tmp = new JSONObject();
             i = 0;
             for(Float depart : departure) {
@@ -437,6 +449,7 @@ public class BeeTracker extends PApplet {
             }
             beeStat.setJSONObject("departures", tmp);
 
+            //associate arrivals and departures with hexadecimal color key
             stats.setJSONObject(String.format("%06x", color), beeStat);
         }
 
@@ -450,7 +463,7 @@ public class BeeTracker extends PApplet {
         );
 
         saveJSONObject(stats, fileName);
-        
+
         return fileName;
     }
 
@@ -458,6 +471,7 @@ public class BeeTracker extends PApplet {
      * Copies the inset frame for image processing and blob detection.
      */
     private void copyInsetFrame() {
+        //for best results, copy source and destination should be same size
         insetFrame.resize(
             (int)(movie.width*(insetBox[2] - insetBox[0])),
             (int)(movie.height*(insetBox[3] - insetBox[1]))
@@ -470,6 +484,8 @@ public class BeeTracker extends PApplet {
             (int)(movie.height*(insetBox[3] - insetBox[1])),
             0, 0, insetFrame.width, insetFrame.height
         );
+
+        //BlobDetection expects certain image size
         insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
     }
 
@@ -585,6 +601,7 @@ public class BeeTracker extends PApplet {
             break;
 
         case "fastForward":
+            //TODO: currently bugged, fix or remove
             if(movie != null) {
                 playbackSpeed *= 2;
                 if(playbackSpeed > 8) {
@@ -657,12 +674,12 @@ public class BeeTracker extends PApplet {
      */
     public void crash(String msg) {
         MessageDialogue.crashMessage(this, msg);
-        
+
         this.exit();
     }
-    
+
     /**
-     * 
+     *
      */
     @Override
     public void exit() {
@@ -680,7 +697,7 @@ public class BeeTracker extends PApplet {
                 String.format("%06x", colors.get(i)));
         }
         settings.setJSONObject("colors", setting);
-        
+
         setting = new JSONObject();
         for(i = 0; i < insetBox.length; i++) {
             setting.setFloat(Integer.toString(i), insetBox[i]);
@@ -695,7 +712,7 @@ public class BeeTracker extends PApplet {
 
         saveJSONObject(settings, "settings.json");
 
-        super.exit(); 
+        super.exit();
     }
 
     /**
@@ -835,6 +852,7 @@ public class BeeTracker extends PApplet {
     public void mouseReleased() {
         if(isDrag) {
             if(!selectExit) {
+                //selection box has area of zero
                 if(insetBox[0] == insetBox[2] || insetBox[1] == insetBox[3]) {
                     insetBox[0] = insetBox[1] = 0f;
                     insetBox[2] = insetBox[3] = 1f;
@@ -843,6 +861,7 @@ public class BeeTracker extends PApplet {
                 else {
                     float tmp;
 
+                    //ensure coordinates are in ascending order
                     if(insetBox[0] > insetBox[2]) {
                         tmp = insetBox[0];
                         insetBox[0] = insetBox[2];

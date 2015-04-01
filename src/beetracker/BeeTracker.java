@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import controlP5.ControlEvent;
+
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.data.IntList;
@@ -217,11 +218,10 @@ public class BeeTracker extends PApplet {
 
                 copyInsetFrame();
 
-                PImage[] filteredImgs = BlobDetectionUtils
-                    .filterImg(this, insetFrame, colors);
+                BlobDetectionUtils.filterImg(this, insetFrame, colors);
 
                 List<Cluster> clusters = tu.getClusters(bdu
-                    .getCentroids(filteredImgs));
+                    .getCentroids(this, insetFrame, colors));
 
                 tu.updateBeePositions(insetFrame, clusters, colors, bees,
                     exitRadial, movieDims, movie.time());

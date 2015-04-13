@@ -49,6 +49,7 @@ public class BeeTracker extends PApplet {
     private boolean isDrag = false;
 
     private Movie movie = null;
+    private float curTime; 
 
     private PImage insetFrame;
 
@@ -212,7 +213,7 @@ public class BeeTracker extends PApplet {
             image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
 
             if(!init) {
-                if(debug) {
+                if(debug && isPlaying) {
                     println("pip: " + pip);
                 }
 
@@ -386,16 +387,49 @@ public class BeeTracker extends PApplet {
             }
 
             //end of movie reached
-            if(movie.time() >= movie.duration()) {
-                StringBuilder msg = new StringBuilder("End of video reached. ");
+            if(isPlaying && (movie.time() >= movie.duration() || movie.time() == curTime))
+            {
+                StringBuilder msg = new StringBuilder("End of video reached.\n\n");
+                msg.append("bees tracked: ").append(colors.size()).append('\n');
+
+                Bee bee;
+                for(Integer color : colors) {
+                    bee = bees.get(hue(color));
+                    msg.append("color: ").append(String.format("%06x", color))
+                        .append("\n-arrival times:\n");
+
+                    for(float arriveTime : bee.getArrivalTimes()) {
+                        msg.append("--").append(arriveTime).append('\n');
+                    }
+
+                    msg.append("number of arrivals: ")
+                        .append(bee.getArrivalTimes().size())
+                        .append("\n-departure times:\n");
+
+                    for(float departTime : bee.getArrivalTimes()) {
+                        msg.append("--").append(departTime).append('\n');
+                    }
+
+                    msg.append('\n');
+                }
+
                 msg.append("Video statistics have been saved to \"")
                     .append(resultsToJSON())
                     .append('\"');
 
-                //TODO maybe video statistics too?
+                if(debug) {
+                    println("\n" + msg.toString());
+                }
+
                 MessageDialogue.endVideoMessage(this, msg.toString());
 
+                resultsToJSON();
+
                 stopPlayback();
+            }
+
+            if(movie != null) {
+                curTime = movie.time();
             }
         }
 
@@ -514,11 +548,12 @@ public class BeeTracker extends PApplet {
             }
 
             if(videoPath != null) {
+                curTime = 0f;
                 movie = new Movie(this, videoPath);
                 movie.play();
                 init = true;
                 isPlaying = false;
-
+                
                 uic.toggleSetup();
                 uic.toggleOpenButton();
                 uic.togglePlay();
@@ -579,7 +614,7 @@ public class BeeTracker extends PApplet {
                     }
 
                     else {
-                        movie.stop();
+                        movie.pause();
                     }
                 }
             }
@@ -661,11 +696,6 @@ public class BeeTracker extends PApplet {
         if(init) {
             uic.toggleSetup();
         }
-
-        insetBox[0] = insetBox[1] = 0f;
-        insetBox[2] = insetBox[3] = 1f;
-
-        exitRadial[0] = exitRadial[1] = exitRadial[2] = exitRadial[3] = 0f;
     }
 
     /**

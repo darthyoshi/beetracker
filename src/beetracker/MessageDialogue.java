@@ -62,7 +62,15 @@ public class MessageDialogue {
      * @param msg the message to display
      */
     public static void endVideoMessage(PApplet parent, String msg) {
-        JOptionPane.showMessageDialog(parent, msg);
+        javax.swing.JTextArea textArea = new javax.swing.JTextArea(msg);  
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true); 
+
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+        scrollPane.setPreferredSize(new java.awt.Dimension(400, 250));
+
+        JOptionPane.showMessageDialog(parent, scrollPane, "Session Summary",
+            JOptionPane.PLAIN_MESSAGE);
     }
 
     /**

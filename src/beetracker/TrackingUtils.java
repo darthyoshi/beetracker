@@ -8,7 +8,6 @@
 package beetracker;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -70,39 +69,47 @@ public class TrackingUtils {
 
 
     /**
-     * Uses the X-means algorithm to sort a set of points into clusters.
-     * @param pointSets a List containing the normalized points to process.
-     * @return an LinkedList of Cluster objects
+     * Uses the K-means algorithm to sort a set of points into clusters.
+     * @param pointSets a HashMap mapping RGB integer values to the Lists of
+     *   normalized points to process
+     * @return a HashMap mapping RGB integer values to Cluster objects
      */
-    public List<Cluster> getClusters(List<List<float[]>> pointSets) {
-        List<Cluster> result = new ArrayList<>();
+    public HashMap<Integer, Cluster> getClusters(
+        HashMap<Integer, List<float[]>> pointSets)
+    {
+        HashMap<Integer, Cluster> result = new HashMap<>();
         Cluster c;
         Instance row;
         double[] tmp;
         int i;
 
-        for(List<float[]> points : pointSets) {
-            //clear old points from data set
-            dataSet.delete();
+        try {
+            Iterator<Integer> keyIter = pointSets.keySet().iterator();
+            List<float[]> points;
+            Integer key;
+            while(keyIter.hasNext()) {
+                key = keyIter.next();
+                points = pointSets.get(key);
 
-            //add new points to data set
-            for(float[] point : points) {
-                row = new SparseInstance(2);
-                row.setValue(0, point[0]);
-                row.setValue(1, point[1]);
-                row.setDataset(dataSet);
+                //clear old points from data set
+                dataSet.delete();
 
-                dataSet.add(row);
-            }
+                //add new points to data set
+                for(float[] point : points) {
+                    row = new SparseInstance(2);
+                    row.setValue(0, point[0]);
+                    row.setValue(1, point[1]);
+                    row.setDataset(dataSet);
 
-            try {
-                if(dataSet.numInstances() > 0) {//K-means requires 1+ points
+                    dataSet.add(row);
+                }
+
+                //K-means requires 1+ points
+                if(dataSet.numInstances() > 0) {
                     //invoke weka SimpleKMeans clusterer for Instances
                     clusterer.buildClusterer(dataSet);
 
-                    //add to list of clusters
                     c = new Cluster();
-                    result.add(c);
 
                     for(i = 0; i < dataSet.numInstances(); i++) {
                         row = dataSet.instance(i);
@@ -135,14 +142,15 @@ public class TrackingUtils {
                         PApplet.println(String.format("%f, %f, %f, %f",
                             c.getX(),c.getY(), c.getWidth(), c.getHeight()));
                     }
-                }
-            } catch (Exception e) {
-                e.printStackTrace(log);
-                parent.crash(e.toString());
-            }
-        }
 
-        ((ArrayList)result).trimToSize();
+                    //add to list of clusters
+                    result.put(key, c);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace(log);
+            parent.crash(e.toString());
+        }
 
         return result;
     }
@@ -151,7 +159,7 @@ public class TrackingUtils {
      * Updates the positions of the Bees for the current frame.
      * TODO check bee position, add arrival/departure timestamp as necessary
      * @param blobImg the filtered PImage
-     * @param clusters an List of Cluster objects
+     * @param clusters a HashMap mapping RGB integer values to Cluster objects
      * @param colors a list of the integer RGB values to scan for
      * @param bees a HashMap mapping hue values to Bees
      * @param exitRadial a float array containing the following:
@@ -164,19 +172,18 @@ public class TrackingUtils {
      */
     public void updateBeePositions(
         processing.core.PImage blobImg,
-        List<Cluster> clusters,
+        HashMap<Integer, Cluster> clusters,
         processing.data.IntList colors,
         HashMap<Float, Bee> bees,
         float[] exitRadial,
         int[] dims,
         float time
     ) {
-        int pixel, beeX, beeY;
-        float hueVal = -1f;
+        int beeX, beeY;
+        float hueVal;
         Bee bee;
         double[] point;
         Cluster cluster;
-        Instance center;
 
         //exit center coordinates
         float[] exitXY = new float[2];
@@ -188,62 +195,31 @@ public class TrackingUtils {
         semiMajAxes[0] = exitRadial[2]*dims[0];
         semiMajAxes[1] = exitRadial[3]*dims[1];
 
-        //list of bees that are not in the current frame
-        List<Float> invisBees = new java.util.LinkedList<>();
-        for(int col : colors) {
-            invisBees.add(parent.hue(col));
-        }
+        //create list to track bees that are not in the current frame
+        List<Float> missingBees = new java.util.LinkedList<>(bees.keySet());
 
         parent.colorMode(PConstants.HSB, 255);
 
         blobImg.loadPixels();
 
-        //iterate through cluster centroids
-        Iterator<Cluster> clusterIter = clusters.iterator();
-        while(clusterIter.hasNext()) {
-            cluster = clusterIter.next();
+        //iterate through clusters
+        Iterator<Integer> keyIter = clusters.keySet().iterator();
+        Integer key;
+        while(keyIter.hasNext()) {
+            key = keyIter.next();
+
+            cluster = clusters.get(key);
             point = new double[2];
 
             point[0] = cluster.getX();
             point[1] = cluster.getY();
 
-            //grab centroid pixel from blob image
-            pixel = blobImg.pixels[
-                (int)(point[1]*blobImg.height*blobImg.width/parent.height) +
-                (int)(point[0]*blobImg.width/parent.width)
-            ];
+            hueVal = parent.hue(key);
 
-            //case: centroid is in a blob (pixel has non-zero brightness)
-            if(parent.brightness(pixel) > 0) {
-                hueVal = parent.hue(pixel);
-            }
-
-            //case: centroid is not in a blob (pixel is black)
-            else {
-                //iterate through cluster members for valid hue
-                for(double[] tmp : cluster.getPoints()) {
-                    pixel = blobImg.pixels[
-                        (int)(tmp[1]*blobImg.height*blobImg.width/parent.height) +
-                        (int)(tmp[0]*blobImg.width/parent.width)
-                    ];
-
-                    if(parent.brightness(pixel) > 0) {
-                        hueVal = parent.hue(pixel);
-
-                        break;
-                    }
-                }
-
-                //TODO: check for cases where no cluster members are actually within a blob?
-            }
-
-            invisBees.remove(hueVal);
+            //bee is found; remove from list of missing bees
+            missingBees.remove(hueVal);
 
             bee = bees.get(hueVal);
-            if(bee == null) {
-                bee = new Bee();
-                bees.put(hueVal, bee);
-            }
             beeX = (int)(point[0]*dims[0]);
             beeY = (int)(point[1]*dims[1]);
 
@@ -266,7 +242,7 @@ public class TrackingUtils {
         }
 
         //check tracked bees that are not in current frame
-        for(Float hue : invisBees) {
+        for(Float hue : missingBees) {
             bee = bees.get(hue);
             beeX = bee.getX();
             beeY = bee.getY();

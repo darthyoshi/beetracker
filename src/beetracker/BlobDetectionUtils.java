@@ -7,6 +7,7 @@
 
 package beetracker;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 
@@ -52,7 +53,7 @@ public class BlobDetectionUtils {
         IntList colors)
     {
         float tmp, hue;
-        int i, j, k;
+        int i, j;
 
         img.loadPixels();
 
@@ -147,14 +148,13 @@ public class BlobDetectionUtils {
      * @param parent the calling PApplet
      * @param frame the filtered frame
      * @param colors the list of color values
-     * @return a HashMap containing Lists of normalized xy coordinates of the
-     *   detected blob centroids, where each list is mapped to a specific RGB
-     *   color value
+     * @return a HashMap mapping RGB integer values to Lists of normalized the
+     *   xy coordinates of the detected blob centroids
      */
-    public List<List<float[]>> getCentroids(PApplet parent, PImage frame,
+    public HashMap<Integer, List<float[]>> getCentroids(PApplet parent, PImage frame,
         IntList colors)
     {
-        java.util.HashMap<Integer, List<float[]>> tmp = new java.util.HashMap<>();
+        HashMap<Integer, List<float[]>> result = new HashMap<>();
         float[] point;
         Blob b;
         int i, j, color, pixel;
@@ -166,7 +166,7 @@ public class BlobDetectionUtils {
         }
 
         for(i = 0; i < colors.size(); i++) {
-            tmp.put(Integer.valueOf(colors.get(i)), new LinkedList<float[]>());
+            result.put(Integer.valueOf(colors.get(i)), new LinkedList<float[]>());
         }
 
         frame.loadPixels();
@@ -192,7 +192,7 @@ public class BlobDetectionUtils {
 
                     //case: centroid is in blob
                     if(parent.brightness(pixel) > 0 && parent.hue(pixel) == hue) {
-                        tmp.get(color).add(point);
+                        result.get(color).add(point);
 
                         added = true;
                         break;
@@ -215,7 +215,7 @@ public class BlobDetectionUtils {
                                 if(parent.brightness(pixel) > 0 &&
                                     parent.hue(pixel) == hue)
                                 {
-                                    tmp.get(color).add(point);
+                                    result.get(color).add(point);
 
                                     added = true;
                                     break;
@@ -235,7 +235,7 @@ public class BlobDetectionUtils {
             }
         }
 
-        return new LinkedList<List<float[]>>(tmp.values());
+        return result;
     }
 
     /**

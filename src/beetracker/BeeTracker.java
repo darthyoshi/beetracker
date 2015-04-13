@@ -220,7 +220,7 @@ public class BeeTracker extends PApplet {
 
                 BlobDetectionUtils.filterImg(this, insetFrame, colors);
 
-                List<Cluster> clusters = tu.getClusters(bdu
+                HashMap<Integer, Cluster> clusters = tu.getClusters(bdu
                     .getCentroids(this, insetFrame, colors));
 
                 tu.updateBeePositions(insetFrame, clusters, colors, bees,
@@ -253,7 +253,7 @@ public class BeeTracker extends PApplet {
                 strokeWeight(.02f*frameDims[1]);
 
                 float cX, cY;
-                for(Cluster c : clusters) {
+                for(Cluster c : clusters.values()) {
                     cX = (float)c.getX()*frameDims[0] + frameOffset[0];
                     cY = (float)c.getY()*frameDims[1] + frameOffset[1];
 
@@ -585,8 +585,8 @@ public class BeeTracker extends PApplet {
             }
 
             else {
-            	boolean[] errors = {(colors.size() == 0), (exitRadial[2] <= 0f)};
-            	MessageDialogue.playButtonError(this, errors);
+                boolean[] errors = {(colors.size() == 0), (exitRadial[2] <= 0f)};
+                MessageDialogue.playButtonError(this, errors);
             }
 
             break;

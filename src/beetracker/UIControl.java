@@ -29,19 +29,17 @@ public class UIControl {
     /**
      * Class constructor.
      * @param parent the instantiating PApplet object
+     * @param cp5 the ControlP5 object
      */
-    public UIControl(processing.core.PApplet parent) {
-        ControlP5 cp5 = new ControlP5(parent);
+    public UIControl(processing.core.PApplet parent, ControlP5 cp5) {
         cp5.setFont(cp5.getFont().getFont(), 15);
 
         setupGroup = cp5.addGroup("setup").setLabel("").setVisible(false);
         playGroup = cp5.addGroup("playback").setLabel("").setVisible(false);
 
         Button editColor = cp5.addButton("editColor").setSize(90, 20);
-        editColor.setPosition(
-                parent.width - 270,
-                25
-            ).setCaptionLabel("Edit color")
+        editColor.setPosition(parent.width - 270, 25)
+            .setCaptionLabel("Edit color")
             .setGroup(setupGroup)
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
@@ -122,7 +120,7 @@ public class UIControl {
             .getCaptionLabel()
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
-	}
+    }
 
     /**
      * Toggles the visibility of the playback controls.
@@ -144,23 +142,23 @@ public class UIControl {
      * @param lbl the label of the item to remove
      */
     public void removeListItem(String lbl) {
-    	String[][] oldLbls = colorList.getListBoxItems();
-    	String[] newLbls = new String[oldLbls.length-1];
-    	
-    	int j = 0;
+        String[][] oldLbls = colorList.getListBoxItems();
+        String[] newLbls = new String[oldLbls.length-1];
 
-    	for(int i = 0; i < oldLbls.length && j < newLbls.length; i++) {
-    		if(!oldLbls[i][0].equalsIgnoreCase(lbl)) {
-    			newLbls[j] = oldLbls[i][0];
-    			j++;
-    		}
-		}
+        int j = 0;
 
-    	colorList.clear();
-    	
-    	for(j = 0; j < newLbls.length; j++) {
-    		colorList.addItem(newLbls[j], j-1);
-    	}
+        for(int i = 0; i < oldLbls.length && j < newLbls.length; i++) {
+            if(!oldLbls[i][0].equalsIgnoreCase(lbl)) {
+                newLbls[j] = oldLbls[i][0];
+                j++;
+            }
+        }
+
+        colorList.clear();
+
+        for(j = 0; j < newLbls.length; j++) {
+            colorList.addItem(newLbls[j], j-1);
+        }
         colorList.setCaptionLabel(listLbl);
     }
 

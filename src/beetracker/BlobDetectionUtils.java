@@ -49,9 +49,7 @@ public class BlobDetectionUtils {
      * @param img the PImage to preprocess
      * @param colors a list of the integer RGB values to scan for
      */
-    public static void filterImg(PApplet parent, PImage img,
-        IntList colors)
-    {
+    public static void filterImg(PApplet parent, PImage img, IntList colors) {
         float tmp, hue;
         int i, j;
 
@@ -96,7 +94,8 @@ public class BlobDetectionUtils {
      *   detection is being performed, in pixels
      * @param offset the xy coordinates of the image frame, in pixels
      */
-    public void drawBlobs(PApplet parent, PImage img, int[] frameDims, int[] offset)
+    public void drawBlobs(PApplet parent, PImage img,
+        int[] frameDims, int[] offset)
     {
         EdgeVertex eA,eB;
         Blob b;

@@ -157,7 +157,6 @@ public class TrackingUtils {
 
     /**
      * Updates the positions of the Bees for the current frame.
-     * TODO check bee position, add arrival/departure timestamp as necessary
      * @param blobImg the filtered PImage
      * @param clusters a HashMap mapping RGB integer values to Cluster objects
      * @param colors a list of the integer RGB values to scan for

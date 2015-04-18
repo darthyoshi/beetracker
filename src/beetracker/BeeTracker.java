@@ -49,7 +49,6 @@ public class BeeTracker extends PApplet {
     private boolean isDrag = false;
 
     private Movie movie = null;
-    private float curTime; 
 
     private PImage insetFrame;
 
@@ -61,7 +60,6 @@ public class BeeTracker extends PApplet {
 
     private PrintStream log = null;
 
-    private processing.core.PFont font;
     private PImage titleImg;
 
     private final boolean debug = true;
@@ -75,6 +73,10 @@ public class BeeTracker extends PApplet {
         frameRate(60);
         strokeWeight(1);
 
+        controlP5.ControlP5 cp5 = new controlP5.ControlP5(this);
+
+        textFont(cp5.getFont().getFont(), 24);
+
         if(frame != null) {
             frame.setTitle("BeeTracker");
         }
@@ -87,7 +89,7 @@ public class BeeTracker extends PApplet {
             crash(ex.toString());
         }
 
-        uic = new UIControl(this);
+        uic = new UIControl(this, cp5);
 
         //read settings file
         colors = new IntList();
@@ -167,7 +169,6 @@ public class BeeTracker extends PApplet {
 
         bdu = new BlobDetectionUtils((int)(width*.5f), (int)(height*.5f), debug);
 
-        font = this.createDefaultFont(12);
         titleImg = loadImage("data/img/title.png");
     }
 
@@ -181,9 +182,6 @@ public class BeeTracker extends PApplet {
         fill(0xff444444);
         rectMode(CORNERS);
         rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
-
-        textFont(font);
-        fill(0xFFFF0099);
 
         if(movie != null) {
             if((isPlaying || init) && movie.available()) {
@@ -211,6 +209,12 @@ public class BeeTracker extends PApplet {
 
             imageMode(CENTER);
             image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
+
+            //status box boundary
+            strokeWeight(0);
+            fill(0xff02344d);
+            rectMode(CENTER);
+            rect(275, 25, 450, 40);
 
             if(!init) {
                 if(debug && isPlaying) {
@@ -269,7 +273,7 @@ public class BeeTracker extends PApplet {
                 textAlign(CENTER, CENTER);
 
                 //status box
-                textSize(24);
+                fill(0xffffffff);
                 text(
                     String.format(
                         "%02d:%02d - %02d:%02d (%dx)",
@@ -283,33 +287,28 @@ public class BeeTracker extends PApplet {
 
                 //bee count
                 rectMode(CENTER);
-                stroke(0xffffffff);
-                strokeWeight(1);
+                strokeWeight(0);
+                fill(0xff02344d);
                 rect(628, 25, 245, 40);
 
+                fill(0xffffffff);
                 textAlign(CENTER, CENTER);
                 text("#bees visible: " + clusters.size(), 627, 25);
             }
 
             else {
-                textSize(24);
-
                 //status box
                 textAlign(CENTER, CENTER);
+                fill(0xffffffff);
                 text("Setup Mode", 275, 25);
 
                 text("Press play to begin.", .5f*width, 575);
             }
 
-            //status box boundary
             strokeWeight(1);
-            noFill();
-            stroke(0xffffffff);
-            rectMode(CENTER);
-            rect(275, 25, 450, 40);
-
             stroke(0xffffa600);
             ellipseMode(RADIUS);
+            noFill();
 
             //unzoomed
             if(!pip || init) {
@@ -387,8 +386,7 @@ public class BeeTracker extends PApplet {
             }
 
             //end of movie reached
-            if(isPlaying && (movie.time() >= movie.duration() || movie.time() == curTime))
-            {
+            if(isPlaying && movie.duration() - movie.time() < 1f/movie.frameRate) {
                 StringBuilder msg = new StringBuilder("End of video reached.\n\n");
                 msg.append("bees tracked: ").append(colors.size()).append('\n');
 
@@ -426,10 +424,6 @@ public class BeeTracker extends PApplet {
                 resultsToJSON();
 
                 stopPlayback();
-            }
-
-            if(movie != null) {
-                curTime = movie.time();
             }
         }
 
@@ -548,12 +542,11 @@ public class BeeTracker extends PApplet {
             }
 
             if(videoPath != null) {
-                curTime = 0f;
                 movie = new Movie(this, videoPath);
                 movie.play();
                 init = true;
                 isPlaying = false;
-                
+
                 uic.toggleSetup();
                 uic.toggleOpenButton();
                 uic.togglePlay();
@@ -636,14 +629,14 @@ public class BeeTracker extends PApplet {
             break;
 
         case "fastForward":
-            //TODO: currently bugged, fix or remove
+            //TODO: currently bugged
             if(movie != null) {
                 playbackSpeed *= 2;
                 if(playbackSpeed > 8) {
                     playbackSpeed = 1;
                 }
 
-                movie.frameRate(playbackSpeed*frameRate);
+                movie.speed((float)playbackSpeed);
             }
 
             break;

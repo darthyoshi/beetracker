@@ -158,6 +158,8 @@ public class TrackingUtils {
     /**
      * Updates the positions of the Bees for the current frame.
      * @param blobImg the filtered PImage
+     * @param frameDims the dimensions of blobImg
+     * @param frameOffset the offset of blobImg
      * @param clusters a HashMap mapping RGB integer values to Cluster objects
      * @param colors a list of the integer RGB values to scan for
      * @param bees a HashMap mapping hue values to Bees
@@ -166,33 +168,38 @@ public class TrackingUtils {
      *   normalized y coordinate of the exit center,
      *   normalized horizontal semi-major axis of the exit,
      *   normalized vertical semi-major axis of the exit
-     * @param dims the dimensions of the frame
+     * @param movieDims the dimensions of the video
+     * @param movieOffset the offset of the video
      * @param time timestamp of the current frame
      */
     public void updateBeePositions(
         processing.core.PImage blobImg,
+        int[] frameDims,
+        int[] frameOffset,
         HashMap<Integer, Cluster> clusters,
         processing.data.IntList colors,
         HashMap<Float, Bee> bees,
         float[] exitRadial,
-        int[] dims,
+        int[] movieDims,
+        int[] movieOffset,
         float time
     ) {
         int beeX, beeY;
         float hueVal;
         Bee bee;
-        double[] point;
+        double beeDistance, radius;
         Cluster cluster;
 
         //exit center coordinates
         float[] exitXY = new float[2];
-        exitXY[0] = exitRadial[0]*dims[0];
-        exitXY[1] = exitRadial[1]*dims[1];
+        exitXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
+        exitXY[1] = exitRadial[1]*movieDims[1]+movieOffset[1];
 
         //exit axes
         float[] semiMajAxes = new float[2];
-        semiMajAxes[0] = exitRadial[2]*dims[0];
-        semiMajAxes[1] = exitRadial[3]*dims[1];
+        semiMajAxes[0] = exitRadial[2]*movieDims[0];
+        semiMajAxes[1] = exitRadial[3]*movieDims[1];
+        radius = Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[1], 2);
 
         //create list to track bees that are not in the current frame
         List<Float> missingBees = new java.util.LinkedList<>(bees.keySet());
@@ -208,10 +215,6 @@ public class TrackingUtils {
             key = keyIter.next();
 
             cluster = clusters.get(key);
-            point = new double[2];
-
-            point[0] = cluster.getX();
-            point[1] = cluster.getY();
 
             hueVal = parent.hue(key);
 
@@ -219,13 +222,21 @@ public class TrackingUtils {
             missingBees.remove(hueVal);
 
             bee = bees.get(hueVal);
-            beeX = (int)(point[0]*dims[0]);
-            beeY = (int)(point[1]*dims[1]);
+            beeX = (int)(cluster.getX()*frameDims[0]+frameOffset[0]);
+            beeY = (int)(cluster.getY()*frameDims[1]+frameOffset[1]);
+
+            beeDistance = Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2);
+
+            if(debug) {
+                parent.line(beeX, beeY, exitXY[0], exitXY[1]);
+                PApplet.println(String.format("exit: (%d, %d), radius^2: %f",
+                    (int)exitXY[0], (int)exitXY[1], radius));
+                PApplet.println(String.format("bee: (%d, %d), distance^2: %f",
+                    beeX, beeY, beeDistance));
+            }
 
             //if current bee position within exit
-            if(Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
-                Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[0], 2))
-            {
+            if(beeDistance < radius) {
                 //if last known position was Integer.MIN_VALUE,
                 //bee was not previously visible and bee has left hive
                 if(bee.getX() == Integer.MIN_VALUE &&
@@ -248,7 +259,7 @@ public class TrackingUtils {
 
             //if last known position within exit, bee has entered hive
             if(Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
-                Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[0], 2))
+                radius)
             {
                 bee.addArrivalTime(time);
 

@@ -228,8 +228,12 @@ public class BeeTracker extends PApplet {
                 HashMap<Integer, Cluster> clusters = tu.getClusters(bdu
                     .getCentroids(this, insetFrame, colors));
 
-                tu.updateBeePositions(insetFrame, clusters, colors, bees,
-                    exitRadial, movieDims, movie.time());
+                tu.updateBeePositions(
+                    insetFrame, frameDims, frameOffset,
+                    clusters, colors, bees,
+                    exitRadial, movieDims, offset,
+                    movie.time()
+                );
 
                 //zoomed
                 if(pip) {
@@ -246,7 +250,13 @@ public class BeeTracker extends PApplet {
                     frameOffset[1] = (int)((height-zoomDims[1])*.5f);
                     frameDims = zoomDims;
 
-                    image(insetFrame, .5f*width, .5f*height, zoomDims[0], zoomDims[1]);
+                    image(
+                        insetFrame,
+                        .5f * width,
+                        .5f * height,
+                        zoomDims[0],
+                        zoomDims[1]
+                    );
                 }
 
                 if(debug) {
@@ -300,9 +310,7 @@ public class BeeTracker extends PApplet {
                 //status box
                 textAlign(CENTER, CENTER);
                 fill(0xffffffff);
-                text("Setup Mode", 275, 25);
-
-                text("Press play to begin.", .5f*width, 575);
+                text("Setup Mode - Press play to begin.", 275, 25);
             }
 
             strokeWeight(1);
@@ -408,7 +416,9 @@ public class BeeTracker extends PApplet {
                         msg.append("--").append(departTime).append('\n');
                     }
 
-                    msg.append('\n');
+                    msg.append("number of departures: ")
+                        .append(bee.getDepartureTimes().size())
+                        .append('\n');
                 }
 
                 msg.append("Video statistics have been saved to \"")
@@ -420,8 +430,6 @@ public class BeeTracker extends PApplet {
                 }
 
                 MessageDialogue.endVideoMessage(this, msg.toString());
-
-                resultsToJSON();
 
                 stopPlayback();
             }
@@ -543,6 +551,7 @@ public class BeeTracker extends PApplet {
 
             if(videoPath != null) {
                 movie = new Movie(this, videoPath);
+                movie.volume(0f);
                 movie.play();
                 init = true;
                 isPlaying = false;
@@ -632,11 +641,18 @@ public class BeeTracker extends PApplet {
             //TODO: currently bugged
             if(movie != null) {
                 playbackSpeed *= 2;
-                if(playbackSpeed > 8) {
+
+                if(playbackSpeed > 4) {
                     playbackSpeed = 1;
                 }
 
-                movie.speed((float)playbackSpeed);
+                if(debug) {
+                    print("setting movie speed: "+playbackSpeed);
+                }
+                movie.speed(playbackSpeed);
+                if(debug) {
+                    println(" - done");
+                }
             }
 
             break;
@@ -675,7 +691,7 @@ public class BeeTracker extends PApplet {
     private void stopPlayback() {
         if(isPlaying) {
             isPlaying = !isPlaying;
-            uic.setPlayState(isPlaying);
+            uic.setPlayState(false);
         }
 
         if(movie != null) {
@@ -710,6 +726,15 @@ public class BeeTracker extends PApplet {
             log.close();
         }
 
+        if(movie != null) {
+            movie.stop();
+            movie = null;
+        }
+
+        if(debug) {
+            print("saving settings");
+        }
+
         //save current color and selection settings
         JSONObject settings = new JSONObject();
         JSONObject setting = new JSONObject();
@@ -734,6 +759,10 @@ public class BeeTracker extends PApplet {
         settings.setJSONObject("exitRadial", setting);
 
         saveJSONObject(settings, "settings.json");
+
+        if(debug) {
+            println(" - done");
+        }
 
         super.exit();
     }

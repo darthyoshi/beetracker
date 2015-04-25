@@ -21,7 +21,7 @@ import processing.core.PImage;
 import processing.data.IntList;
 
 public class BlobDetectionUtils {
-    final static int hueThreshold = 10, satThreshold = 100, lumThreshold = 50;
+    final static int hueThreshold = 10, satThreshold = 25, lumThreshold = 50;
     private static final float noise = 0.00005f;
     private final BlobDetection bd;
 
@@ -50,7 +50,7 @@ public class BlobDetectionUtils {
      * @param colors a list of the integer RGB values to scan for
      */
     public static void filterImg(PApplet parent, PImage img, IntList colors) {
-        float tmp, hue;
+        float pixelHue, pixelSat, listHue, listSat;
         int i, j;
 
         img.loadPixels();
@@ -59,18 +59,21 @@ public class BlobDetectionUtils {
 
         //scan every pixel in image
         for(i = 0; i < img.pixels.length; i++) {
-            tmp = parent.hue(img.pixels[i]);
+            pixelHue = parent.hue(img.pixels[i]);
+            pixelSat = parent.saturation(img.pixels[i]);
 
             //for color matches, brighten pixel
             for(j = 0; j < colors.size(); j++) {
-                hue = parent.hue(colors.get(j));
+                listHue = parent.hue(colors.get(j));
+                listSat = parent.saturation(colors.get(j));
 
-                if(tmp > hue - hueThreshold &&
-                    tmp < hue + hueThreshold &&
-                    parent.saturation(img.pixels[i]) > satThreshold &&
+                if(pixelHue > listHue - hueThreshold &&
+                    pixelHue < listHue + hueThreshold &&
+                    pixelSat > listSat - satThreshold &&
+                    pixelSat < listSat + satThreshold &&
                     parent.brightness(img.pixels[i]) > lumThreshold)
                 {
-                    img.pixels[i] = parent.color(hue, 255, 255);
+                    img.pixels[i] = parent.color(listHue, 255, 255);
 
                     break;
                 }

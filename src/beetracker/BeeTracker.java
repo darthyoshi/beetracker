@@ -235,12 +235,19 @@ public class BeeTracker extends PApplet {
                     movie.time()
                 );
 
+                //filtered image for displaying blobs in debug mode
+                PImage tmp = null;
+                if(debug){
+                    try {
+                        tmp = (PImage)insetFrame.clone();
+                    } catch (CloneNotSupportedException e) {
+                        e.printStackTrace(log);
+                    }
+                }
+
                 //zoomed
                 if(pip) {
-                    //in debug mode, show filtered image
-                    if(!debug) {
-                        copyInsetFrame();
-                    }
+                    copyInsetFrame();
 
                     zoomDims = scaledDims(
                         movieDims[0]*(insetBox[2] - insetBox[0]),
@@ -260,7 +267,7 @@ public class BeeTracker extends PApplet {
                 }
 
                 if(debug) {
-                    bdu.drawBlobs(this, insetFrame, frameDims, frameOffset);
+                    bdu.drawBlobs(this, tmp, frameDims, frameOffset);
                 }
 
                 //mark bees

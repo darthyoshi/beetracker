@@ -228,7 +228,6 @@ public class TrackingUtils {
             beeDistance = Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2);
 
             if(debug) {
-                parent.line(beeX, beeY, exitXY[0], exitXY[1]);
                 PApplet.println(String.format("exit: (%d, %d), radius^2: %f",
                     (int)exitXY[0], (int)exitXY[1], radius));
                 PApplet.println(String.format("bee: (%d, %d), distance^2: %f",
@@ -237,11 +236,16 @@ public class TrackingUtils {
 
             //if current bee position within exit
             if(beeDistance < radius) {
-                //if last known position was Integer.MIN_VALUE,
-                //bee was not previously visible and bee has left hive
-                if(bee.getX() == Integer.MIN_VALUE &&
-                    bee.getY() == Integer.MIN_VALUE)
-                {
+                //if bee was not previously visible then bee has left hive
+                if(!bee.isVisible()) {
+                    if(debug) {
+                        parent.println(String.format(
+                            "departure detected for bee 0x%06x @ %fs",
+                            key,
+                            time
+                        ));
+                    }
+
                     bee.addDepartureTime(time);
                 }
             }
@@ -249,23 +253,44 @@ public class TrackingUtils {
             //update bee position
             bee.setX(beeX);
             bee.setY(beeY);
+
+            bee.setVisible(true);
         }
 
         //check tracked bees that are not in current frame
         for(Float hue : missingBees) {
             bee = bees.get(hue);
-            beeX = bee.getX();
-            beeY = bee.getY();
 
-            //if last known position within exit, bee has entered hive
-            if(Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
-                radius)
-            {
-                bee.addArrivalTime(time);
+            //only care about bees that were previously visible
+            if(bee.isVisible()) {
+                beeX = bee.getX();
+                beeY = bee.getY();
 
-                //update bee position
-                bee.setX(Integer.MIN_VALUE);
-                bee.setY(Integer.MIN_VALUE);
+                //if last known position within exit, bee has entered hive
+                if(Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
+                    radius)
+                {
+                    if(debug) {
+                        int color = 0;
+                        keyIter = clusters.keySet().iterator();
+                        while(keyIter.hasNext()) {
+                            key = keyIter.next();
+                            if(parent.hue(key) == hue) {
+                                color = key;
+                                break;
+                            }
+                        }
+                        parent.println(String.format(
+                            "arrival detected for bee 0x%06x @ %fs",
+                            color,
+                            time
+                        ));
+                    }
+    
+                    bee.addArrivalTime(time);
+                }
+    
+                bee.setVisible(false);
             }
         }
     }

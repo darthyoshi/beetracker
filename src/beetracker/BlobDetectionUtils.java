@@ -21,9 +21,10 @@ import processing.core.PImage;
 import processing.data.IntList;
 
 public class BlobDetectionUtils {
-    final static int hueThreshold = 10, satThreshold = 25, lumThreshold = 50;
-    private static final float noise = 0.00005f;
+    final static int hueThreshold = 10, satThreshold = 55, lumThreshold = 20;
+    private static final float noise = 0.0001f;
     private final BlobDetection bd;
+    private IntList blobColors;
 
     private final boolean debug;
 
@@ -35,6 +36,10 @@ public class BlobDetectionUtils {
      */
     public BlobDetectionUtils(int width, int height, boolean debug) {
         this.debug = debug;
+
+        if(debug) {
+            blobColors = new IntList();
+        }
 
         bd = new BlobDetection(width, height);
         bd.setPosDiscrimination(true);
@@ -92,45 +97,45 @@ public class BlobDetectionUtils {
      * Draws the blobs in the current frame. Blobs with a bounding box of less
      *   than 0.005% of the total image area are ignored as noise.
      * @param parent the calling PApplet
-     * @param img a frame containing the blobs to draw
      * @param frameDims the dimensions of the image frame for which blob
      *   detection is being performed, in pixels
-     * @param offset the xy coordinates of the image frame, in pixels
+     * @param offset the xy coordinates of the image frame origin, in pixels
+     * @param exitXY the xy coordinates of the exit center, in pixels
      */
-    public void drawBlobs(PApplet parent, PImage img,
-        int[] frameDims, int[] offset)
+    public void drawBlobs(PApplet parent, int[] frameDims, int[] offset,
+        float[] exitXY)
     {
         EdgeVertex eA,eB;
         Blob b;
-
-        img.loadPixels();
-        bd.computeBlobs(img.pixels);
+        int i = 0;
 
         parent.noFill();
-        parent.strokeWeight(1);
 
         for (int n = 0; n < bd.getBlobNb(); n++) {
             b = bd.getBlob(n);
             if (b != null) {
-                if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
-                    //edges
-                    parent.stroke(0xFFFF00AA);
-                    for (int m = 0; m < b.getEdgeNb(); m++) {
-                        eA = b.getEdgeVertexA(m);
-                        eB = b.getEdgeVertexB(m);
+                parent.strokeWeight(1);
 
-                        if (eA !=null && eB !=null) {
-                            parent.line(
-                                eA.x*frameDims[0] + offset[0],
-                                eA.y*frameDims[1] + offset[1],
-                                eB.x*frameDims[0] + offset[0],
-                                eB.y*frameDims[1] + offset[1]
-                            );
-                        }
+                //mark edges all blobs
+                parent.stroke(0xFFFF00AA);
+                for (int m = 0; m < b.getEdgeNb(); m++) {
+                    eA = b.getEdgeVertexA(m);
+                    eB = b.getEdgeVertexB(m);
+
+                    if (eA !=null && eB !=null) {
+                        parent.line(
+                            eA.x*frameDims[0] + offset[0],
+                            eA.y*frameDims[1] + offset[1],
+                            eB.x*frameDims[0] + offset[0],
+                            eB.y*frameDims[1] + offset[1]
+                        );
                     }
+                }
 
+                //mark valid blobs
+                if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
                     //bounding boxes
-                    parent.stroke(0xFF00FFAA);
+                    parent.stroke(blobColors.get(i));
                     parent.rectMode(PConstants.CORNER);
                     parent.rect(
                         b.xMin*frameDims[0] + offset[0],
@@ -138,6 +143,18 @@ public class BlobDetectionUtils {
                         b.w*frameDims[0],
                         b.h*frameDims[1]
                     );
+                    
+                    //line to exit center
+                    parent.strokeWeight(2);
+                    parent.stroke(255, 0, 255);
+                    parent.line(
+                        b.x*frameDims[0]+offset[0],
+                        b.y*frameDims[1]+offset[1],
+                        exitXY[0],
+                        exitXY[1]
+                    );
+
+                    i++;
                 }
             }
         }
@@ -159,42 +176,47 @@ public class BlobDetectionUtils {
         HashMap<Integer, List<float[]>> result = new HashMap<>();
         float[] point;
         Blob b;
-        int i, j, color, pixel;
-        float hue;
+        int i, j, color, pixel, hue;
         boolean added;
 
+        frame.loadPixels();
+        bd.computeBlobs(frame.pixels);
+
         if(debug) {
-            PApplet.println("blobs:");
+            blobColors.clear();
+
+            PApplet.println("blobs: " + bd.getBlobNb());
         }
 
         for(i = 0; i < colors.size(); i++) {
             result.put(Integer.valueOf(colors.get(i)), new LinkedList<float[]>());
         }
 
-        frame.loadPixels();
-        bd.computeBlobs(frame.pixels);
-
         //iterate through blobs
         for(i = 0; i < bd.getBlobNb(); i++) {
             added = false;
 
             b = bd.getBlob(i);
-            if((b.xMax-b.xMin)*(b.yMax-b.yMin) > noise) {
+            if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
                 point = new float[2];
                 point[0] = b.x;
                 point[1] = b.y;
 
                 for(j = 0; j < colors.size(); j++) {
                     color = colors.get(j);
-                    hue = parent.hue(color);
+                    hue = (int)parent.hue(color);
                     pixel = frame.pixels[
                          (int)(b.y*frame.height)*frame.width +
                          (int)(b.x*frame.width)
                     ];
 
                     //case: centroid is in blob
-                    if(parent.brightness(pixel) > 0 && parent.hue(pixel) == hue) {
+                    if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
                         result.get(color).add(point);
+
+                        if(debug) {
+                            blobColors.append(parent.color(hue, 255, 255));
+                        }
 
                         added = true;
                         break;
@@ -214,10 +236,14 @@ public class BlobDetectionUtils {
                             ) {
                                 pixel = frame.pixels[k*frame.width + l];
 
-                                if(parent.brightness(pixel) > 0 &&
-                                    parent.hue(pixel) == hue)
+                                if(parent.brightness(pixel) > 0f &&
+                                    (int)parent.hue(pixel) == hue)
                                 {
                                     result.get(color).add(point);
+
+                                    if(debug) {
+                                        blobColors.append(parent.color(hue, 255, 255));
+                                    }
 
                                     added = true;
                                     break;

@@ -158,10 +158,7 @@ public class BeeTracker extends PApplet {
             ex.printStackTrace(log);
         }
 
-        bees = new HashMap<>(colors.size());
-        for(Integer color : colors) {
-            bees.put(hue(color), new Bee());
-        }
+        bees = new HashMap<>();
 
         tu = new TrackingUtils(this, log, new File("header.arff"), debug);
 
@@ -266,27 +263,52 @@ public class BeeTracker extends PApplet {
                     );
                 }
 
+                //draw detected blobs
                 if(debug) {
-                    bdu.drawBlobs(this, tmp, frameDims, frameOffset);
+                    float exitXY[] = new float[2];
+
+                    if(pip) {
+                        exitXY[0] = (exitRadial[0]-insetBox[0])*zoomDims[0]/
+                            (insetBox[2]-insetBox[0]) + frameOffset[0];
+                        exitXY[1] = (exitRadial[1]-insetBox[1])*zoomDims[1]/
+                            (insetBox[3]-insetBox[1]) + frameOffset[1];
+                    }
+
+                    else {
+                        exitXY[0] = exitRadial[0]*movieDims[0] + offset[0];
+                        exitXY[1] = exitRadial[1]*movieDims[1] + offset[1];
+                    }
+
+                    bdu.drawBlobs(this, frameDims, frameOffset, exitXY);
+                    
+                    int arr = 0, dep = 0;
+                    for(Bee bee : bees.values()) {
+                        arr += bee.getArrivalTimes().size();
+                        dep += bee.getDepartureTimes().size();
+                    }
+                    fill(0xffffffff);
+                    text("total arr: "+arr+", total dep: "+dep, width*.5f,
+                        height - 25);
                 }
 
                 //mark bees
-                stroke(0xffffffff);
-                strokeWeight(.02f*frameDims[1]);
-
-                float cX, cY;
-                for(Cluster c : clusters.values()) {
-                    cX = (float)c.getX()*frameDims[0] + frameOffset[0];
-                    cY = (float)c.getY()*frameDims[1] + frameOffset[1];
-
-                    line(
-                        cX + .5f*(float)c.getWidth()*frameDims[0],
-                        cY + .5f*(float)c.getHeight()*frameDims[1],
-                        cX - .5f*(float)c.getWidth()*frameDims[0],
-                        cY - .5f*(float)c.getHeight()*frameDims[1]
-                    );
+                else {
+                    stroke(0xffffffff);
+                    strokeWeight(.02f*frameDims[1]);
+    
+                    float cX, cY;
+                    for(Cluster c : clusters.values()) {
+                        cX = (float)c.getX()*frameDims[0] + frameOffset[0];
+                        cY = (float)c.getY()*frameDims[1] + frameOffset[1];
+    
+                        line(
+                            cX + .5f*(float)c.getWidth()*frameDims[0],
+                            cY + .5f*(float)c.getHeight()*frameDims[1],
+                            cX - .5f*(float)c.getWidth()*frameDims[0],
+                            cY - .5f*(float)c.getHeight()*frameDims[1]
+                        );
+                    }
                 }
-
                 textAlign(CENTER, CENTER);
 
                 //status box
@@ -615,6 +637,10 @@ public class BeeTracker extends PApplet {
                     init = false;
 
                     colors.resize(colors.size());
+
+                    for(Integer color : colors) {
+                        bees.put(hue(color), new Bee());
+                    }
                 }
 
                 if(movie != null) {
@@ -712,6 +738,8 @@ public class BeeTracker extends PApplet {
         if(init) {
             uic.toggleSetup();
         }
+
+        bees.clear();
     }
 
     /**

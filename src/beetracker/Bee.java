@@ -12,12 +12,13 @@ import java.util.LinkedList;
 public class Bee {
     private final LinkedList<Float> departureTimes, arrivalTimes;
     private int x, y;
+    private boolean visible;
 
     /**
      * Class constructor.
      */
     public Bee() {
-        x = y = Integer.MIN_VALUE;
+        visible = false;
         departureTimes = new LinkedList<>();
         arrivalTimes = new LinkedList<>();
     }
@@ -80,5 +81,20 @@ public class Bee {
      */
     public void addArrivalTime(float time) {
         arrivalTimes.add(time);
+    }
+
+    /**
+     * @return the visibility state of the Bee
+     */
+    public boolean isVisible() {
+        return visible;
+    }
+
+    /**
+     * Sets the visibility state of the Bee.
+     * @param visible the new visibility state of the Bee
+     */
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 }

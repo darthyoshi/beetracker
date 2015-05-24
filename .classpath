@@ -92,7 +92,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/weka/weka.jar"/>
 	<classpathentry kind="lib" path="lib/controlP5/controlP5.jar"/>
 	<classpathentry kind="lib" path="lib/blobDetection/blobDetection.jar"/>
 	<classpathentry kind="output" path="bin"/>

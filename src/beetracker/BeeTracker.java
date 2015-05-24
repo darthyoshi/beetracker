@@ -39,7 +39,6 @@ public class BeeTracker extends PApplet {
 
     private boolean isPlaying = false, init = false;
     private boolean pip = false, selectExit = true, showFilter = false;
-    private short playbackSpeed = 1;
     private int listVal = -1;
 
     private File currentDir = null;
@@ -276,7 +275,7 @@ public class BeeTracker extends PApplet {
                     }
 
                     bdu.drawBlobs(this, frameDims, frameOffset, exitXY);
-                    
+
                     int arr = 0, dep = 0;
                     timeStamps = tu.getTimeStamps();
                     for(int color : colors) {
@@ -317,12 +316,11 @@ public class BeeTracker extends PApplet {
                 fill(0xffffffff);
                 text(
                     String.format(
-                        "%02d:%02d - %02d:%02d (%dx)",
+                        "%02d:%02d - %02d:%02d",
                         (int)movie.time()/60,
                         (int)movie.time()%60,
                         (int)movie.duration()/60,
-                        (int)movie.duration()%60,
-                        playbackSpeed
+                        (int)movie.duration()%60
                     ), 275, 25
                 );
 
@@ -653,7 +651,7 @@ public class BeeTracker extends PApplet {
                         uic.setFilterToggleVisibility(pip);
                     }
                 }
-                
+
                 else {
                     MessageDialogue.playButtonError(this, errors);
                 }

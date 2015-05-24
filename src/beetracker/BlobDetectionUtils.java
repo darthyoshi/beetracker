@@ -136,7 +136,7 @@ public class BlobDetectionUtils {
                     b.w*frameDims[0],
                     b.h*frameDims[1]
                 );
-             /*   
+             /*
                 //line to exit center
                 parent.strokeWeight(2);
                 parent.stroke(255, 0, 255);
@@ -182,7 +182,7 @@ public class BlobDetectionUtils {
         }
 
         for(i = 0; i < colors.size(); i++) {
-            result.put(Integer.valueOf(colors.get(i)), new LinkedList<float[]>());
+            result.put(colors.get(i), new LinkedList<float[]>());
         }
 
         //iterate through blobs
@@ -277,9 +277,10 @@ public class BlobDetectionUtils {
      * @param threshold the new threshold value
      */
     public void setThreshold(int threshold) {
-//        satThreshold = 255 - threshold;
-     //   lumThreshold = 255 - threshold;
-    //    hueThreshold = lumThreshold/2;
+        //TODO independent adjustment? only luminosity/saturation?
+        satThreshold = 255 - threshold;
+        lumThreshold = 255 - threshold;
+        hueThreshold = lumThreshold/2;
     }
 
     /**

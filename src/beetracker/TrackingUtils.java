@@ -7,7 +7,6 @@
 
 package beetracker;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -38,7 +37,7 @@ public class TrackingUtils {
         arrivalTimes = new HashMap<>();
         colors = new IntList();
     }
-   
+
     /**
      * Updates the centroid positions for the current frame.
      * @param newPointMap a HashMap mapping six-digit hexadecimal RGB values
@@ -194,7 +193,7 @@ public class TrackingUtils {
 
             departures = departureTimes.get(color);
             arrivals = arrivalTimes.get(color);
-//TODO figure out why transitions across exit circumference aren't registering
+
             //check all paired points
             for(i = 0; i < k; i++) {
                 point = oldPoints.get(validPairs[i][0]);
@@ -210,11 +209,12 @@ public class TrackingUtils {
                 isOldPointInExit = rSquared > Math.pow(oldX - exitXY[0], 2) + Math.pow(oldY - exitXY[1], 2);
                 isNewPointInExit = rSquared > Math.pow(newX - exitXY[0], 2) + Math.pow(newY - exitXY[1], 2);
 
+                //TODO figure out why transitions across exit circumference aren't registering
                 if(debug) {
                 	PApplet.println(String.format(
             			"pair %d:\n%s %d %s %s\n%s %d %s %s",
-            			"old point",
             			i,
+            			"old point",
             			validPairs[i][0],
             			"is inside exit:",
             			(isOldPointInExit ? "true" : "false"),
@@ -223,7 +223,7 @@ public class TrackingUtils {
             			"is inside exit:",
             			(isNewPointInExit ? "true" : "false")
         			));
-                
+
 	                //line to exit center
 	                parent.strokeWeight(2);
 	                parent.stroke(255, 0, 255);
@@ -242,7 +242,7 @@ public class TrackingUtils {
                     }
                 }
             }
-            
+
             //store current points for next frame
             allPoints.get(color).clear();
             allPoints.get(color).addAll(newPoints);

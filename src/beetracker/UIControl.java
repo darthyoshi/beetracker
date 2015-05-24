@@ -217,6 +217,7 @@ public class UIControl {
 
     /**
      * Toggles the visibility of the "show filtered image" checkbox.
+     * @param visible the new visibility state
      */
     public void setFilterToggleVisibility(boolean visible) {
         filterToggle.setVisible(visible);

@@ -48,7 +48,7 @@ public class MessageDialogue {
      *   JOoptionPane.CANCEL_OPTION
      */
     public static int stopButtonWarning(PApplet parent) {
-    	return JOptionPane.showConfirmDialog(
+        return JOptionPane.showConfirmDialog(
             parent,
             "Cancel playback? Current video statistics will not be saved.",
             "Warning",

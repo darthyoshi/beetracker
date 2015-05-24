@@ -35,11 +35,10 @@ public class BeeTracker extends PApplet {
     };
 
     private IntList colors;
-    private HashMap<Float, Bee> bees;
     private int[] movieDims, zoomDims;
 
     private boolean isPlaying = false, init = false;
-    private boolean pip = false, selectExit = true;
+    private boolean pip = false, selectExit = true, showFilter = false;
     private short playbackSpeed = 1;
     private int listVal = -1;
 
@@ -158,9 +157,7 @@ public class BeeTracker extends PApplet {
             ex.printStackTrace(log);
         }
 
-        bees = new HashMap<>();
-
-        tu = new TrackingUtils(this, log, new File("header.arff"), debug);
+        tu = new TrackingUtils(this, debug);
 
         insetFrame = createImage((int)(width*.5f), (int)(height*.5f), RGB);
 
@@ -178,7 +175,7 @@ public class BeeTracker extends PApplet {
 
         fill(0xff444444);
         rectMode(CORNERS);
-        rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
+        rect(mainBounds[0]-1, mainBounds[1]-1, mainBounds[2]+1, mainBounds[3]+1);
 
         if(movie != null) {
             if((isPlaying || init) && movie.available()) {
@@ -186,7 +183,14 @@ public class BeeTracker extends PApplet {
 
                 if(init) {
                     movie.stop();
+                    movie.jump(0f);
                 }
+            }
+
+        	List<HashMap<Integer, List<Float>>> timeStamps = null;
+
+            if(debug) {
+                println(String.format("---------BEGIN FRAME (%.2fs)---------",movie.time()));
             }
 
             movieDims = scaledDims(
@@ -208,7 +212,7 @@ public class BeeTracker extends PApplet {
             image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
 
             //status box boundary
-            strokeWeight(0);
+            noStroke();
             fill(0xff02344d);
             rectMode(CENTER);
             rect(275, 25, 450, 40);
@@ -220,31 +224,23 @@ public class BeeTracker extends PApplet {
 
                 copyInsetFrame();
 
-                BlobDetectionUtils.filterImg(this, insetFrame, colors);
+                bdu.filterImg(this, insetFrame, colors);
 
-                HashMap<Integer, Cluster> clusters = tu.getClusters(bdu
-                    .getCentroids(this, insetFrame, colors));
+                HashMap<Integer, List<float[]>> centroids = bdu.getCentroids(this, insetFrame, colors);
 
-                tu.updateBeePositions(
-                    insetFrame, frameDims, frameOffset,
-                    clusters, colors, bees,
-                    exitRadial, movieDims, offset,
+                tu.trackCentroids(
+                    centroids,
+                    frameDims, frameOffset,
+                    exitRadial,
+                    movieDims, offset,
                     movie.time()
                 );
 
-                //filtered image for displaying blobs in debug mode
-                PImage tmp = null;
-                if(debug){
-                    try {
-                        tmp = (PImage)insetFrame.clone();
-                    } catch (CloneNotSupportedException e) {
-                        e.printStackTrace(log);
-                    }
-                }
-
                 //zoomed
                 if(pip) {
-                    copyInsetFrame();
+                    if(!showFilter) {
+                        copyInsetFrame();
+                    }
 
                     zoomDims = scaledDims(
                         movieDims[0]*(insetBox[2] - insetBox[0]),
@@ -282,31 +278,37 @@ public class BeeTracker extends PApplet {
                     bdu.drawBlobs(this, frameDims, frameOffset, exitXY);
                     
                     int arr = 0, dep = 0;
-                    for(Bee bee : bees.values()) {
-                        arr += bee.getArrivalTimes().size();
-                        dep += bee.getDepartureTimes().size();
+                    timeStamps = tu.getTimeStamps();
+                    for(int color : colors) {
+                        arr += timeStamps.get(1).get(color).size();
+                        dep += timeStamps.get(0).get(color).size();
                     }
                     fill(0xffffffff);
-                    text("total arr: "+arr+", total dep: "+dep, width*.5f,
-                        height - 25);
+                    text(
+                        String.format("total arr: %d, total dep: %d", arr, dep),
+                        width*.5f,
+                        height - 25
+                    );
                 }
 
                 //mark bees
                 else {
-                    stroke(0xffffffff);
-                    strokeWeight(.02f*frameDims[1]);
-    
-                    float cX, cY;
-                    for(Cluster c : clusters.values()) {
-                        cX = (float)c.getX()*frameDims[0] + frameOffset[0];
-                        cY = (float)c.getY()*frameDims[1] + frameOffset[1];
-    
-                        line(
-                            cX + .5f*(float)c.getWidth()*frameDims[0],
-                            cY + .5f*(float)c.getHeight()*frameDims[1],
-                            cX - .5f*(float)c.getWidth()*frameDims[0],
-                            cY - .5f*(float)c.getHeight()*frameDims[1]
-                        );
+                    strokeWeight(1);
+                    stroke(0xffdddd00);
+                    ellipseMode(CENTER);
+                    colorMode(RGB, 255);
+
+                    for(int color : colors) {
+                        fill(0xff000000 + color);
+
+                        for(float[] centroid : centroids.get(color)) {
+                           ellipse(
+                                centroid[0]*frameDims[0] + frameOffset[0],
+                                centroid[1]*frameDims[1] + frameOffset[1],
+                                .01f*frameDims[1],
+                                .01f*frameDims[1]
+                            );
+                        }
                     }
                 }
                 textAlign(CENTER, CENTER);
@@ -326,13 +328,17 @@ public class BeeTracker extends PApplet {
 
                 //bee count
                 rectMode(CENTER);
-                strokeWeight(0);
+                noStroke();
                 fill(0xff02344d);
                 rect(628, 25, 245, 40);
 
                 fill(0xffffffff);
                 textAlign(CENTER, CENTER);
-                text("#bees visible: " + clusters.size(), 627, 25);
+                int numBees = 0;
+                for(int color : colors) {
+                    numBees += centroids.get(color).size();
+                }
+                text("#bees visible: " + numBees, 627, 25);
             }
 
             else {
@@ -427,31 +433,33 @@ public class BeeTracker extends PApplet {
                 StringBuilder msg = new StringBuilder("End of video reached.\n\n");
                 msg.append("bees tracked: ").append(colors.size()).append('\n');
 
-                Bee bee;
-                for(Integer color : colors) {
-                    bee = bees.get(hue(color));
+                if(timeStamps == null) {
+                    timeStamps = tu.getTimeStamps();
+                }
+
+                for(int color : colors) {
                     msg.append("color: ").append(String.format("%06x", color))
                         .append("\n-arrival times:\n");
 
-                    for(float arriveTime : bee.getArrivalTimes()) {
+                    for(float arriveTime : timeStamps.get(1).get(color)) {
                         msg.append("--").append(arriveTime).append('\n');
                     }
 
                     msg.append("number of arrivals: ")
-                        .append(bee.getArrivalTimes().size())
+                        .append(timeStamps.get(1).get(color).size())
                         .append("\n-departure times:\n");
 
-                    for(float departTime : bee.getArrivalTimes()) {
+                    for(float departTime : timeStamps.get(0).get(color)) {
                         msg.append("--").append(departTime).append('\n');
                     }
 
                     msg.append("number of departures: ")
-                        .append(bee.getDepartureTimes().size())
+                        .append(timeStamps.get(0).get(color).size())
                         .append('\n');
                 }
 
                 msg.append("Video statistics have been saved to \"")
-                    .append(resultsToJSON())
+                    .append(resultsToJSON(timeStamps))
                     .append('\"');
 
                 if(debug) {
@@ -461,6 +469,10 @@ public class BeeTracker extends PApplet {
                 MessageDialogue.endVideoMessage(this, msg.toString());
 
                 stopPlayback();
+            }
+
+            if(debug) {
+                println("---------END FRAME---------");
             }
         }
 
@@ -473,33 +485,29 @@ public class BeeTracker extends PApplet {
         stroke(0xffffffff);
         noFill();
         rectMode(CORNERS);
-        rect(mainBounds[0], mainBounds[1], mainBounds[2], mainBounds[3]);
+        rect(mainBounds[0]-1, mainBounds[1]-1, mainBounds[2]+1, mainBounds[3]+1);
     }
 
     /**
      * Saves the statistics of the current video to file.
+     * @param times an array containing HashMaps mapping six-digit hexadecimal
+     *   RGB values to Lists of floating point timestamps
      * @return the name of the new file in the format "dd.mmm.yyyy-hhmm.json"
      */
-    private String resultsToJSON() {
+    private String resultsToJSON(List<HashMap<Integer, List<Float>>> times) {
         JSONObject stats = new JSONObject();
         JSONObject beeStat, tmp;
 
         stats.setString("file", movie.filename);
 
-        Bee bee;
-        List<Float> departure, arrival;
         int i;
         for(int color : colors) {
-            bee = bees.get(hue(color));
-            departure = bee.getDepartureTimes();
-            arrival = bee.getArrivalTimes();
-
             beeStat = new JSONObject();
 
             //list arrival timestamps
             tmp = new JSONObject();
             i = 0;
-            for(Float arrive : arrival) {
+            for(Float arrive : times.get(0).get(color)) {
                 tmp.setFloat(String.valueOf(i), arrive);
                 i++;
             }
@@ -508,7 +516,7 @@ public class BeeTracker extends PApplet {
             //list departure timestamps
             tmp = new JSONObject();
             i = 0;
-            for(Float depart : departure) {
+            for(Float depart : times.get(1).get(color)) {
                 tmp.setFloat(String.valueOf(i), depart);
                 i++;
             }
@@ -588,6 +596,8 @@ public class BeeTracker extends PApplet {
                 uic.toggleSetup();
                 uic.toggleOpenButton();
                 uic.togglePlay();
+                uic.toggleSlider();
+
                 log.append("loaded ").append(videoPath).append('\n');
                 log.flush();
             }
@@ -627,36 +637,41 @@ public class BeeTracker extends PApplet {
             break;
 
         case "playButton":
-            if(colors.size() > 0 && exitRadial[2] != 0f) {
-                isPlaying = !isPlaying;
-                uic.setPlayState(isPlaying);
+            if(init) {
+                boolean[] errors = {(colors.size() == 0), (exitRadial[2] <= 0f)};
 
-                if(init) {
+                if(!(errors[0] || errors[1])) {
+                    colors.resize(colors.size());
+
+                    tu.setColors(colors);
+
                     uic.toggleSetup();
 
                     init = false;
 
-                    colors.resize(colors.size());
-
-                    for(Integer color : colors) {
-                        bees.put(hue(color), new Bee());
+                    if(debug) {
+                        uic.setFilterToggleVisibility(pip);
                     }
                 }
-
-                if(movie != null) {
-                    if(isPlaying) {
-                        movie.play();
-                    }
-
-                    else {
-                        movie.pause();
-                    }
+                
+                else {
+                    MessageDialogue.playButtonError(this, errors);
                 }
             }
 
-            else {
-                boolean[] errors = {(colors.size() == 0), (exitRadial[2] <= 0f)};
-                MessageDialogue.playButtonError(this, errors);
+            if(!init && movie != null) {
+                isPlaying = !isPlaying;
+                uic.setPlayState(isPlaying);
+
+                if(isPlaying) {
+                    movie.play();
+                }
+
+                else {
+                    movie.pause();
+                }
+
+                uic.toggleSlider();
             }
 
             break;
@@ -666,26 +681,6 @@ public class BeeTracker extends PApplet {
                 javax.swing.JOptionPane.YES_OPTION)
             {
                 stopPlayback();
-            }
-
-            break;
-
-        case "fastForward":
-            //TODO: currently bugged
-            if(movie != null) {
-                playbackSpeed *= 2;
-
-                if(playbackSpeed > 4) {
-                    playbackSpeed = 1;
-                }
-
-                if(debug) {
-                    print("setting movie speed: "+playbackSpeed);
-                }
-                movie.speed(playbackSpeed);
-                if(debug) {
-                    println(" - done");
-                }
             }
 
             break;
@@ -708,11 +703,27 @@ public class BeeTracker extends PApplet {
         case "pipToggle":
             pip = !pip;
 
+            if(debug && !init) {
+                uic.setFilterToggleVisibility(pip);
+            }
+
             break;
 
         case "selectToggle":
             selectExit = !selectExit;
             uic.toggleSelectLbl();
+
+            break;
+
+        case "filterToggle":
+            showFilter = !showFilter;
+
+            break;
+
+        case "thresholdSlider":
+            if(bdu != null) {
+                bdu.setThreshold((int)event.getValue());
+            }
 
             break;
         }
@@ -734,12 +745,15 @@ public class BeeTracker extends PApplet {
 
         uic.toggleOpenButton();
         uic.togglePlay();
+        uic.toggleSlider();
+
+        if(debug) {
+            uic.setFilterToggleVisibility(false);
+        }
 
         if(init) {
             uic.toggleSetup();
         }
-
-        bees.clear();
     }
 
     /**
@@ -991,12 +1005,12 @@ public class BeeTracker extends PApplet {
         float ratio = imgWidth/imgHeight;
 
         //scale by width
-        result[0] = width - 100;
+        result[0] = width - 102;
         result[1] = (int)(result[0]/ratio);
 
         //scale by height
-        if(result[1] > height - 100) {
-            result[1] = height - 100;
+        if(result[1] > height - 102) {
+            result[1] = height - 102;
             result[0] = (int)(result[1]*ratio);
         }
 

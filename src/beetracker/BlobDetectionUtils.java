@@ -21,8 +21,8 @@ import processing.core.PImage;
 import processing.data.IntList;
 
 public class BlobDetectionUtils {
-    final static int hueThreshold = 10, satThreshold = 55, lumThreshold = 20;
-    private static final float noise = 0.0001f;
+    private int hueThreshold = 10, satThreshold = 50, lumThreshold = 30;
+    private static final int filterRadius = 3;
     private final BlobDetection bd;
     private IntList blobColors;
 
@@ -48,14 +48,14 @@ public class BlobDetectionUtils {
 
     /**
      * Preprocesses a PImage for blob detection. Any pixels meeting the defined
-     *   hue and saturation thresholds have the color values maxed out, while
-     *   all other pixels are set to 0x000000.
+     *   hue and saturation thresholds have the saturation and luminosity values
+     *   maxed out, while all other pixels are set to 0x000000.
      * @param parent the calling PApplet
      * @param img the PImage to preprocess
      * @param colors a list of the integer RGB values to scan for
      */
-    public static void filterImg(PApplet parent, PImage img, IntList colors) {
-        float pixelHue, pixelSat, listHue, listSat;
+    public void filterImg(PApplet parent, PImage img, IntList colors) {
+        float pixelHue, listHue;
         int i, j;
 
         img.loadPixels();
@@ -65,17 +65,14 @@ public class BlobDetectionUtils {
         //scan every pixel in image
         for(i = 0; i < img.pixels.length; i++) {
             pixelHue = parent.hue(img.pixels[i]);
-            pixelSat = parent.saturation(img.pixels[i]);
 
             //for color matches, brighten pixel
             for(j = 0; j < colors.size(); j++) {
                 listHue = parent.hue(colors.get(j));
-                listSat = parent.saturation(colors.get(j));
 
                 if(pixelHue > listHue - hueThreshold &&
                     pixelHue < listHue + hueThreshold &&
-                    pixelSat > listSat - satThreshold &&
-                    pixelSat < listSat + satThreshold &&
+                    parent.saturation(img.pixels[i]) > satThreshold &&
                     parent.brightness(img.pixels[i]) > lumThreshold)
                 {
                     img.pixels[i] = parent.color(listHue, 255, 255);
@@ -94,8 +91,7 @@ public class BlobDetectionUtils {
     }
 
     /**
-     * Draws the blobs in the current frame. Blobs with a bounding box of less
-     *   than 0.005% of the total image area are ignored as noise.
+     * Draws the blobs in the current frame.
      * @param parent the calling PApplet
      * @param frameDims the dimensions of the image frame for which blob
      *   detection is being performed, in pixels
@@ -107,7 +103,6 @@ public class BlobDetectionUtils {
     {
         EdgeVertex eA,eB;
         Blob b;
-        int i = 0;
 
         parent.noFill();
 
@@ -132,52 +127,50 @@ public class BlobDetectionUtils {
                     }
                 }
 
-                //mark valid blobs
-                if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
-                    //bounding boxes
-                    parent.stroke(blobColors.get(i));
-                    parent.rectMode(PConstants.CORNER);
-                    parent.rect(
-                        b.xMin*frameDims[0] + offset[0],
-                        b.yMin*frameDims[1] + offset[1],
-                        b.w*frameDims[0],
-                        b.h*frameDims[1]
-                    );
-                    
-                    //line to exit center
-                    parent.strokeWeight(2);
-                    parent.stroke(255, 0, 255);
-                    parent.line(
-                        b.x*frameDims[0]+offset[0],
-                        b.y*frameDims[1]+offset[1],
-                        exitXY[0],
-                        exitXY[1]
-                    );
-
-                    i++;
-                }
+                //bounding boxes
+                parent.stroke(blobColors.get(n));
+                parent.rectMode(PConstants.CORNER);
+                parent.rect(
+                    b.xMin*frameDims[0] + offset[0],
+                    b.yMin*frameDims[1] + offset[1],
+                    b.w*frameDims[0],
+                    b.h*frameDims[1]
+                );
+             /*   
+                //line to exit center
+                parent.strokeWeight(2);
+                parent.stroke(255, 0, 255);
+                parent.line(
+                    b.x*frameDims[0]+offset[0],
+                    b.y*frameDims[1]+offset[1],
+                    exitXY[0],
+                    exitXY[1]
+                );*/
             }
         }
     }
 
     /**
-     * Retrieves the centroids of the blobs in the current frame. Blobs with a
-     *   bounding box of less than 0.005% of the total frame area are ignored as
-     *   noise.
+     * Retrieves the centroids of the blobs in the current frame.
      * @param parent the calling PApplet
      * @param frame the filtered frame
      * @param colors the list of color values
-     * @return a HashMap mapping RGB integer values to Lists of normalized the
-     *   xy coordinates of the detected blob centroids
+     * @return a HashMap mapping RGB integer values to Lists of normalized xy
+     *   coordinates of the detected blob centroids
      */
-    public HashMap<Integer, List<float[]>> getCentroids(PApplet parent, PImage frame,
-        IntList colors)
-    {
+    public HashMap<Integer, List<float[]>> getCentroids(
+        PApplet parent,
+        PImage frame,
+        IntList colors
+    ) {
         HashMap<Integer, List<float[]>> result = new HashMap<>();
         float[] point;
         Blob b;
         int i, j, color, pixel, hue;
         boolean added;
+
+        //remove noise
+        openImage(parent, frame, colors);
 
         frame.loadPixels();
         bd.computeBlobs(frame.pixels);
@@ -197,69 +190,68 @@ public class BlobDetectionUtils {
             added = false;
 
             b = bd.getBlob(i);
-            if((b.xMax-b.xMin)*(b.yMax-b.yMin) >= noise) {
-                point = new float[2];
-                point[0] = b.x;
-                point[1] = b.y;
 
-                for(j = 0; j < colors.size(); j++) {
-                    color = colors.get(j);
-                    hue = (int)parent.hue(color);
-                    pixel = frame.pixels[
-                         (int)(b.y*frame.height)*frame.width +
-                         (int)(b.x*frame.width)
-                    ];
+            point = new float[2];
+            point[0] = b.x;
+            point[1] = b.y;
 
-                    //case: centroid is in blob
-                    if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
-                        result.get(color).add(point);
+            for(j = 0; j < colors.size(); j++) {
+                color = colors.get(j);
+                hue = (int)parent.hue(color);
+                pixel = frame.pixels[
+                     (int)(b.y*frame.height)*frame.width +
+                     (int)(b.x*frame.width)
+                ];
 
-                        if(debug) {
-                            blobColors.append(parent.color(hue, 255, 255));
-                        }
+                //case: centroid is in blob
+                if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
+                    result.get(color).add(point);
 
-                        added = true;
-                        break;
+                    if(debug) {
+                        blobColors.append(parent.color(hue, 255, 255));
                     }
 
-                    //case: centroid is not in blob
-                    else {
+                    added = true;
+                    break;
+                }
+
+                //case: centroid is not in blob
+                else {
+                    for(
+                        int k = (int)(b.yMin*frame.height);
+                        k < (int)(b.yMax*frame.height);
+                        k++
+                    ) {
                         for(
-                            int k = (int)(b.yMin*frame.height);
-                            k < (int)(b.yMax*frame.height);
-                            k++
+                            int l = (int)(b.xMin*frame.width);
+                            l < (int)(b.xMax*frame.width);
+                            l++
                         ) {
-                            for(
-                                int l = (int)(b.xMin*frame.width);
-                                l < (int)(b.xMax*frame.width);
-                                l++
-                            ) {
-                                pixel = frame.pixels[k*frame.width + l];
+                            pixel = frame.pixels[k*frame.width + l];
 
-                                if(parent.brightness(pixel) > 0f &&
-                                    (int)parent.hue(pixel) == hue)
-                                {
-                                    result.get(color).add(point);
+                            if(parent.brightness(pixel) > 0f &&
+                                (int)parent.hue(pixel) == hue)
+                            {
+                                result.get(color).add(point);
 
-                                    if(debug) {
-                                        blobColors.append(parent.color(hue, 255, 255));
-                                    }
-
-                                    added = true;
-                                    break;
+                                if(debug) {
+                                    blobColors.append(parent.color(hue, 255, 255));
                                 }
-                            }
 
-                            if(added) {
+                                added = true;
                                 break;
                             }
                         }
+
+                        if(added) {
+                            break;
+                        }
                     }
                 }
+            }
 
-                if(debug && added) {
-                    PApplet.println(String.format("%f, %f", point[0], point[1]));
-                }
+            if(debug && added) {
+                PApplet.println(String.format("%f, %f", point[0], point[1]));
             }
         }
 
@@ -274,10 +266,100 @@ public class BlobDetectionUtils {
     }
 
     /**
-     *
      * @return the height of the images to process
      */
     public int getImageHeight() {
         return bd.imgHeight;
+    }
+
+    /**
+     * Sets the filter threshold values.
+     * @param threshold the new threshold value
+     */
+    public void setThreshold(int threshold) {
+//        satThreshold = 255 - threshold;
+     //   lumThreshold = 255 - threshold;
+    //    hueThreshold = lumThreshold/2;
+    }
+
+    /**
+     * Performs a morphological opening operation to remove noise. Any blob not
+     *   meeting the radius threshold will be erased.
+     * @param parent the calling PApplet
+     * @param img the PImage to preprocess
+     * @param colors a list of the integer RGB values to scan for
+     */
+    private void openImage(PApplet parent, PImage img, IntList colors) {
+        img.loadPixels();
+
+        int[] tmp = new int[img.pixels.length];
+        int i, j, k, l, m, offset;
+        boolean hit = false;
+
+        for(i = 0; i < tmp.length; i++) {
+            tmp[i] = 0;
+        }
+
+        //erode filtered image
+        for(i = filterRadius; i < img.width - filterRadius; i++) {
+            for(j = filterRadius; j < img.height - filterRadius; j++) {
+                for(m = 0; m < colors.size(); m++) {
+                    erodeLoop:
+                    for(k = 0 - filterRadius; k <= filterRadius; k++) {
+                        for(l = 0 - filterRadius; l <= filterRadius; l++) {
+                            if(Math.abs(k) + Math.abs(l) <= filterRadius) {
+                                offset = (i+k) + (j+l)*img.width;
+                                hit = (int)parent.hue(img.pixels[offset]) ==
+                                    (int)parent.hue(colors.get(m));
+
+                                if(!hit) {
+                                    break erodeLoop;
+                                }
+                            }
+                        }
+                    }
+
+                    if(hit) {
+                        offset = i + j*img.width;
+                        tmp[offset] = img.pixels[offset];
+                    }
+                }
+            }
+        }
+
+        //dilate eroded image
+        int n, colorVal = 0;
+        for(i = 0; i < img.width; i++) {
+            for(j = 0; j < img.height; j++) {
+                dilateLoop:
+                for(k = 0 - filterRadius; k <= filterRadius; k++) {
+                    for(l = 0 - filterRadius; l <= filterRadius; l++) {
+                        m = i + k;
+                        n = j + l;
+
+                        if(
+                            m >= 0 && m < img.width &&
+                            n >= 0 && n < img.height &&
+                            Math.abs(k) + Math.abs(l) <= filterRadius
+                        ) {
+                            offset = m + n*img.width;
+                            hit = parent.brightness(tmp[offset]) > 0;
+
+                            if(hit) {
+                                colorVal = tmp[offset];
+
+                                break dilateLoop;
+                            }
+                        }
+                    }
+                }
+
+                if(hit) {
+                    img.pixels[i + j*img.width] = colorVal;
+                }
+            }
+        }
+
+        img.updatePixels();
     }
 }

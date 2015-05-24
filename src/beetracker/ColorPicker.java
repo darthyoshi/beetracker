@@ -20,11 +20,11 @@ public class ColorPicker {
      *   for a non-valid selection
      */
     public static int getColor(PApplet parent) {
-        Color newColor = JColorChooser.showDialog(null, "Select Color", Color.BLACK);
+        Color newColor = JColorChooser.showDialog(parent, "Select Color", Color.BLACK);
         int result = 0;
 
         if(newColor != null) {
-            result = newColor.getRed()*256*256 + newColor.getGreen()*256 + newColor.getBlue();
+            result = (newColor.getRed() << 16) + (newColor.getGreen() << 8) + newColor.getBlue();
         }
 
         return result;

@@ -12,6 +12,7 @@ import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
 import controlP5.DropdownList;
 import controlP5.Group;
+import controlP5.Slider;
 import controlP5.Toggle;
 
 import processing.core.PImage;
@@ -19,9 +20,10 @@ import processing.core.PImage;
 public class UIControl {
     private final Group setupGroup, playGroup;
     private final DropdownList colorList;
-    private final Toggle selectToggle;
+    private final Toggle selectToggle, filterToggle;
     private final Button playButton, openButton;
     private final PImage[] playIcons;
+    private final Slider slider;
 
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
@@ -78,23 +80,16 @@ public class UIControl {
         playIcons = new PImage[2];
         playIcons[0] = parent.loadImage("data/img/playbutton.png");
         playIcons[1] = parent.loadImage("data/img/pausebutton.png");
-        playButton = cp5.addButton("playButton")//new NewToggle(cp5, "playButton")
+        playButton = cp5.addButton("playButton")
             .setCaptionLabel("")
             .setPosition(50, parent.height - 40)
             .setSize(30, 30)
             .setGroup(playGroup)
             .setImage(playIcons[0]);
 
-        cp5.addButton("fastForward")
-            .setCaptionLabel("")
-            .setPosition(90, parent.height - 40)
-            .setSize(30, 30)
-            .setGroup(playGroup)
-            .setImage(parent.loadImage("data/img/fastforward.png"));
-
         cp5.addButton("stopButton")
             .setCaptionLabel("")
-            .setPosition(130, parent.height - 40)
+            .setPosition(90, parent.height - 40)
             .setSize(30, 30)
             .setGroup(playGroup)
             .setImage(parent.loadImage("data/img/stopbutton.png"));
@@ -119,6 +114,25 @@ public class UIControl {
             .setGroup(setupGroup)
             .getCaptionLabel()
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
+            .setPaddingX(5);
+
+        filterToggle = cp5.addToggle("filterToggle").setSize(15, 15);
+        filterToggle.setCaptionLabel("hide filter")
+            .setPosition(parent.width - 80, parent.height - 40)
+            .setVisible(false)
+            .setState(false)
+            .getCaptionLabel()
+            .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
+            .setPaddingX(5);
+
+        slider = cp5.addSlider("thresholdSlider").setSize(255, 15);
+        slider.setRange(0, 255)
+            .setVisible(false)
+            .setValue(128f)
+            .setPosition(200, parent.height - 40)
+            .setCaptionLabel("Filter Threshold")
+            .getCaptionLabel()
+            .align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE)
             .setPaddingX(5);
     }
 
@@ -199,5 +213,19 @@ public class UIControl {
      */
     public void toggleOpenButton() {
         openButton.setVisible(!openButton.isVisible());
+    }
+
+    /**
+     * Toggles the visibility of the "show filtered image" checkbox.
+     */
+    public void setFilterToggleVisibility(boolean visible) {
+        filterToggle.setVisible(visible);
+    }
+
+    /**
+     * Toggles the visibility of the "threshold" slider.
+     */
+    public void toggleSlider() {
+        slider.setVisible(!slider.isVisible());
     }
 }

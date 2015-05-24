@@ -8,187 +8,74 @@
 package beetracker;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import processing.core.PApplet;
-import processing.core.PConstants;
-
-import weka.clusterers.SimpleKMeans;
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.SparseInstance;
+import processing.data.IntList;
 
 public class TrackingUtils {
-    private final PrintStream log;
-
-    private final BeeTracker parent;
-
-    private SimpleKMeans clusterer;
-    private Instances dataSet;
-    private static final String options[] = {
-        "-N", "1",          //k
-        "-A", "weka.core.EuclideanDistance -R first-last",  //distance function
-        "-I", "500",        //max iterations
-        "-S", "10"          //random seed
-    };
-
+	private final BeeTracker parent;
     private final boolean debug;
+    private final HashMap<Integer, List<float[]>> allPoints;
+    private final HashMap<Integer, List<Float>> departureTimes, arrivalTimes;
+    private final IntList colors;
+    private final static float distThreshold = 10f;
 
     /**
      * Class constructor.
      * @param parent the instantiating PApplet
-     * @param log the output log
-     * @param header the File object containing the Weka header definitions
      * @param debug whether or not debug mode is enabled
      */
-    public TrackingUtils(
-        BeeTracker parent,
-        PrintStream log,
-        java.io.File header,
-        boolean debug
-    ) {
+    public TrackingUtils(BeeTracker parent, boolean debug) {
         this.parent = parent;
-        this.log = log;
         this.debug = debug;
 
-        clusterer = new SimpleKMeans();
-
-        try {
-            clusterer.setOptions(options);
-
-            dataSet = new Instances(new java.io.BufferedReader(
-                new java.io.FileReader(header))
-            );
-        } catch(Exception e) {
-            e.printStackTrace(log);
-            parent.crash(e.toString());
-        }
+        allPoints = new HashMap<>();
+        departureTimes = new HashMap<>();
+        arrivalTimes = new HashMap<>();
+        colors = new IntList();
     }
-
-
+   
     /**
-     * Uses the K-means algorithm to sort a set of points into clusters.
-     * @param pointSets a HashMap mapping RGB integer values to the Lists of
-     *   normalized points to process
-     * @return a HashMap mapping RGB integer values to Cluster objects
-     */
-    public HashMap<Integer, Cluster> getClusters(
-        HashMap<Integer, List<float[]>> pointSets)
-    {
-        HashMap<Integer, Cluster> result = new HashMap<>();
-        Cluster c;
-        Instance row;
-        double[] tmp;
-        int i;
-
-        try {
-            Iterator<Integer> keyIter = pointSets.keySet().iterator();
-            List<float[]> points;
-            Integer key;
-            while(keyIter.hasNext()) {
-                key = keyIter.next();
-                points = pointSets.get(key);
-
-                //clear old points from data set
-                dataSet.delete();
-
-                //add new points to data set
-                for(float[] point : points) {
-                    row = new SparseInstance(2);
-                    row.setValue(0, point[0]);
-                    row.setValue(1, point[1]);
-                    row.setDataset(dataSet);
-
-                    dataSet.add(row);
-                }
-
-                //K-means requires 1+ points
-                if(dataSet.numInstances() > 0) {
-                    //invoke weka SimpleKMeans clusterer for Instances
-                    clusterer.buildClusterer(dataSet);
-
-                    c = new Cluster();
-
-                    for(i = 0; i < dataSet.numInstances(); i++) {
-                        row = dataSet.instance(i);
-
-                        //group points in a cluster together
-                        tmp = new double[2];
-                        tmp[0] = row.value(0);
-                        tmp[1] = row.value(1);
-                        c.addPoint(tmp);
-
-                        if(debug) {
-                            PApplet.println("instance " + i + '(' + tmp[0] + ','
-                                + tmp[1] + "): cluster " +
-                                clusterer.clusterInstance(row));
-                        }
-                    }
-
-                    if(debug) {
-                        PApplet.println("clusters (DataMinerUtils.getClusters()):");
-                    }
-
-                    Instance center = clusterer.getClusterCentroids()
-                        .firstInstance();
-
-                    c.setX(center.value(0));
-                    c.setY(center.value(1));
-                    c.calcDims();
-
-                    if(debug) {
-                        PApplet.println(String.format("%f, %f, %f, %f",
-                            c.getX(),c.getY(), c.getWidth(), c.getHeight()));
-                    }
-
-                    //add to list of clusters
-                    result.put(key, c);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace(log);
-            parent.crash(e.toString());
-        }
-
-        return result;
-    }
-
-    /**
-     * Updates the positions of the Bees for the current frame.
-     * @param blobImg the filtered PImage
-     * @param frameDims the dimensions of blobImg
-     * @param frameOffset the offset of blobImg
-     * @param clusters a HashMap mapping RGB integer values to Cluster objects
-     * @param colors a list of the integer RGB values to scan for
-     * @param bees a HashMap mapping hue values to Bees
-     * @param exitRadial a float array containing the following:
-     *   normalized x coordinate of the exit center,
-     *   normalized y coordinate of the exit center,
-     *   normalized horizontal semi-major axis of the exit,
-     *   normalized vertical semi-major axis of the exit
+     * Updates the centroid positions for the current frame.
+     * @param newPointMap a HashMap mapping six-digit hexadecimal RGB values
+     *   to Lists of normalized xy coordinates
+     * @param frameDims the dimensions of the inset frame
+     * @param frameOffset the offset of the inset frame
+     * @param exitRadial a float array containing the following (normalized
+     *   within the view window):
+     *   x coordinate of the exit center,
+     *   y coordinate of the exit center,
+     *   horizontal semi-major axis of the exit,
+     *   vertical semi-major axis of the exit
      * @param movieDims the dimensions of the video
      * @param movieOffset the offset of the video
      * @param time timestamp of the current frame
      */
-    public void updateBeePositions(
-        processing.core.PImage blobImg,
+    public void trackCentroids(
+        HashMap<Integer, List<float[]>> newPointMap,
         int[] frameDims,
         int[] frameOffset,
-        HashMap<Integer, Cluster> clusters,
-        processing.data.IntList colors,
-        HashMap<Float, Bee> bees,
         float[] exitRadial,
         int[] movieDims,
         int[] movieOffset,
         float time
     ) {
-        int beeX, beeY;
-        float hueVal;
-        Bee bee;
-        double beeDistance, radius;
-        Cluster cluster;
+        List<float[]> newPoints = new ArrayList<>();
+        List<float[]> oldPoints = new ArrayList<>();
+        List<Float> departures, arrivals;
+        IntList checkedIndicesOld = new IntList();
+        IntList checkedIndicesNew = new IntList();
+        float minDist;
+        float[] point;
+        float[][] distances;
+        int oldX, oldY, newX, newY, i, j, k, numPairs, minI, minJ;
+        int[][] validPairs = null;
+        double rSquared;
+        boolean isOldPointInExit, isNewPointInExit;
 
         //exit center coordinates
         float[] exitXY = new float[2];
@@ -199,99 +86,200 @@ public class TrackingUtils {
         float[] semiMajAxes = new float[2];
         semiMajAxes[0] = exitRadial[2]*movieDims[0];
         semiMajAxes[1] = exitRadial[3]*movieDims[1];
-        radius = Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[1], 2);
+        rSquared = Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[1], 2);
 
-        //create list to track bees that are not in the current frame
-        List<Float> missingBees = new java.util.LinkedList<>(bees.keySet());
+        for(int color : colors) {
+        	oldPoints.clear();
+            newPoints.clear();
 
-        parent.colorMode(PConstants.HSB, 255);
+            checkedIndicesOld.clear();
+            checkedIndicesNew.clear();
 
-        blobImg.loadPixels();
+            oldPoints.addAll(allPoints.get(color));
+            newPoints.addAll(newPointMap.get(color));
 
-        //iterate through clusters
-        Iterator<Integer> keyIter = clusters.keySet().iterator();
-        Integer key;
-        while(keyIter.hasNext()) {
-            key = keyIter.next();
+            k = 0;
 
-            cluster = clusters.get(key);
+        	if(debug) {
+        		PApplet.println(String.format(
+					"---checking blobs colored %06x---\n%s %d\n%s %d",
+					color,
+					"points in last frame:",
+					oldPoints.size(),
+					"points in current frame:",
+					newPoints.size()
+				));
+        	}
 
-            hueVal = parent.hue(key);
+            if(oldPoints.size() > 0 && newPoints.size() > 0) {
+                distances = new float[oldPoints.size()][newPoints.size()];
 
-            //bee is found; remove from list of missing bees
-            missingBees.remove(hueVal);
+                //calc distances between all old and all new points
+                i = 0;
+                for(float[] oldPoint : oldPoints) {
+                    oldX = (int)(oldPoint[0]*frameDims[0]+frameOffset[0]);
+                    oldY = (int)(oldPoint[1]*frameDims[1]+frameOffset[1]);
 
-            bee = bees.get(hueVal);
-            beeX = (int)(cluster.getX()*frameDims[0]+frameOffset[0]);
-            beeY = (int)(cluster.getY()*frameDims[1]+frameOffset[1]);
+                    j = 0;
+                    for(float[] newPoint : newPoints) {
+                        newX = (int)(newPoint[0]*frameDims[0]+frameOffset[0]);
+                        newY = (int)(newPoint[1]*frameDims[1]+frameOffset[1]);
 
-            beeDistance = Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2);
+                        distances[i][j] = (float)Math.pow(Math.pow(oldX - newX, 2) +
+                            Math.pow(oldY - newY, 2), 0.5);
 
-            if(debug) {
-                PApplet.println(String.format("exit: (%d, %d), radius^2: %f",
-                    (int)exitXY[0], (int)exitXY[1], radius));
-                PApplet.println(String.format("bee: (%d, %d), distance^2: %f",
-                    beeX, beeY, beeDistance));
-            }
-
-            //if current bee position within exit
-            if(beeDistance < radius) {
-                //if bee was not previously visible then bee has left hive
-                if(!bee.isVisible()) {
-                    if(debug) {
-                        parent.println(String.format(
-                            "departure detected for bee 0x%06x @ %fs",
-                            key,
-                            time
-                        ));
+                        j++;
                     }
 
-                    bee.addDepartureTime(time);
+                    i++;
                 }
-            }
 
-            //update bee position
-            bee.setX(beeX);
-            bee.setY(beeY);
+                minI = minJ = -1;
 
-            bee.setVisible(true);
-        }
+                numPairs = (
+                    oldPoints.size() > newPoints.size() ?
+                    newPoints.size() :
+                    oldPoints.size()
+                );
+                validPairs = new int[numPairs][2];
 
-        //check tracked bees that are not in current frame
-        for(Float hue : missingBees) {
-            bee = bees.get(hue);
+                //until all valid old and new point pairs have been assigned
+                while(checkedIndicesOld.size() < numPairs) {
+                    minDist = Float.MAX_VALUE;
 
-            //only care about bees that were previously visible
-            if(bee.isVisible()) {
-                beeX = bee.getX();
-                beeY = bee.getY();
-
-                //if last known position within exit, bee has entered hive
-                if(Math.pow(beeX-exitXY[0], 2) + Math.pow(beeY-exitXY[1], 2) <
-                    radius)
-                {
-                    if(debug) {
-                        int color = 0;
-                        keyIter = clusters.keySet().iterator();
-                        while(keyIter.hasNext()) {
-                            key = keyIter.next();
-                            if(parent.hue(key) == hue) {
-                                color = key;
-                                break;
+                    //pair points with minimum distance
+                    for(i = 0; i < oldPoints.size(); i++) {
+                        //oldPoints.get(i) not already paired
+                        if(!checkedIndicesOld.hasValue(i)) {
+                            for(j = 0; j < newPoints.size(); j++) {
+                                //newPoints.get(j) not already paired
+                                if(!checkedIndicesNew.hasValue(j)) {
+                                    if(distances[i][j] < minDist) {
+                                        minI = i;
+                                        minJ = j;
+                                        minDist = distances[i][j];
+                                    }
+                                }
                             }
                         }
-                        parent.println(String.format(
-                            "arrival detected for bee 0x%06x @ %fs",
-                            color,
-                            time
-                        ));
                     }
-    
-                    bee.addArrivalTime(time);
+
+                    //mark paired points
+                    checkedIndicesOld.append(minI);
+                    checkedIndicesNew.append(minJ);
+
+                    //mark pairs with valid distance
+                    if(minDist < distThreshold) {
+                        validPairs[k][0] = minI;
+                        validPairs[k][1] = minJ;
+
+                        k++;
+
+                        if(debug) {
+                        	PApplet.println(String.format("points (%d, %d) paired", minI, minJ));
+                        }
+                    }
+
+                    //if the closest pair of points is not within the distance
+                    //  threshold, no other points will be, so break loop
+                    else {
+                        break;
+                    }
                 }
-    
-                bee.setVisible(false);
             }
+
+            if(debug) {
+            	PApplet.println(String.format("%d point(s) paired", k));
+            }
+
+            departures = departureTimes.get(color);
+            arrivals = arrivalTimes.get(color);
+//TODO figure out why transitions across exit circumference aren't registering
+            //check all paired points
+            for(i = 0; i < k; i++) {
+                point = oldPoints.get(validPairs[i][0]);
+
+                oldX = (int)(point[0]*frameDims[0]+frameOffset[0]);
+                oldY = (int)(point[1]*frameDims[1]+frameOffset[1]);
+
+                point = newPoints.get(validPairs[i][1]);
+
+                newX = (int)(point[0]*frameDims[0]+frameOffset[0]);
+                newY = (int)(point[1]*frameDims[1]+frameOffset[1]);
+
+                isOldPointInExit = rSquared > Math.pow(oldX - exitXY[0], 2) + Math.pow(oldY - exitXY[1], 2);
+                isNewPointInExit = rSquared > Math.pow(newX - exitXY[0], 2) + Math.pow(newY - exitXY[1], 2);
+
+                if(debug) {
+                	PApplet.println(String.format(
+            			"pair %d:\n%s %d %s %s\n%s %d %s %s",
+            			"old point",
+            			i,
+            			validPairs[i][0],
+            			"is inside exit:",
+            			(isOldPointInExit ? "true" : "false"),
+            			"new point",
+            			validPairs[i][1],
+            			"is inside exit:",
+            			(isNewPointInExit ? "true" : "false")
+        			));
+                
+	                //line to exit center
+	                parent.strokeWeight(2);
+	                parent.stroke(255, 0, 255);
+	                parent.line(newX, newY, exitXY[0], exitXY[1]);
+                }
+
+                if(isOldPointInExit) {
+                    if(!isNewPointInExit) {
+                        departures.add(time);
+                    }
+                }
+
+                else {
+                    if(isNewPointInExit) {
+                        arrivals.add(time);
+                    }
+                }
+            }
+            
+            //store current points for next frame
+            allPoints.get(color).clear();
+            allPoints.get(color).addAll(newPoints);
         }
+    }
+
+    /**
+     * Sets the colors to track.
+     * @param newColors an IntList containing six-digit hexadecimal RGB values
+     */
+    public void setColors(IntList newColors) {
+        colors.clear();
+        allPoints.clear();
+        departureTimes.clear();
+        arrivalTimes.clear();
+
+        for(int color : newColors) {
+            colors.append(color);
+
+            allPoints.put(color, new LinkedList<float[]>());
+
+            departureTimes.put(color, new LinkedList<Float>());
+            arrivalTimes.put(color, new LinkedList<Float>());
+        }
+    }
+
+    /**
+     * Retrieves the departure and arrival timestamps for all tracked colors.
+     * @return an array containing HashMaps mapping six-digit hexadecimal RGB
+     *   values to Lists of floating point timestamps
+     */
+    public ArrayList<HashMap<Integer, List<Float>>> getTimeStamps() {
+    	ArrayList<HashMap<Integer, List<Float>>> result = new ArrayList<>();
+        result.add(departureTimes);
+        result.add(arrivalTimes);
+        result.trimToSize();
+
+        return result;
     }
 }

@@ -225,8 +225,9 @@ public class UIControl {
 
     /**
      * Toggles the visibility of the "threshold" slider.
+     * @param visible the visibility state
      */
-    public void toggleSlider() {
-        slider.setVisible(!slider.isVisible());
+    public void setSliderVisibility(boolean visible) {
+        slider.setVisible(visible);
     }
 }

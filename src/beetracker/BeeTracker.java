@@ -594,7 +594,7 @@ public class BeeTracker extends PApplet {
                 uic.toggleSetup();
                 uic.toggleOpenButton();
                 uic.togglePlay();
-                uic.toggleSlider();
+                uic.setSliderVisibility(true);
 
                 log.append("loaded ").append(videoPath).append('\n');
                 log.flush();
@@ -662,14 +662,22 @@ public class BeeTracker extends PApplet {
                 uic.setPlayState(isPlaying);
 
                 if(isPlaying) {
-                    movie.play();
+                	if(debug) {
+                		println("starting playback...");
+                	}
+
+                	movie.play();
                 }
 
                 else {
-                    movie.pause();
+                	if(debug) {
+                		println("pausing playback...");
+                	}
+
+                	movie.pause();
                 }
 
-                uic.toggleSlider();
+                uic.toggleSlider(!isPlaying);
             }
 
             break;
@@ -678,7 +686,11 @@ public class BeeTracker extends PApplet {
             if(MessageDialogue.stopButtonWarning(this) ==
                 javax.swing.JOptionPane.YES_OPTION)
             {
-                stopPlayback();
+            	if(debug) {
+            		println("stopping playback...");
+            	}
+
+            	stopPlayback();
             }
 
             break;
@@ -743,7 +755,7 @@ public class BeeTracker extends PApplet {
 
         uic.toggleOpenButton();
         uic.togglePlay();
-        uic.toggleSlider();
+        uic.toggleSlider(false);
 
         if(debug) {
             uic.setFilterToggleVisibility(false);

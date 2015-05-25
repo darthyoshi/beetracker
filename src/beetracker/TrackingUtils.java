@@ -16,7 +16,7 @@ import processing.core.PApplet;
 import processing.data.IntList;
 
 public class TrackingUtils {
-	private final BeeTracker parent;
+    private final BeeTracker parent;
     private final boolean debug;
     private final HashMap<Integer, List<float[]>> allPoints;
     private final HashMap<Integer, List<Float>> departureTimes, arrivalTimes;
@@ -68,27 +68,23 @@ public class TrackingUtils {
         List<Float> departures, arrivals;
         IntList checkedIndicesOld = new IntList();
         IntList checkedIndicesNew = new IntList();
-        float minDist;
+        float oldX, oldY, newX, newY, minDist;
         float[] point;
         float[][] distances;
-        int oldX, oldY, newX, newY, i, j, k, numPairs, minI, minJ;
+        int i, j, k, numPairs, minI, minJ;
         int[][] validPairs = null;
-        double rSquared;
         boolean isOldPointInExit, isNewPointInExit;
 
-        //exit center coordinates
-        float[] exitXY = new float[2];
-        exitXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
-        exitXY[1] = exitRadial[1]*movieDims[1]+movieOffset[1];
+        float[] exitCenterXY = new float[2];
+        exitCenterXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
+        exitCenterXY[1] = exitRadial[1]*movieDims[1]+movieOffset[1];
 
-        //exit axes
-        float[] semiMajAxes = new float[2];
-        semiMajAxes[0] = exitRadial[2]*movieDims[0];
-        semiMajAxes[1] = exitRadial[3]*movieDims[1];
-        rSquared = Math.pow(semiMajAxes[0], 2) + Math.pow(semiMajAxes[1], 2);
+        float[] exitAxes = new float[2];
+        exitAxes[0] = exitRadial[2]*movieDims[0];
+        exitAxes[1] = exitRadial[3]*movieDims[1];
 
         for(int color : colors) {
-        	oldPoints.clear();
+          oldPoints.clear();
             newPoints.clear();
 
             checkedIndicesOld.clear();
@@ -99,16 +95,16 @@ public class TrackingUtils {
 
             k = 0;
 
-        	if(debug) {
-        		PApplet.println(String.format(
-					"---checking blobs colored %06x---\n%s %d\n%s %d",
-					color,
-					"points in last frame:",
-					oldPoints.size(),
-					"points in current frame:",
-					newPoints.size()
-				));
-        	}
+            if(debug) {
+                PApplet.println(String.format(
+                    "---checking blobs colored %06x---\n%s %d\n%s %d",
+                    color,
+                    "points in last frame:",
+                    oldPoints.size(),
+                    "points in current frame:",
+                    newPoints.size()
+                ));
+            }
 
             if(oldPoints.size() > 0 && newPoints.size() > 0) {
                 distances = new float[oldPoints.size()][newPoints.size()];
@@ -116,13 +112,13 @@ public class TrackingUtils {
                 //calc distances between all old and all new points
                 i = 0;
                 for(float[] oldPoint : oldPoints) {
-                    oldX = (int)(oldPoint[0]*frameDims[0]+frameOffset[0]);
-                    oldY = (int)(oldPoint[1]*frameDims[1]+frameOffset[1]);
+                    oldX = oldPoint[0]*frameDims[0]+frameOffset[0];
+                    oldY = oldPoint[1]*frameDims[1]+frameOffset[1];
 
                     j = 0;
                     for(float[] newPoint : newPoints) {
-                        newX = (int)(newPoint[0]*frameDims[0]+frameOffset[0]);
-                        newY = (int)(newPoint[1]*frameDims[1]+frameOffset[1]);
+                        newX = newPoint[0]*frameDims[0]+frameOffset[0];
+                        newY = newPoint[1]*frameDims[1]+frameOffset[1];
 
                         distances[i][j] = (float)Math.pow(Math.pow(oldX - newX, 2) +
                             Math.pow(oldY - newY, 2), 0.5);
@@ -175,7 +171,7 @@ public class TrackingUtils {
                         k++;
 
                         if(debug) {
-                        	PApplet.println(String.format("points (%d, %d) paired", minI, minJ));
+                            PApplet.println(String.format("points (%d, %d) paired", minI, minJ));
                         }
                     }
 
@@ -188,7 +184,7 @@ public class TrackingUtils {
             }
 
             if(debug) {
-            	PApplet.println(String.format("%d point(s) paired", k));
+                PApplet.println(String.format("%d point(s) paired", k));
             }
 
             departures = departureTimes.get(color);
@@ -198,36 +194,35 @@ public class TrackingUtils {
             for(i = 0; i < k; i++) {
                 point = oldPoints.get(validPairs[i][0]);
 
-                oldX = (int)(point[0]*frameDims[0]+frameOffset[0]);
-                oldY = (int)(point[1]*frameDims[1]+frameOffset[1]);
+                oldX = point[0]*frameDims[0]+frameOffset[0];
+                oldY = point[1]*frameDims[1]+frameOffset[1];
 
                 point = newPoints.get(validPairs[i][1]);
 
-                newX = (int)(point[0]*frameDims[0]+frameOffset[0]);
-                newY = (int)(point[1]*frameDims[1]+frameOffset[1]);
+                newX = point[0]*frameDims[0]+frameOffset[0];
+                newY = point[1]*frameDims[1]+frameOffset[1];
 
-                isOldPointInExit = rSquared > Math.pow(oldX - exitXY[0], 2) + Math.pow(oldY - exitXY[1], 2);
-                isNewPointInExit = rSquared > Math.pow(newX - exitXY[0], 2) + Math.pow(newY - exitXY[1], 2);
+                isOldPointInExit = isInExit(oldX, oldY, exitCenterXY, exitAxes);
+                isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
 
-                //TODO figure out why transitions across exit circumference aren't registering
                 if(debug) {
-                	PApplet.println(String.format(
-            			"pair %d:\n%s %d %s %s\n%s %d %s %s",
-            			i,
-            			"old point",
-            			validPairs[i][0],
-            			"is inside exit:",
-            			(isOldPointInExit ? "true" : "false"),
-            			"new point",
-            			validPairs[i][1],
-            			"is inside exit:",
-            			(isNewPointInExit ? "true" : "false")
-        			));
+                    PApplet.println(String.format(
+                        "pair %d:\n%s %d %s %s\n%s %d %s %s",
+                        i,
+                        "old point",
+                        validPairs[i][0],
+                        "is inside exit:",
+                        (isOldPointInExit ? "true" : "false"),
+                        "new point",
+                        validPairs[i][1],
+                        "is inside exit:",
+                        (isNewPointInExit ? "true" : "false")
+                    ));
 
-	                //line to exit center
-	                parent.strokeWeight(2);
-	                parent.stroke(255, 0, 255);
-	                parent.line(newX, newY, exitXY[0], exitXY[1]);
+                    //line from point to exit center
+                    parent.strokeWeight(1);
+                    parent.stroke(0xff000000 + color);
+                    parent.line(newX, newY, exitCenterXY[0], exitCenterXY[1]);
                 }
 
                 if(isOldPointInExit) {
@@ -275,11 +270,27 @@ public class TrackingUtils {
      *   values to Lists of floating point timestamps
      */
     public ArrayList<HashMap<Integer, List<Float>>> getTimeStamps() {
-    	ArrayList<HashMap<Integer, List<Float>>> result = new ArrayList<>();
+      ArrayList<HashMap<Integer, List<Float>>> result = new ArrayList<>();
         result.add(departureTimes);
         result.add(arrivalTimes);
         result.trimToSize();
 
         return result;
+    }
+    
+    /**
+     * Determines if a point is within the exit.
+     * @param x the x coordinate of the point in pixels
+     * @param y the y coordinate of the point in pixels
+     * @param exitXY the coordinates of the exit center in pixels
+     * @param axes the axes of the exit in pixels
+     * @return true if (dX/A)^2 + (dY/B)^2 <= 1, where
+     *   dX is the x axis distance between the point and the exit center
+     *   dY is the y axis distance between the point and the exit center
+     *   A is the ellipse x axis
+     *   B is the ellipse y axis
+     */
+    private boolean isInExit(float x, float y, float[] exitXY, float[] axes) {
+        return Math.pow((x - exitXY[0])/axes[0], 2) + Math.pow((y - exitXY[1])/axes[1], 2) <= 1;
     }
 }

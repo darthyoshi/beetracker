@@ -186,10 +186,11 @@ public class BeeTracker extends PApplet {
                 }
             }
 
-        	List<HashMap<Integer, List<Float>>> timeStamps = null;
+            List<HashMap<Integer, List<Float>>> timeStamps = null;
 
             if(debug) {
-                println(String.format("---------BEGIN FRAME (%.2fs)---------",movie.time()));
+                println(String.format("---------BEGIN FRAME (%.2fs)---------",
+                    movie.time()));
             }
 
             movieDims = scaledDims(
@@ -284,7 +285,7 @@ public class BeeTracker extends PApplet {
                     }
                     fill(0xffffffff);
                     text(
-                        String.format("total arr: %d, total dep: %d", arr, dep),
+                        "total arr: " + arr + ", total dep: " + dep,
                         width*.5f,
                         height - 25
                     );
@@ -565,9 +566,7 @@ public class BeeTracker extends PApplet {
      * @param event the initiating ControlEvent
      */
     public void controlEvent(ControlEvent event) {
-        String eventName = event.getName();
-
-        switch(eventName) {
+        switch(event.getName()) {
         case "openButton":
             File video = VideoBrowser.getVideoFile(this, currentDir);
 
@@ -662,19 +661,19 @@ public class BeeTracker extends PApplet {
                 uic.setPlayState(isPlaying);
 
                 if(isPlaying) {
-                	if(debug) {
-                		println("starting playback...");
-                	}
+                    if(debug) {
+                        println("starting playback...");
+                    }
 
-                	movie.play();
+                    movie.play();
                 }
 
                 else {
-                	if(debug) {
-                		println("pausing playback...");
-                	}
+                    if(debug) {
+                        println("pausing playback...");
+                    }
 
-                	movie.pause();
+                    movie.pause();
                 }
 
                 uic.toggleSlider(!isPlaying);
@@ -686,11 +685,11 @@ public class BeeTracker extends PApplet {
             if(MessageDialogue.stopButtonWarning(this) ==
                 javax.swing.JOptionPane.YES_OPTION)
             {
-            	if(debug) {
-            		println("stopping playback...");
-            	}
+                if(debug) {
+                    println("stopping playback...");
+                }
 
-            	stopPlayback();
+                stopPlayback();
             }
 
             break;
@@ -699,11 +698,11 @@ public class BeeTracker extends PApplet {
             listVal = (int)event.getValue();
 
             if(debug) {
-                println(String.format("%d %s", listVal,
+                println(listVal + " " +
                     (
                         listVal > -1 ?
                         String.format("%06x",colors.get(listVal)) :
-                        "new color")
+                        "new color"
                     )
                 );
             }
@@ -732,8 +731,13 @@ public class BeeTracker extends PApplet {
 
         case "thresholdSlider":
             if(bdu != null) {
-                bdu.setThreshold((int)event.getValue());
+                bdu.setThreshold(uic.getThresholdType(), (int)event.getValue());
             }
+
+            break;
+
+        case "radioButtons":
+            uic.setSliderValue(bdu.getThresholdValue((int)event.getValue()));
 
             break;
         }
@@ -990,11 +994,14 @@ public class BeeTracker extends PApplet {
             isDrag = false;
 
             if(debug) {
-                println(String.format(
-                    "inset: %f, %f, %f, %f\nexit: %f, %f, %f, %f\n",
-                    insetBox[0], insetBox[1], insetBox[2], insetBox[3],
-                    exitRadial[0], exitRadial[1], exitRadial[2], exitRadial[3]
-                ));
+                println(
+                    "inset: " +
+                    insetBox[0] + ", " + insetBox[1] + ", " +
+                    insetBox[2] + ", " + insetBox[3] +
+                    "\nexit: " +
+                    exitRadial[0] + ", " + exitRadial[1] + ", " +
+                    exitRadial[2] + ", " + exitRadial[3]
+                );
             }
         }
     }

@@ -21,8 +21,8 @@ import processing.core.PImage;
 import processing.data.IntList;
 
 public class BlobDetectionUtils {
-    private int hueThreshold = 10, satThreshold = 50, lumThreshold = 30;
-    private static final int filterRadius = 3;
+    private int hueThreshold = 20, satThreshold = 60, lumThreshold = 20;
+    private static final int filterRadius = 5;
     private final BlobDetection bd;
     private IntList blobColors;
 
@@ -251,7 +251,7 @@ public class BlobDetectionUtils {
             }
 
             if(debug && added) {
-                PApplet.println(String.format("%f, %f", point[0], point[1]));
+                PApplet.println(point[0] + ", " + point[1]);
             }
         }
 
@@ -274,13 +274,26 @@ public class BlobDetectionUtils {
 
     /**
      * Sets the filter threshold values.
+     * @param type the threshold type:
+     *   0 = hue
+     *   1 = saturation
+     *   2 = luminosity
      * @param threshold the new threshold value
      */
-    public void setThreshold(int threshold) {
-        //TODO independent adjustment? only luminosity/saturation?
-        satThreshold = 255 - threshold;
-        lumThreshold = 255 - threshold;
-        hueThreshold = lumThreshold/2;
+    public void setThreshold(int type, int threshold) {
+        switch(type) {
+        case 0:
+            hueThreshold = threshold;
+            break;
+
+        case 1:
+            satThreshold = threshold;
+            break;
+
+        case 2:
+            lumThreshold = threshold;
+            break;
+        }
     }
 
     /**
@@ -362,5 +375,32 @@ public class BlobDetectionUtils {
         }
 
         img.updatePixels();
+    }
+
+    /**
+     * Retrieves the value of the specified threshold.
+     * @param type the threshold type:
+     *   0 = hue
+     *   1 = saturation
+     *   2 = luminosity
+     * @return an integer from 0-255
+     */
+    public int getThresholdValue(int type) {
+        int result = 0;
+        switch(type) {
+        case 0:
+            result = hueThreshold;
+            break;
+
+        case 1:
+            result = satThreshold;
+            break;
+
+        case 2:
+            result = lumThreshold;
+            break;
+        }
+
+        return result;
     }
 }

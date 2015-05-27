@@ -171,7 +171,7 @@ public class TrackingUtils {
                         k++;
 
                         if(debug) {
-                            PApplet.println(String.format("points (%d, %d) paired", minI, minJ));
+                            PApplet.println("points (" + minI + " , " + minJ + ") paired");
                         }
                     }
 
@@ -184,7 +184,7 @@ public class TrackingUtils {
             }
 
             if(debug) {
-                PApplet.println(String.format("%d point(s) paired", k));
+                PApplet.println(k + " point(s) paired");
             }
 
             departures = departureTimes.get(color);
@@ -207,15 +207,9 @@ public class TrackingUtils {
 
                 if(debug) {
                     PApplet.println(String.format(
-                        "pair %d:\n%s %d %s %s\n%s %d %s %s",
-                        i,
-                        "old point",
-                        validPairs[i][0],
-                        "is inside exit:",
-                        (isOldPointInExit ? "true" : "false"),
-                        "new point",
-                        validPairs[i][1],
-                        "is inside exit:",
+                        "pair " + i + ":\nold point " + validPairs[i][0] +
+                        " is inside exit: " + (isOldPointInExit ? "true" : "false") +
+                        "\nnew point " + validPairs[i][1] +" is inside exit: " +
                         (isNewPointInExit ? "true" : "false")
                     ));
 

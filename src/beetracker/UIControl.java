@@ -13,7 +13,7 @@ import controlP5.ControlP5Constants;
 import controlP5.DropdownList;
 import controlP5.Group;
 import controlP5.RadioButton;
-import controlP5.Slider;
+import controlP5.Range;
 import controlP5.Toggle;
 
 import processing.core.PImage;
@@ -24,16 +24,16 @@ public class UIControl {
     private final Toggle selectToggle, filterToggle;
     private final Button playButton, openButton;
     private final PImage[] playIcons;
-    private final Slider slider;
+    private final Range range;
     private final RadioButton radioButtons;
-
+    
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
 
     /**
      * Class constructor.
      * @param parent the instantiating PApplet object
-     * @param cp5 the ControlP5 object
+     * @param cp5 the ControlP5 object\
      */
     public UIControl(processing.core.PApplet parent, ControlP5 cp5) {
         cp5.setFont(cp5.getFont().getFont(), 15);
@@ -128,32 +128,36 @@ public class UIControl {
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        slider = cp5.addSlider("slider").setTriggerEvent(Slider.RELEASE);
-        slider.setSize(255, 15)
-            .setRange(0, 255)
-            .changeValue(20f)
-            .setPosition(200, height - 40)
-            .setCaptionLabel("Threshold")
-            .getCaptionLabel()
-            .align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE)
-            .setPaddingX(5)
-            .setPaddingY(6);
-
         Toggle tmp = cp5.addToggle("Hue").setBroadcast(false).toggle();
         tmp.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
         radioButtons = cp5.addRadioButton("radioButtons")
-            .setPosition(200, height - 20)
+            .setPosition(200, parent.height - 20)
             .setItemsPerRow(3)
             .setSpacingColumn(50)
-            .addItem(toggle, 0)
+            .addItem(tmp, 0)
             .addItem("Sat", 1)
-            .addItem("Lum", 2)
+            .addItem("Val", 2)
             .setSize(15,15)
             .setNoneSelectedAllowed(false)
             .setGroup(thresholdGroup);
+
+        range = cp5.addRange("thresholdSlider").setBroadcast(false);
+        range.setSize(265, 15)
+            .setRange(0, 255)
+            .setHandleSize(5)
+            .setRangeValues(0f, 40f)
+            .setPosition(200, parent.height - 40)
+            .setCaptionLabel("Threshold")
+            .setGroup(thresholdGroup)
+            .setValueLabel("")
+            .setBroadcast(true)
+            .getCaptionLabel()
+            .align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE)
+            .setPaddingX(5)
+            .setPaddingY(6);
     }
 
     /**
@@ -180,7 +184,6 @@ public class UIControl {
         String[] newLbls = new String[oldLbls.length-1];
 
         int j = 0;
-
         for(int i = 0; i < oldLbls.length && j < newLbls.length; i++) {
             if(!oldLbls[i][0].equalsIgnoreCase(lbl)) {
                 newLbls[j] = oldLbls[i][0];
@@ -252,14 +255,29 @@ public class UIControl {
     }
 
     /**
-     * Updates the slider value.
-     * @param val the new slider value
+     * Updates the slider values.
+     * @param val the new slider values
      */
-    public void setSliderValue(int val) {
-        slider.changeValue(val);
+    public void setSliderValues(int[] val) {
+        range.setBroadcast(false).setRangeValues(val[0], val[1]).setBroadcast(true);
     }
-    
+
+    /**
+     * Retrieves the currently selected threshold.
+     * @return the current radio button integer value:
+     *   0 = hue
+     *   1 = saturation
+     *   2 = luminosity
+     */
     public int getThresholdType() {
         return (int)radioButtons.getValue();
+    }
+
+    /**
+     * Sets the leftmost slider label.
+     * @param lbl the new label
+     */
+    public void setSliderLabel(String lbl) {
+        range.setValueLabel(lbl);
     }
 }

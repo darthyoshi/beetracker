@@ -8,10 +8,6 @@
 
 package beetracker;
 
-import java.awt.Color;
-import javax.swing.JColorChooser;
-import processing.core.PApplet;
-
 public class ColorPicker {
     /**
      * Displays a color picker.
@@ -19,8 +15,9 @@ public class ColorPicker {
      * @return the six-digit hexadecimal RGB value of the selected color or 0
      *   for a non-valid selection
      */
-    public static int getColor(PApplet parent) {
-        Color newColor = JColorChooser.showDialog(parent, "Select Color", Color.BLACK);
+    public static int getColor(processing.core.PApplet parent) {
+        java.awt.Color newColor = javax.swing.JColorChooser
+            .showDialog(parent, "Select Color", java.awt.Color.BLACK);
         int result = 0;
 
         if(newColor != null) {

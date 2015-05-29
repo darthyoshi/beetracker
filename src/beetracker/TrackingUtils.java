@@ -16,11 +16,10 @@ import processing.core.PApplet;
 import processing.data.IntList;
 
 public class TrackingUtils {
-    private final BeeTracker parent;
     private final boolean debug;
-    private final HashMap<Integer, List<float[]>> allPoints;
-    private final HashMap<Integer, List<Float>> departureTimes, arrivalTimes;
-    private final IntList colors;
+    private HashMap<Integer, List<float[]>> allPoints;
+    private HashMap<Integer, List<Float>> departureTimes, arrivalTimes;
+    private IntList colors;
     private final static float distThreshold = 10f;
 
     /**
@@ -28,8 +27,7 @@ public class TrackingUtils {
      * @param parent the instantiating PApplet
      * @param debug whether or not debug mode is enabled
      */
-    public TrackingUtils(BeeTracker parent, boolean debug) {
-        this.parent = parent;
+    public TrackingUtils(boolean debug) {
         this.debug = debug;
 
         allPoints = new HashMap<>();
@@ -63,11 +61,9 @@ public class TrackingUtils {
         int[] movieOffset,
         float time
     ) {
-        List<float[]> newPoints = new ArrayList<>();
-        List<float[]> oldPoints = new ArrayList<>();
+        List<float[]> newPoints, oldPoints;
         List<Float> departures, arrivals;
-        IntList checkedIndicesOld = new IntList();
-        IntList checkedIndicesNew = new IntList();
+        IntList checkedIndicesOld, checkedIndicesNew;
         float oldX, oldY, newX, newY, minDist;
         float[] point;
         float[][] distances;
@@ -84,14 +80,11 @@ public class TrackingUtils {
         exitAxes[1] = exitRadial[3]*movieDims[1];
 
         for(int color : colors) {
-          oldPoints.clear();
-            newPoints.clear();
+            oldPoints = allPoints.get(color);
+            newPoints = newPointMap.get(color);
 
-            checkedIndicesOld.clear();
-            checkedIndicesNew.clear();
-
-            oldPoints.addAll(allPoints.get(color));
-            newPoints.addAll(newPointMap.get(color));
+            checkedIndicesOld = new IntList(oldPoints.size());
+            checkedIndicesNew = new IntList(newPoints.size());
 
             k = 0;
 
@@ -112,16 +105,10 @@ public class TrackingUtils {
                 //calc distances between all old and all new points
                 i = 0;
                 for(float[] oldPoint : oldPoints) {
-                    oldX = oldPoint[0]*frameDims[0]+frameOffset[0];
-                    oldY = oldPoint[1]*frameDims[1]+frameOffset[1];
-
                     j = 0;
                     for(float[] newPoint : newPoints) {
-                        newX = newPoint[0]*frameDims[0]+frameOffset[0];
-                        newY = newPoint[1]*frameDims[1]+frameOffset[1];
-
-                        distances[i][j] = (float)Math.pow(Math.pow(oldX - newX, 2) +
-                            Math.pow(oldY - newY, 2), 0.5);
+                        distances[i][j] = (float)Math.pow(Math.pow(oldPoint[0] - newPoint[0], 2) +
+                            Math.pow(oldPoint[1] - newPoint[1], 2), 0.5);
 
                         j++;
                     }
@@ -171,7 +158,7 @@ public class TrackingUtils {
                         k++;
 
                         if(debug) {
-                            PApplet.println("points (" + minI + " , " + minJ + ") paired");
+                            PApplet.println("points (" + minI + ", " + minJ + ") paired");
                         }
                     }
 
@@ -212,11 +199,6 @@ public class TrackingUtils {
                         "\nnew point " + validPairs[i][1] +" is inside exit: " +
                         (isNewPointInExit ? "true" : "false")
                     ));
-
-                    //line from point to exit center
-                    parent.strokeWeight(1);
-                    parent.stroke(0xff000000 + color);
-                    parent.line(newX, newY, exitCenterXY[0], exitCenterXY[1]);
                 }
 
                 if(isOldPointInExit) {
@@ -233,8 +215,7 @@ public class TrackingUtils {
             }
 
             //store current points for next frame
-            allPoints.get(color).clear();
-            allPoints.get(color).addAll(newPoints);
+            allPoints.put(color, newPoints);
         }
     }
 
@@ -243,10 +224,10 @@ public class TrackingUtils {
      * @param newColors an IntList containing six-digit hexadecimal RGB values
      */
     public void setColors(IntList newColors) {
-        colors.clear();
-        allPoints.clear();
-        departureTimes.clear();
-        arrivalTimes.clear();
+        colors = new IntList();
+        allPoints = new HashMap<>();
+        departureTimes = new HashMap<>();
+        arrivalTimes = new HashMap<>();
 
         for(int color : newColors) {
             colors.append(color);
@@ -264,10 +245,9 @@ public class TrackingUtils {
      *   values to Lists of floating point timestamps
      */
     public ArrayList<HashMap<Integer, List<Float>>> getTimeStamps() {
-      ArrayList<HashMap<Integer, List<Float>>> result = new ArrayList<>();
+        ArrayList<HashMap<Integer, List<Float>>> result = new ArrayList<>(2);
         result.add(departureTimes);
         result.add(arrivalTimes);
-        result.trimToSize();
 
         return result;
     }
@@ -279,10 +259,10 @@ public class TrackingUtils {
      * @param exitXY the coordinates of the exit center in pixels
      * @param axes the axes of the exit in pixels
      * @return true if (dX/A)^2 + (dY/B)^2 <= 1, where
-     *   dX is the x axis distance between the point and the exit center
-     *   dY is the y axis distance between the point and the exit center
-     *   A is the ellipse x axis
-     *   B is the ellipse y axis
+     *   dX is the distance between the point and the exit center on the x axis
+     *   dY is the distance between the point and the exit center on the y axis
+     *   A is the length of the ellipse along the x axis
+     *   B is the length of the ellipse along the y axis
      */
     private boolean isInExit(float x, float y, float[] exitXY, float[] axes) {
         return Math.pow((x - exitXY[0])/axes[0], 2) + Math.pow((y - exitXY[1])/axes[1], 2) <= 1;

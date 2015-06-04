@@ -19,21 +19,18 @@ public class TrackingUtils {
     private final boolean debug;
     private HashMap<Integer, List<float[]>> allPoints;
     private HashMap<Integer, List<Float>> departureTimes, arrivalTimes;
+    private HashMap<Integer, IntList> allTimeOuts;
     private IntList colors;
-    private final static float distThreshold = 10f;
+    private final static float distThreshold = 0.25f;
 
     /**
      * Class constructor.
-     * @param parent the instantiating PApplet
      * @param debug whether or not debug mode is enabled
      */
     public TrackingUtils(boolean debug) {
         this.debug = debug;
 
-        allPoints = new HashMap<>();
-        departureTimes = new HashMap<>();
-        arrivalTimes = new HashMap<>();
-        colors = new IntList();
+        initAll();
     }
 
     /**
@@ -63,7 +60,7 @@ public class TrackingUtils {
     ) {
         List<float[]> newPoints, oldPoints;
         List<Float> departures, arrivals;
-        IntList checkedIndicesOld, checkedIndicesNew;
+        IntList checkedIndicesOld, checkedIndicesNew, timeOuts;
         float oldX, oldY, newX, newY, minDist;
         float[] point;
         float[][] distances;
@@ -79,12 +76,13 @@ public class TrackingUtils {
         exitAxes[0] = exitRadial[2]*movieDims[0];
         exitAxes[1] = exitRadial[3]*movieDims[1];
 
-        for(int color : colors) {
+        for(int color : newPointMap.keySet()) {
             oldPoints = allPoints.get(color);
             newPoints = newPointMap.get(color);
+            timeOuts = allTimeOuts.get(color);
 
-            checkedIndicesOld = new IntList(oldPoints.size());
-            checkedIndicesNew = new IntList(newPoints.size());
+            checkedIndicesOld = new IntList();
+            checkedIndicesNew = new IntList();
 
             k = 0;
 
@@ -107,8 +105,11 @@ public class TrackingUtils {
                 for(float[] oldPoint : oldPoints) {
                     j = 0;
                     for(float[] newPoint : newPoints) {
-                        distances[i][j] = (float)Math.pow(Math.pow(oldPoint[0] - newPoint[0], 2) +
-                            Math.pow(oldPoint[1] - newPoint[1], 2), 0.5);
+                        oldX = oldPoint[0] - newPoint[0];
+                        oldY = oldPoint[1] - newPoint[1];
+
+                        distances[i][j] = (float)Math.pow(oldX*oldX + oldY*oldY,
+                            0.5);
 
                         j++;
                     }
@@ -214,8 +215,52 @@ public class TrackingUtils {
                 }
             }
 
-            //store current points for next frame
-            allPoints.put(color, newPoints);
+            //update old points for next frame
+            for(i = 0; i < k; i++) {
+                oldPoints.set(validPairs[i][0], newPoints.get(validPairs[i][1]));
+                newPoints.set(validPairs[i][1], null);
+                timeOuts.set(validPairs[i][0], -1);
+            }
+
+            //add new points for next frame
+            j = 1;
+            for(float[] newPoint : newPoints) {
+                if(newPoint != null) {
+                    oldPoints.add(newPoint);
+                    timeOuts.append(0);
+
+                    j++;
+                }
+            }
+
+            if(debug) {
+                PApplet.println(j + "\n" + timeOuts +"\nold points:");
+                for(float[] oldPoint : oldPoints) {
+                    PApplet.print("("+oldPoint[0]+" "+oldPoint[1]+")");
+                }
+                PApplet.println("\ntotal: "+oldPoints.size()+"\nnew points:");
+                for(float[] newPoint : newPoints) {
+                    if(newPoint != null) {
+                        PApplet.print("("+newPoint[0]+" "+newPoint[1]+")");
+                    }
+
+                    else {
+                        PApplet.print("(point is an old point)");
+                    }
+                }
+                PApplet.println("\ntotal: "+newPoints.size());
+            }
+
+            //update timeout values for old missing points
+            for(i = timeOuts.size() - j; i >= 0; i--) {
+                timeOuts.increment(i);
+
+                //remove points that have been missing for too long
+                if(timeOuts.get(i) > 5) {
+                    timeOuts.remove(i);
+                    oldPoints.remove(i);
+                }
+            }
         }
     }
 
@@ -224,34 +269,33 @@ public class TrackingUtils {
      * @param newColors an IntList containing six-digit hexadecimal RGB values
      */
     public void setColors(IntList newColors) {
-        colors = new IntList();
-        allPoints = new HashMap<>();
-        departureTimes = new HashMap<>();
-        arrivalTimes = new HashMap<>();
-
         for(int color : newColors) {
-            colors.append(color);
+            if(!colors.hasValue(color)) {
+                colors.append(color);
 
-            allPoints.put(color, new LinkedList<float[]>());
+                allPoints.put(color, new ArrayList<float[]>());
 
-            departureTimes.put(color, new LinkedList<Float>());
-            arrivalTimes.put(color, new LinkedList<Float>());
+                departureTimes.put(color, new LinkedList<Float>());
+                arrivalTimes.put(color, new LinkedList<Float>());
+
+                allTimeOuts.put(color, new IntList());
+            }
         }
     }
 
     /**
-     * Retrieves the departure and arrival timestamps for all tracked colors.
-     * @return an array containing HashMaps mapping six-digit hexadecimal RGB
-     *   values to Lists of floating point timestamps
+     * Retrieves the arrival and departure timestamps for all tracked colors.
+     * @return a HashMap mapping Strings to HashMaps mapping six-digit
+     *   hexadecimal RGB values to Lists of floating point timestamps
      */
-    public ArrayList<HashMap<Integer, List<Float>>> getTimeStamps() {
-        ArrayList<HashMap<Integer, List<Float>>> result = new ArrayList<>(2);
-        result.add(departureTimes);
-        result.add(arrivalTimes);
+    public HashMap<String, HashMap<Integer, List<Float>>> getTimeStamps() {
+        HashMap<String, HashMap<Integer, List<Float>>> result = new HashMap<>();
+        result.put("arrivals", arrivalTimes);
+        result.put("departures", departureTimes);
 
         return result;
     }
-    
+
     /**
      * Determines if a point is within the exit.
      * @param x the x coordinate of the point in pixels
@@ -265,6 +309,19 @@ public class TrackingUtils {
      *   B is the length of the ellipse along the y axis
      */
     private boolean isInExit(float x, float y, float[] exitXY, float[] axes) {
-        return Math.pow((x - exitXY[0])/axes[0], 2) + Math.pow((y - exitXY[1])/axes[1], 2) <= 1;
+        float a = (x - exitXY[0])/axes[0];
+        float b = (y - exitXY[1])/axes[1];
+        return a*a + b*b <= 1f;
+    }
+
+    /**
+     * Initializes all tracking data structures.
+     */
+    public void initAll() {
+        allPoints = new HashMap<>();
+        departureTimes = new HashMap<>();
+        arrivalTimes = new HashMap<>();
+        colors = new IntList();
+        allTimeOuts = new HashMap<>();
     }
 }

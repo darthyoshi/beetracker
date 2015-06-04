@@ -15,6 +15,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import processing.core.PApplet;
 
 public class VideoBrowser {
+    private static final FileNameExtensionFilter movType = new FileNameExtensionFilter("*.mov", "mov");
+    private static final FileNameExtensionFilter allType = new FileNameExtensionFilter("All video files", "mov", "mpg", "mpeg", "avi", "mp4");
+    private static final FileNameExtensionFilter aviType = new FileNameExtensionFilter("*.avi", "avi");
+    private static final FileNameExtensionFilter mpgType = new FileNameExtensionFilter("*.mpg, *.mpeg", "mpg", "mpeg");
+    private static final FileNameExtensionFilter mp4Type = new FileNameExtensionFilter("*.mp4", "mp4");
+
     /**
      * Displays a file browser that filters for video files.
      * @param parent the invoking PApplet
@@ -25,11 +31,11 @@ public class VideoBrowser {
         File result = null;
 
         JFileChooser browser = new JFileChooser();
-        browser.setFileFilter(new FileNameExtensionFilter("All video files", "mov", "mpg", "mpeg", "avi", "mp4"));
-        browser.addChoosableFileFilter(new FileNameExtensionFilter("*.avi", "avi"));
-        browser.addChoosableFileFilter(new FileNameExtensionFilter("*.mpg, *.mpeg", "mpg", "mpeg"));
-        browser.addChoosableFileFilter(new FileNameExtensionFilter("*.mp4", "mp4"));
-        browser.addChoosableFileFilter(new FileNameExtensionFilter("*.mov", "mov"));
+        browser.setFileFilter(allType);
+        browser.addChoosableFileFilter(aviType);
+        browser.addChoosableFileFilter(mpgType);
+        browser.addChoosableFileFilter(mp4Type);
+        browser.addChoosableFileFilter(movType);
         browser.removeChoosableFileFilter(browser.getAcceptAllFileFilter());
         if(currentDir != null) {
             browser.setCurrentDirectory(currentDir);

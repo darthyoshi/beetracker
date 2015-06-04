@@ -21,8 +21,8 @@ import processing.core.PImage;
 import processing.data.IntList;
 
 public class BlobDetectionUtils {
-    private BeeTracker parent;
-    private int[] hueThreshold, satThreshold, valThreshold;
+    private final BeeTracker parent;
+    private final int[] hueThreshold, satThreshold, valThreshold;
     private static final int filterRadius = 5;
     private final BlobDetection bd;
     private IntList blobColors;
@@ -39,7 +39,7 @@ public class BlobDetectionUtils {
     public BlobDetectionUtils(BeeTracker parent, int width, int height, boolean debug) {
         this.parent = parent;
         this.debug = debug;
-        
+
         hueThreshold = new int[2];
         satThreshold = new int[2];
         valThreshold = new int[2];
@@ -57,12 +57,11 @@ public class BlobDetectionUtils {
      * Preprocesses a PImage for blob detection. Any pixels meeting the defined
      *   hue and saturation thresholds have the saturation and brightness values
      *   maxed out, while all other pixels are set to 0x000000.
-     * @param parent the calling PApplet
      * @param img the PImage to preprocess
      * @param colors a list of the integer RGB values to scan for
      */
     public void filterImg(PImage img, IntList colors) {
-        int pixelHue, listHue, pixelSat, pixelLum;
+        int pixelHue, listHue, pixelSat, pixelVal;
         int i, j;
 
         img.loadPixels();
@@ -73,7 +72,7 @@ public class BlobDetectionUtils {
         for(i = 0; i < img.pixels.length; i++) {
             pixelHue = (int)parent.hue(img.pixels[i]);
             pixelSat = (int)parent.saturation(img.pixels[i]);
-            pixelLum = (int)parent.brightness(img.pixels[i]);
+            pixelVal = (int)parent.brightness(img.pixels[i]);
 
             //for color matches, brighten pixel
             for(j = 0; j < colors.size(); j++) {
@@ -83,8 +82,8 @@ public class BlobDetectionUtils {
                     pixelHue < listHue + hueThreshold[1] &&
                     pixelSat > satThreshold[0] &&
                     pixelSat < satThreshold[1] &&
-                    pixelLum > valThreshold[0] &&
-                    pixelLum < valThreshold[1])
+                    pixelVal > valThreshold[0] &&
+                    pixelVal < valThreshold[1])
                 {
                     img.pixels[i] = parent.color(listHue, 255, 255);
 
@@ -99,7 +98,12 @@ public class BlobDetectionUtils {
         }
 
         //remove noise
-        openImage(img.pixels, colors);
+        erodeImage(img.pixels, colors);
+        dilateImage(img.pixels);
+
+        //fill blob holes
+        dilateImage(img.pixels);
+        erodeImage(img.pixels, colors);
 
         img.updatePixels();
     }
@@ -306,21 +310,19 @@ public class BlobDetectionUtils {
     }
 
     /**
-     * Performs a morphological opening operation to remove noise. Any blob not
-     *   meeting the radius threshold will be erased.
-     * @param pixels the pixel array to preprocess
+     * Performs a morphological erosion operation. Any blobs consisting of the
+     *   specified colors will shrink. All other pixels will be set to black.
+     * @param pixels the operand pixel array
      * @param colors a list of the integer RGB values to scan for
      */
-    private void openImage(int[] pixels, IntList colors) {
+    private void erodeImage(int[] pixels, IntList colors) {
         int[] tmp = new int[pixels.length];
         int i, j, k, l, m, offset;
-        boolean hit = false;
 
         for(i = 0; i < tmp.length; i++) {
             tmp[i] = 0xff000000;
         }
 
-        //erode filtered image
         for(i = filterRadius; i < bd.imgWidth - filterRadius; i++) {
             for(j = filterRadius; j < bd.imgHeight - filterRadius; j++) {
                 erodeProbe:
@@ -329,10 +331,12 @@ public class BlobDetectionUtils {
                         for(l = -filterRadius; l <= filterRadius; l++) {
                             if(Math.abs(k) + Math.abs(l) <= filterRadius) {
                                 offset = (i+k) + (j+l)*bd.imgWidth;
-                                hit = (int)parent.hue(pixels[offset]) ==
-                                    (int)parent.hue(colors.get(m));
 
-                                if(!hit) {
+                                if(!(
+                                    (int)parent.hue(pixels[offset]) ==
+                                    (int)parent.hue(colors.get(m)) &&
+                                    parent.brightness(pixels[offset]) > 0f
+                                )) {
                                     continue erodeProbe;
                                 }
                             }
@@ -345,8 +349,20 @@ public class BlobDetectionUtils {
             }
         }
 
-        //dilate eroded image
-        int n, colorVal = 0;
+        for(i = 0; i < tmp.length; i++) {
+            pixels[i] = tmp[i];
+        }
+    }
+
+    /**
+     * Performs a morphological dilation operation. Any non-black blobs will
+     *   grow.
+     * @param pixels the operand pixel array
+     */
+    private void dilateImage(int[] pixels) {
+        int[] tmp = new int[pixels.length];
+        int i, j, k, l, m, n, offset;
+
         for(i = 0; i < bd.imgWidth; i++) {
             dilateProbe:
             for(j = 0; j < bd.imgHeight; j++) {
@@ -361,10 +377,9 @@ public class BlobDetectionUtils {
                             Math.abs(k) + Math.abs(l) <= filterRadius
                         ) {
                             offset = m + n*bd.imgWidth;
-                            hit = parent.brightness(tmp[offset]) > 0;
 
-                            if(hit) {
-                                pixels[i + j*bd.imgWidth] = tmp[offset];
+                            if(parent.brightness(pixels[offset]) > 0) {
+                                tmp[i + j*bd.imgWidth] = pixels[offset];
 
                                 continue dilateProbe;
                             }
@@ -372,8 +387,12 @@ public class BlobDetectionUtils {
                     }
                 }
 
-                pixels[i + j*bd.imgWidth] = 0xff000000;
+                tmp[i + j*bd.imgWidth] = 0xff000000;
             }
+        }
+
+        for(i = 0; i < tmp.length; i++) {
+            pixels[i] = tmp[i];
         }
     }
 

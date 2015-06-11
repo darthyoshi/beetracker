@@ -34,7 +34,9 @@ public class UIControl {
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
     private static final String[] recordTips = {"Begin tracking", "Pause tracking"};
-    private static final String[] playTips = {"Begin playback without tracking", "Pause playback"};
+    private static final String[] playTips = {"Begin playback without tracking", "Begin playback with tracking", "Pause playback"};
+
+    private boolean isPlaying = false, isRecord = false;
 
     /**
      * Class constructor.
@@ -254,16 +256,16 @@ public class UIControl {
      * @param state the new play state
      */
     public void setPlayState(boolean state) {
-        int index = (state ? 1 : 0);
-        playButton.setImage(playIcons[index]);
-        toolTip.register(playButton, playTips[index]);
+        isPlaying = state;
+        playButton.setImage(playIcons[(state ? 1 : 0)]);
+        toolTip.register(playButton, playTips[(state ? 2 : (isRecord ? 1 : 0))]);
     }
 
     /**
      * Updates the label of the selection mode switch.
      */
     public void toggleSelectLbl() {
-        selectToggle.setCaptionLabel(selectMode[(selectToggle.getState()?0:1)]);
+        selectToggle.setCaptionLabel(selectMode[(selectToggle.getState() ? 0 : 1)]);
     }
 
     /**
@@ -340,7 +342,7 @@ public class UIControl {
      */
     public void setSeekLabel(float time){
         int tmp = (int)(time*100);
-        seekBar.setValueLabel(String.format("%02d:%02d.%02d", tmp/6000, (tmp/100)%60, tmp%100)); 
+        seekBar.setValueLabel(String.format("%02d:%02d.%02d", tmp/6000, (tmp/100)%60, tmp%100));
     }
 
     /**
@@ -367,9 +369,14 @@ public class UIControl {
      * @param state the new recording state
      */
     public void setRecordState(boolean state) {
+        isRecord = state;
         int index = (state ? 1 : 0);
         recordButton.setImage(recordIcons[index]);
         toolTip.register(recordButton, recordTips[index]);
+
+        if(!isPlaying) {
+            toolTip.register(playButton, playTips[index]);
+        }
     }
 
     /**
@@ -381,9 +388,9 @@ public class UIControl {
 
     /**
      * Forces activation of a radio button.
-     * @param val the value of the radio button to activate 
+     * @param val the value of the radio button to activate
      */
     public void selectRadioButton(int val) {
-    	radioButtons.activate(0);
+        radioButtons.activate(0);
     }
 }

@@ -36,7 +36,7 @@ public class BeeTracker extends PApplet {
     private IntList colors;
     private int[] movieDims;
 
-    private boolean isPlaying = false, record = false;
+    private boolean isPlaying = false, record = false, movieLoaded = false;
     private boolean pip = false, selectExit = true, showFilter = false;
     private int listVal = -1;
 
@@ -211,267 +211,274 @@ public class BeeTracker extends PApplet {
                 }
             }
 
-            movieDims = scaledDims(
-                movie.width,
-                movie.height
-            );
-            int[] offset = {
-                (int)((width-movieDims[0])*.5f),
-                (int)((height-movieDims[1])*.5f)
-            };
-            int[] frameOffset = new int[2];
-            frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + offset[0];
-            frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + offset[1];
-            int[] frameDims = new int[2];
-            frameDims[0] = (int)(movieDims[0]*(insetBox[2] - insetBox[0]));
-            frameDims[1] = (int)(movieDims[1]*(insetBox[3] - insetBox[1]));
+            if(movieLoaded) {
+                movieDims = scaledDims(
+                    movie.width,
+                    movie.height
+                );
+                int[] offset = {
+                    (int)((width-movieDims[0])*.5f),
+                    (int)((height-movieDims[1])*.5f)
+                };
+                int[] frameOffset = new int[2];
+                frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + offset[0];
+                frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + offset[1];
+                int[] frameDims = new int[2];
+                frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
+                frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
 
-            imageMode(CENTER);
-            image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
+                imageMode(CENTER);
+                image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
 
-            PImage insetFrame = copyInsetFrame();
-            HashMap<Integer, List<float[]>> centroids = null;
+                PImage insetFrame = copyInsetFrame();
+                HashMap<Integer, List<float[]>> centroids = null;
 
-            noSmooth();
+                noSmooth();
 
-            if(isPlaying && record) {
-                bdu.filterImg(insetFrame, colors);
+                if(isPlaying && record) {
+                    bdu.filterImg(insetFrame, colors);
 
-                centroids = bdu.getCentroids(insetFrame, colors);
+                    centroids = bdu.getCentroids(insetFrame, colors);
 
-                if(debug) {
-                    println(String.format("---------BEGIN FRAME (%.2fs)---------",
-                        movie.time()) + "\npip: " + pip);
+                    if(debug) {
+                        println(String.format("---------BEGIN FRAME (%.2fs)---------",
+                            movie.time()) + "\npip: " + pip);
+                    }
+
+                    tu.trackCentroids(
+                        centroids,
+                        frameDims, frameOffset,
+                        exitRadial,
+                        movieDims, offset,
+                        movie.time()
+                    );
                 }
 
-                tu.trackCentroids(
-                    centroids,
-                    frameDims, frameOffset,
-                    exitRadial,
-                    movieDims, offset,
-                    movie.time()
-                );
-            }
-
-            //zoomed
-            if(pip) {
-                if(!showFilter) {
-                    insetFrame = copyInsetFrame();
-                }
-
-                frameDims = scaledDims(
-                    movieDims[0]*(insetBox[2] - insetBox[0]),
-                    movieDims[1]*(insetBox[3] - insetBox[1])
-                );
-                frameOffset[0] = (int)((width-frameDims[0])*.5f);
-                frameOffset[1] = (int)((height-frameDims[1])*.5f);
-
-                image(
-                    insetFrame,
-                    .5f * width,
-                    .5f * height,
-                    frameDims[0],
-                    frameDims[1]
-                );
-            }
-
-            smooth();
-
-            //draw detected blobs
-            if(debug) {
-                float[] exitXY = new float[2];
-
+                //zoomed
                 if(pip) {
-                    exitXY[0] = (exitRadial[0]-insetBox[0])*frameDims[0]/
-                        (insetBox[2]-insetBox[0]) + frameOffset[0];
-                    exitXY[1] = (exitRadial[1]-insetBox[1])*frameDims[1]/
-                        (insetBox[3]-insetBox[1]) + frameOffset[1];
+                    if(!showFilter) {
+                        insetFrame = copyInsetFrame();
+                    }
+
+                    frameDims = scaledDims(
+                        movieDims[0]*(insetBox[2] - insetBox[0]),
+                        movieDims[1]*(insetBox[3] - insetBox[1])
+                    );
+                    frameOffset[0] = (int)((width-frameDims[0])*.5f);
+                    frameOffset[1] = (int)((height-frameDims[1])*.5f);
+
+                    image(
+                        insetFrame,
+                        .5f * width,
+                        .5f * height,
+                        frameDims[0],
+                        frameDims[1]
+                    );
                 }
 
-                else {
-                    exitXY[0] = exitRadial[0]*movieDims[0] + offset[0];
-                    exitXY[1] = exitRadial[1]*movieDims[1] + offset[1];
-                }
+                smooth();
 
-                if(record) {
-                	bdu.drawBlobs(frameDims, frameOffset, exitXY);
-                }
-            }
+                //draw detected blobs
+                if(debug) {
+                    float[] exitXY = new float[2];
 
-            //mark bees
-            else if(record) {
-                strokeWeight(1);
-                stroke(0xffdddd00);
-                ellipseMode(CENTER);
-                colorMode(RGB, 255);
+                    if(pip) {
+                        exitXY[0] = (exitRadial[0]-insetBox[0])*frameDims[0]/
+                            (insetBox[2]-insetBox[0]) + frameOffset[0];
+                        exitXY[1] = (exitRadial[1]-insetBox[1])*frameDims[1]/
+                            (insetBox[3]-insetBox[1]) + frameOffset[1];
+                    }
 
-                for(int color : colors) {
-                    fill(0xff000000 + color);
+                    else {
+                        exitXY[0] = exitRadial[0]*movieDims[0] + offset[0];
+                        exitXY[1] = exitRadial[1]*movieDims[1] + offset[1];
+                    }
 
-                    for(float[] centroid : centroids.get(color)) {
-                       ellipse(
-                            centroid[0]*frameDims[0] + frameOffset[0],
-                            centroid[1]*frameDims[1] + frameOffset[1],
-                            .01f*frameDims[1],
-                            .01f*frameDims[1]
-                        );
+                    if(record) {
+                        bdu.drawBlobs(frameDims, frameOffset, exitXY);
                     }
                 }
-            }
 
-            textAlign(CENTER, CENTER);
-            rectMode(CENTER);
-            noStroke();
-            fill(0xff02344d);
+                //mark bees
+                else if(record) {
+                    strokeWeight(1);
+                    stroke(0xffdddd00);
+                    ellipseMode(CENTER);
+                    colorMode(RGB, 255);
 
-            //bee count
-            if(isPlaying) {
-                rect(643, 25, 215, 40);
-
-                fill(0xffffffff);
-
-                int numBees = 0;
-                if(centroids != null) {
                     for(int color : colors) {
-                        numBees += centroids.get(color).size();
+                        fill(0xff000000 + color);
+
+                        for(float[] centroid : centroids.get(color)) {
+                           ellipse(
+                                centroid[0]*frameDims[0] + frameOffset[0],
+                                centroid[1]*frameDims[1] + frameOffset[1],
+                                .01f*frameDims[1],
+                                .01f*frameDims[1]
+                            );
+                        }
                     }
                 }
-                text("#bees visible: " + numBees, 642, 25);
 
-                if(debug && record) {
-                    println("---------END FRAME---------");
-                }
-            }
-
-            //status box
-            if(!isPlaying) {
-                rect(145, 25, 190, 40);
-                fill(0xffffffff);
-                text("Config Mode",145,25);
-            }
-
-            strokeWeight(1);
-            stroke(0xffffa600);
-            ellipseMode(RADIUS);
-            noFill();
-
-            //unzoomed
-            if(!pip) {
-                //inset box
-                rectMode(CORNERS);
-                rect(
-                    insetBox[0]*movieDims[0] + offset[0],
-                    insetBox[1]*movieDims[1] + offset[1],
-                    insetBox[2]*movieDims[0] + offset[0],
-                    insetBox[3]*movieDims[1] + offset[1]
-                );
-
-                //exit circle
-                ellipse(
-                    exitRadial[0]*movieDims[0] + offset[0],
-                    exitRadial[1]*movieDims[1] + offset[1],
-                    exitRadial[2]*movieDims[0],
-                    exitRadial[3]*movieDims[1]
-                );
-            }
-
-            //zoomed
-            else {
-                //inset box
+                textAlign(CENTER, CENTER);
                 rectMode(CENTER);
-                rect(.5f*width, .5f*height, frameDims[0], frameDims[1]);
+                noStroke();
+                fill(0xff02344d);
 
-                //exit circle
-                ellipse(
-                    (exitRadial[0]-insetBox[0])*frameDims[0]/
-                        (insetBox[2]-insetBox[0]) + frameOffset[0],
-                    (exitRadial[1]-insetBox[1])*frameDims[1]/
-                        (insetBox[3]-insetBox[1]) + frameOffset[1],
-                    exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
-                    exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
-                );
-            }
+                //bee count
+                if(isPlaying) {
+                    rect(643, 25, 215, 40);
 
-            if(isDrag) {
-                if(!selectExit) {
-                    //draw selection box diagonals
-                    line(
+                    fill(0xffffffff);
+
+                    int numBees = 0;
+                    if(centroids != null) {
+                        for(int color : colors) {
+                            numBees += centroids.get(color).size();
+                        }
+                    }
+                    text("#bees visible: " + numBees, 642, 25);
+
+                    if(debug && record) {
+                        println("---------END FRAME---------");
+                    }
+                }
+
+                //status box
+                if(!isPlaying) {
+                    rect(145, 25, 190, 40);
+                    fill(0xffffffff);
+                    text("Config Mode",145,25);
+                }
+
+                strokeWeight(1);
+                stroke(0xffffa600);
+                ellipseMode(RADIUS);
+                noFill();
+
+                //unzoomed
+                if(!pip) {
+                    //inset box
+                    rectMode(CORNERS);
+                    rect(
                         insetBox[0]*movieDims[0] + offset[0],
                         insetBox[1]*movieDims[1] + offset[1],
                         insetBox[2]*movieDims[0] + offset[0],
                         insetBox[3]*movieDims[1] + offset[1]
                     );
-                    line(
-                        insetBox[0]*movieDims[0] + offset[0],
-                        insetBox[3]*movieDims[1] + offset[1],
-                        insetBox[2]*movieDims[0] + offset[0],
-                        insetBox[1]*movieDims[1] + offset[1]
+
+                    //exit circle
+                    ellipse(
+                        exitRadial[0]*movieDims[0] + offset[0],
+                        exitRadial[1]*movieDims[1] + offset[1],
+                        exitRadial[2]*movieDims[0],
+                        exitRadial[3]*movieDims[1]
                     );
                 }
 
+                //zoomed
                 else {
-                    //draw selection circle interior lines
-                    line(
-                        exitRadial[0]*movieDims[0] + offset[0],
-                        exitRadial[1]*movieDims[1] + offset[1] -
-                            exitRadial[3]*movieDims[1],
-                        exitRadial[0]*movieDims[0] + offset[0],
-                        exitRadial[1]*movieDims[1] + offset[1] +
-                            exitRadial[3]*movieDims[1]
+                    //inset box
+                    rectMode(CENTER);
+                    rect(.5f*width, .5f*height, frameDims[0], frameDims[1]);
+
+                    //exit circle
+                    ellipse(
+                        (exitRadial[0]-insetBox[0])*frameDims[0]/
+                            (insetBox[2]-insetBox[0]) + frameOffset[0],
+                        (exitRadial[1]-insetBox[1])*frameDims[1]/
+                            (insetBox[3]-insetBox[1]) + frameOffset[1],
+                        exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
+                        exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
                     );
-                    line(
-                        exitRadial[0]*movieDims[0] + offset[0] -
-                            exitRadial[2]*movieDims[0],
-                        exitRadial[1]*movieDims[1] + offset[1],
-                        exitRadial[0]*movieDims[0] + offset[0] +
-                            exitRadial[2]*movieDims[0],
-                        exitRadial[1]*movieDims[1] + offset[1]
-                    );
+                }
+
+                if(isDrag) {
+                    if(!selectExit) {
+                        //draw selection box diagonals
+                        line(
+                            insetBox[0]*movieDims[0] + offset[0],
+                            insetBox[1]*movieDims[1] + offset[1],
+                            insetBox[2]*movieDims[0] + offset[0],
+                            insetBox[3]*movieDims[1] + offset[1]
+                        );
+                        line(
+                            insetBox[0]*movieDims[0] + offset[0],
+                            insetBox[3]*movieDims[1] + offset[1],
+                            insetBox[2]*movieDims[0] + offset[0],
+                            insetBox[1]*movieDims[1] + offset[1]
+                        );
+                    }
+
+                    else {
+                        //draw selection circle interior lines
+                        line(
+                            exitRadial[0]*movieDims[0] + offset[0],
+                            exitRadial[1]*movieDims[1] + offset[1] -
+                                exitRadial[3]*movieDims[1],
+                            exitRadial[0]*movieDims[0] + offset[0],
+                            exitRadial[1]*movieDims[1] + offset[1] +
+                                exitRadial[3]*movieDims[1]
+                        );
+                        line(
+                            exitRadial[0]*movieDims[0] + offset[0] -
+                                exitRadial[2]*movieDims[0],
+                            exitRadial[1]*movieDims[1] + offset[1],
+                            exitRadial[0]*movieDims[0] + offset[0] +
+                                exitRadial[2]*movieDims[0],
+                            exitRadial[1]*movieDims[1] + offset[1]
+                        );
+                    }
+                }
+
+                //end of movie reached
+                if(isPlaying && movie.duration() - movie.time() < 1f/movie.frameRate) {
+                    StringBuilder msg = new StringBuilder("End of video reached.\n\n");
+                    msg.append("bees tracked: ").append(colors.size()).append('\n');
+
+                    HashMap<String, HashMap<Integer, List<Float>>> timeStamps = tu.getTimeStamps();
+
+                    for(int color : colors) {
+                        msg.append("color: ").append(String.format("%06x", color))
+                            .append("\n-arrival times:\n");
+
+                        for(float arriveTime : timeStamps.get(1).get(color)) {
+                            msg.append("--").append(arriveTime).append('\n');
+                        }
+
+                        msg.append("number of arrivals: ")
+                            .append(timeStamps.get(1).get(color).size())
+                            .append("\n-departure times:\n");
+
+                        for(float departTime : timeStamps.get(0).get(color)) {
+                            msg.append("--").append(departTime).append('\n');
+                        }
+
+                        msg.append("number of departures: ")
+                            .append(timeStamps.get(0).get(color).size())
+                            .append('\n');
+                    }
+
+                    msg.append("Video statistics have been saved to \"")
+                        .append(resultsToJSON(timeStamps))
+                        .append('\"');
+
+                    if(debug) {
+                        println("\n" + msg.toString());
+                    }
+
+                    MessageDialogue.endVideoMessage(this, msg.toString());
+
+                    stopPlayback();
                 }
             }
 
-            //end of movie reached
-            if(isPlaying && movie.duration() - movie.time() < 1f/movie.frameRate) {
-                StringBuilder msg = new StringBuilder("End of video reached.\n\n");
-                msg.append("bees tracked: ").append(colors.size()).append('\n');
-
-                HashMap<String, HashMap<Integer, List<Float>>> timeStamps = tu.getTimeStamps();
-
-                for(int color : colors) {
-                    msg.append("color: ").append(String.format("%06x", color))
-                        .append("\n-arrival times:\n");
-
-                    for(float arriveTime : timeStamps.get(1).get(color)) {
-                        msg.append("--").append(arriveTime).append('\n');
-                    }
-
-                    msg.append("number of arrivals: ")
-                        .append(timeStamps.get(1).get(color).size())
-                        .append("\n-departure times:\n");
-
-                    for(float departTime : timeStamps.get(0).get(color)) {
-                        msg.append("--").append(departTime).append('\n');
-                    }
-
-                    msg.append("number of departures: ")
-                        .append(timeStamps.get(0).get(color).size())
-                        .append('\n');
+            else {
+                if((movieLoaded = movie.height > 0)) {
+                    uic.setSeekRange(movie.duration());
                 }
-
-                msg.append("Video statistics have been saved to \"")
-                    .append(resultsToJSON(timeStamps))
-                    .append('\"');
-
-                if(debug) {
-                    println("\n" + msg.toString());
-                }
-
-                MessageDialogue.endVideoMessage(this, msg.toString());
-
-                stopPlayback();
             }
         }
-
         else {
             imageMode(CENTER);
             image(titleImg, .5f*width, .5f*height-50);
@@ -785,14 +792,19 @@ public class BeeTracker extends PApplet {
            }
 
            currentDir = video.getParentFile();
-
-           if(debug) {
-               println("loading video: " + videoPath);
-           }
        }
 
        if(videoPath != null) {
+           if(debug) {
+               print("loading video: '" + videoPath + "'... ");
+           }
+
            movie = new Movie(this, videoPath);
+
+           if(debug) {
+               println("done");
+           }
+
            movie.volume(0f);
            movie.play();
            isPlaying = false;
@@ -801,14 +813,9 @@ public class BeeTracker extends PApplet {
            uic.toggleOpenButton();
            uic.togglePlay();
            uic.setRangeVisibility(true);
-           uic.setSeekRange(movie.duration());
 
            log.append("loaded ").append(videoPath).append('\n');
            log.flush();
-
-           if(debug) {
-               println("done");
-           }
        }
     }
 
@@ -833,6 +840,7 @@ public class BeeTracker extends PApplet {
         if(movie != null) {
             movie.stop();
             movie = null;
+            movieLoaded = false;
         }
 
         uic.toggleOpenButton();

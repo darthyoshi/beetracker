@@ -20,6 +20,7 @@ public class MessageDialogue {
         "The application has encountered the following error:\n",
         "\nand will now close. Please check Console.log for details."
     };
+    private static final String endOptions[] = {"Replay video", "Close video"};
 
     /**
      * Displays a warning message if setup parameters have not been set.
@@ -57,11 +58,13 @@ public class MessageDialogue {
     }
 
     /**
-     * Displays a message at the end of video playback. 
+     * Displays a message at the end of video playback.
      * @param parent the invoking PApplet
      * @param msg the message to display
+     * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
+     *   JOptionPane.CANCEL_OPTION
      */
-    public static void endVideoMessage(PApplet parent, String msg) {
+    public static int endVideoMessage(PApplet parent, String msg) {
         javax.swing.JTextArea textArea = new javax.swing.JTextArea(msg);  
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true); 
@@ -69,8 +72,8 @@ public class MessageDialogue {
         javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
         scrollPane.setPreferredSize(new java.awt.Dimension(400, 250));
 
-        JOptionPane.showMessageDialog(parent, scrollPane, "Session Summary",
-            JOptionPane.PLAIN_MESSAGE);
+        return JOptionPane.showOptionDialog(parent, scrollPane, "Session Summary",
+            JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, endOptions, null);
     }
 
     /**
@@ -84,5 +87,24 @@ public class MessageDialogue {
 
         JOptionPane.showMessageDialog(parent, builder.toString(), "Fatal Error",
             JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Displays a message listing the location of the saved video statistics
+     *   and prompts the user for confirmation on whether or not to save the
+     *   individual frame data.
+     * @param parent the invoking PApplet
+     * @param filePath the path to the saved statistics file
+     * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
+     *   JOptionPane.CANCEL_OPTION
+     */
+    public static int saveStatisticsmessage(PApplet parent, String filePath) {
+        return JOptionPane.showConfirmDialog(
+            parent,
+            "Video statistics have been saved to \"" + filePath +
+                "\"\nSave frame annotations?",
+            "Results Saved",
+            JOptionPane.YES_NO_OPTION
+        );
     }
 }

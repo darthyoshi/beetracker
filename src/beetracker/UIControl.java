@@ -13,7 +13,6 @@ import controlP5.ControlP5Constants;
 import controlP5.DropdownList;
 import controlP5.Group;
 import controlP5.RadioButton;
-import controlP5.Range;
 import controlP5.Slider;
 import controlP5.Toggle;
 import controlP5.Tooltip;
@@ -26,15 +25,18 @@ public class UIControl {
     private final Toggle selectToggle, filterToggle;
     private final Button playButton, openButton, recordButton;
     private final PImage[] playIcons, recordIcons;
-    private final Range range;
+    private final Slider thresholdSlider, seekBar;
     private final RadioButton radioButtons;
-    private final Slider seekBar;
     private final Tooltip toolTip;
 
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
     private static final String[] recordTips = {"Begin tracking", "Pause tracking"};
-    private static final String[] playTips = {"Begin playback without tracking", "Begin playback with tracking", "Pause playback"};
+    private static final String[] playTips = {
+        "Begin playback without tracking",
+        "Begin playback with tracking",
+        "Pause playback"
+    };
 
     private boolean isPlaying = false, isRecord = false;
 
@@ -46,10 +48,12 @@ public class UIControl {
     public UIControl(BeeTracker parent, ControlP5 cp5) {
         cp5.setFont(cp5.getFont().getFont(), 15);
 
-        toolTip = cp5.getTooltip()
-            .setPositionOffset(0f, -20f)
-            .setAlpha(0)
-            .setColorLabel(0xffffffff);
+        toolTip = cp5.getTooltip().setPositionOffset(0f, -30f).setAlpha(0);
+        toolTip.getLabel()
+            .setFont(cp5.getFont())
+            .setColorBackground(0xffffffff)
+            .getStyle()
+            .setPadding(5, 5, 5, 5);
 
         setupGroup = cp5.addGroup("setup").setLabel("").setVisible(false);
         playGroup = cp5.addGroup("playback").setLabel("").setVisible(false);
@@ -173,7 +177,7 @@ public class UIControl {
             .setPaddingX(5);
 
         radioButtons = cp5.addRadioButton("radioButtons")
-            .setPosition(250, 27)
+            .setPosition(255, 27)
             .setItemsPerRow(3)
             .setSpacingColumn(50)
             .addItem(tmp, 0)
@@ -183,18 +187,15 @@ public class UIControl {
             .setNoneSelectedAllowed(false)
             .setGroup(thresholdGroup);
 
-        range = cp5.addRange("thresholdSlider").setBroadcast(false);
-        range.setSize(265, 15)
+        thresholdSlider = cp5.addSlider("thresholdSlider").setBroadcast(false);
+        thresholdSlider.setSize(255, 15)
             .setRange(0, 255)
-            .setHandleSize(5)
-            .setRangeValues(0f, 40f)
+            .setValue(40f)
             .setPosition(
                 radioButtons.getPosition().x,
                 radioButtons.getPosition().y - 20
             ).setCaptionLabel("Threshold")
             .setGroup(thresholdGroup)
-            .setLowValueLabel("")
-            .setHighValueLabel("+/-40.00")
             .setBroadcast(true)
             .getCaptionLabel()
             .align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE)
@@ -300,10 +301,10 @@ public class UIControl {
 
     /**
      * Updates the slider values.
-     * @param val the new slider values
+     * @param val the new slider value
      */
-    public void setRangeValues(int[] val) {
-        range.setBroadcast(false).setRangeValues(val[0], val[1]).setBroadcast(true);
+    public void setRangeValues(int val) {
+        thresholdSlider.setBroadcast(false).setValue(val).setBroadcast(true);
     }
 
     /**
@@ -318,31 +319,25 @@ public class UIControl {
     }
 
     /**
-     * Sets the leftmost slider label.
-     * @param lbl the new label
-     */
-    public void setHueRangeLabel() {
-        range.setLowValueLabel("");
-        range.setHighValueLabel("+/-"+range.getHighValue());
-    }
-
-    /**
      * Changes the value of the seek bar.
      * @param time the new time in seconds
      */
-    public void setSeekTime(float time){
+    public void setSeekTime(float time) {
         seekBar.changeValue(time);
 
-        setSeekLabel(time);
+        formatSeekLabel();
     }
 
     /**
      * Changes the seek bar label to mm:ss.mm format.
-     * @param time the new time in seconds
      */
-    public void setSeekLabel(float time){
-        int tmp = (int)(time*100);
-        seekBar.setValueLabel(String.format("%02d:%02d.%02d", tmp/6000, (tmp/100)%60, tmp%100));
+    private void formatSeekLabel() {
+        int tmp = (int)(seekBar.getValue()*100);
+        seekBar.setValueLabel(String.format("%02d:%02d.%02d", tmp/6000, (tmp/100)%60, tmp%100))
+            .getCaptionLabel()
+            .align(ControlP5Constants.RIGHT, ControlP5Constants.BOTTOM_OUTSIDE)
+            .setPaddingX(0)
+            .setPaddingY(5);
     }
 
     /**
@@ -357,11 +352,10 @@ public class UIControl {
      * @param duration the video duration
      */
     public void setSeekRange(float duration) {
-        seekBar.setRange(0f, duration)
-            .getCaptionLabel()
-            .align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE)
-            .setPaddingX(0)
-            .setPaddingY(5);
+        seekBar.setBroadcast(false)
+            .setRange(0f, duration)
+            .setBroadcast(true);
+        formatSeekLabel();
     }
 
     /**
@@ -383,7 +377,7 @@ public class UIControl {
      * @return the current values of the threshold slider
      */
     public float[] getRangeValues() {
-        return range.getArrayValue();
+        return thresholdSlider.getArrayValue();
     }
 
     /**
@@ -392,5 +386,13 @@ public class UIControl {
      */
     public void selectRadioButton(int val) {
         radioButtons.activate(0);
+    }
+
+    /**
+     * Toggles the visibility of the record button.
+     * @param state the new visibility state
+     */
+    public void setRecordVisibility(boolean state) {
+        recordButton.setVisible(state);
     }
 }

@@ -30,7 +30,7 @@ public class TrackingUtils {
     public TrackingUtils(boolean debug) {
         this.debug = debug;
 
-        initAll();
+        init();
     }
 
     /**
@@ -48,8 +48,10 @@ public class TrackingUtils {
      * @param movieDims the dimensions of the video
      * @param movieOffset the offset of the video
      * @param time timestamp of the current frame
+     * @return an array containing the total number of departures and arrivals
+     *   for all tracked colors
      */
-    public void trackCentroids(
+    public int[] trackCentroids(
         HashMap<Integer, List<float[]>> newPointMap,
         int[] frameDims,
         int[] frameOffset,
@@ -76,9 +78,12 @@ public class TrackingUtils {
         exitAxes[0] = exitRadial[2]*movieDims[0];
         exitAxes[1] = exitRadial[3]*movieDims[1];
 
-        for(int color : newPointMap.keySet()) {
+        int[] counts = new int[2];
+        counts[0] = counts[1] = 0;
+
+        for(int color : colors) {
             oldPoints = allPoints.get(color);
-            newPoints = newPointMap.get(color);
+            newPoints = new ArrayList<>(newPointMap.get(color));
             timeOuts = allTimeOuts.get(color);
 
             checkedIndicesOld = new IntList();
@@ -205,12 +210,14 @@ public class TrackingUtils {
                 if(isOldPointInExit) {
                     if(!isNewPointInExit) {
                         departures.add(time);
+                        counts[0]++;
                     }
                 }
 
                 else {
                     if(isNewPointInExit) {
                         arrivals.add(time);
+                        counts[1]++;
                     }
                 }
             }
@@ -262,6 +269,8 @@ public class TrackingUtils {
                 }
             }
         }
+
+        return counts;
     }
 
     /**
@@ -317,7 +326,7 @@ public class TrackingUtils {
     /**
      * Initializes all tracking data structures.
      */
-    public void initAll() {
+    public final void init() {
         allPoints = new HashMap<>();
         departureTimes = new HashMap<>();
         arrivalTimes = new HashMap<>();

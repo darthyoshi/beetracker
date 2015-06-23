@@ -22,7 +22,7 @@ import processing.data.IntList;
 
 public class BlobDetectionUtils {
     private final BeeTracker parent;
-    private final int[] hueThreshold, satThreshold, valThreshold;
+    private int hueThreshold, satThreshold, valThreshold;
     private static final int filterRadius = 5;
     private final BlobDetection bd;
     private IntList blobColors;
@@ -39,10 +39,6 @@ public class BlobDetectionUtils {
     public BlobDetectionUtils(BeeTracker parent, int width, int height, boolean debug) {
         this.parent = parent;
         this.debug = debug;
-
-        hueThreshold = new int[2];
-        satThreshold = new int[2];
-        valThreshold = new int[2];
 
         if(debug) {
             blobColors = new IntList();
@@ -78,12 +74,10 @@ public class BlobDetectionUtils {
             for(j = 0; j < colors.size(); j++) {
                 listHue = (int)parent.hue(colors.get(j));
 
-                if(pixelHue > listHue - hueThreshold[1] &&
-                    pixelHue < listHue + hueThreshold[1] &&
-                    pixelSat > satThreshold[0] &&
-                    pixelSat < satThreshold[1] &&
-                    pixelVal > valThreshold[0] &&
-                    pixelVal < valThreshold[1])
+                if(pixelHue > listHue - hueThreshold &&
+                    pixelHue < listHue + hueThreshold &&
+                    pixelSat > satThreshold &&
+                    pixelVal > valThreshold)
                 {
                     img.pixels[i] = parent.color(listHue, 255, 255);
 
@@ -226,6 +220,7 @@ public class BlobDetectionUtils {
 
                 //case: centroid is not in blob
                 else {
+                    loop:
                     for(
                         int k = (int)(b.yMin*frame.height);
                         k < (int)(b.yMax*frame.height);
@@ -248,12 +243,8 @@ public class BlobDetectionUtils {
                                 }
 
                                 added = true;
-                                break;
+                                break loop;
                             }
-                        }
-
-                        if(added) {
-                            break;
                         }
                     }
                 }
@@ -287,25 +278,15 @@ public class BlobDetectionUtils {
      *   0 = hue
      *   1 = saturation
      *   2 = brightness
-     * @param loVal the new lower value
-     * @param hiVal the new upper value
+     * @param loVal the new value
      */
-    public void setThresholdValues(int type, int loVal, int hiVal) {
+    public void setThresholdValue(int type, int val) {
         switch(type) {
-        case 0:
-            hueThreshold[0] = 0;
-            hueThreshold[1] = hiVal;
-            break;
+        case 0: hueThreshold = val; break;
 
-        case 1:
-            satThreshold[0] = loVal;
-            satThreshold[1] = hiVal;
-            break;
+        case 1: satThreshold = val; break;
 
-        case 2:
-            valThreshold[0] = loVal;
-            valThreshold[1] = hiVal;
-            break;
+        case 2: valThreshold = val;
         }
     }
 
@@ -404,20 +385,14 @@ public class BlobDetectionUtils {
      *   2 = brightness
      * @return an integer array
      */
-    public int[] getThresholdValues(int type) {
-        int[] result = null;
+    public int getThresholdValue(int type) {
+        int result = 0;
         switch(type) {
-        case 0:
-            result = hueThreshold;
-            break;
+        case 0: result = hueThreshold; break;
 
-        case 1:
-            result = satThreshold;
-            break;
+        case 1: result = satThreshold; break;
 
-        case 2:
-            result = valThreshold;
-            break;
+        case 2: result = valThreshold;
         }
 
         return result;

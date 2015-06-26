@@ -87,7 +87,7 @@ public class BlobDetectionUtils {
 
             //if no matches found, darken pixel
             if(j == colors.size()) {
-                img.pixels[i] = parent.color(0);
+                img.pixels[i] = 0;
             }
         }
 
@@ -301,7 +301,7 @@ public class BlobDetectionUtils {
         int i, j, k, l, m, offset;
 
         for(i = 0; i < tmp.length; i++) {
-            tmp[i] = 0xff000000;
+            tmp[i] = 0;
         }
 
         for(i = filterRadius; i < bd.imgWidth - filterRadius; i++) {
@@ -368,7 +368,7 @@ public class BlobDetectionUtils {
                     }
                 }
 
-                tmp[i + j*bd.imgWidth] = 0xff000000;
+                tmp[i + j*bd.imgWidth] = 0;
             }
         }
 

@@ -22,7 +22,7 @@ import processing.core.PImage;
 public class UIControl {
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;
-    private final Toggle selectToggle, filterToggle;
+    private final Toggle selectToggle;
     private final Button playButton, openButton, recordButton;
     private final PImage[] playIcons, recordIcons;
     private final Slider thresholdSlider, seekBar;
@@ -163,14 +163,6 @@ public class UIControl {
 
         toolTip.register(selectToggle, "Boundary selection");
 
-        filterToggle = cp5.addToggle("filterToggle").setSize(15, 15);
-        filterToggle.setCaptionLabel("filter")
-            .setPosition(pipToggle.getPosition().x + 17, pipToggle.getPosition().y)
-            .setVisible(false)
-            .getCaptionLabel()
-            .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
-            .setPaddingX(5);
-
         Toggle tmp = cp5.addToggle("Hue").setBroadcast(false).toggle();
         tmp.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
@@ -281,14 +273,6 @@ public class UIControl {
      */
     public void toggleOpenButton() {
         openButton.setVisible(!openButton.isVisible());
-    }
-
-    /**
-     * Toggles the visibility of the "show filtered image" checkbox.
-     * @param visible the new visibility state
-     */
-    public void setFilterToggleVisibility(boolean visible) {
-        filterToggle.setVisible(visible);
     }
 
     /**

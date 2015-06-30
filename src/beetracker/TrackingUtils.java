@@ -297,10 +297,17 @@ public class TrackingUtils {
      * @return a HashMap mapping Strings to HashMaps mapping six-digit
      *   hexadecimal RGB values to Lists of floating point timestamps
      */
-    public HashMap<String, HashMap<Integer, List<Float>>> getTimeStamps() {
-        HashMap<String, HashMap<Integer, List<Float>>> result = new HashMap<>();
-        result.put("arrivals", arrivalTimes);
-        result.put("departures", departureTimes);
+    public HashMap<Float, String> getSummary() {
+        HashMap<Float, String> result = new HashMap<>();
+
+        for(int color : colors) {
+            for(Float time : arrivalTimes.get(color)) {
+                result.put(time, String.format("06x,arrival", color));
+            }
+            for(Float time : departureTimes.get(color)) {
+                result.put(time, String.format("06x,departure", color));
+            }
+        }
 
         return result;
     }

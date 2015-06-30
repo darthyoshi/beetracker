@@ -7,9 +7,9 @@
 
 package beetracker;
 
-import javax.swing.JOptionPane;
+import java.awt.EventQueue;
 
-import processing.core.PApplet;
+import javax.swing.JOptionPane;
 
 public class MessageDialogue {
     private static final String errorMsg[] = {
@@ -24,81 +24,124 @@ public class MessageDialogue {
 
     /**
      * Displays a warning message if setup parameters have not been set.
-     * @param parent the invoking PApplet
+     * @param parent the invoking BeeTracker
      * @param errors the setup error flags
      */
-    public static void playButtonError(PApplet parent, boolean[] errors) {
-        StringBuilder msg = new StringBuilder();
+    public static void playButtonErrorMessage(final BeeTracker parent, final boolean[] errors) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                StringBuilder msg = new StringBuilder();
 
-        if(errors[0]) {
-            msg.append(errorMsg[0]);
-        }
+                if(errors[0]) {
+                    msg.append(errorMsg[0]);
+                }
 
-        if(errors[1]) {
-            msg.append(errorMsg[1]);
-        }
+                if(errors[1]) {
+                    msg.append(errorMsg[1]);
+                }
 
-        JOptionPane.showMessageDialog(parent, msg.toString(), "Error",
-            JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(parent, msg.toString(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
     /**
      * Displays a dialogue to confirm whether or not to prematurely end playback. 
-     * @param parent the invoking PApplet
-     * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
-     *   JOoptionPane.CANCEL_OPTION
+     * @param parent the invoking BeeTracker
      */
-    public static int stopButtonWarning(PApplet parent) {
-        return JOptionPane.showConfirmDialog(
-            parent,
-            "Cancel playback? Current video statistics will not be saved.",
-            "Warning",
-            JOptionPane.YES_NO_OPTION
-        );
+    public static void stopButtonWarning(final BeeTracker parent) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                if(
+                    JOptionPane.showConfirmDialog(
+                        parent,
+                        "Cancel playback? Current video statistics will not be saved.",
+                        "Warning",
+                        JOptionPane.YES_NO_OPTION
+                    ) == JOptionPane.YES_OPTION
+                ) {
+                    parent.stopPlayback();
+                }
+            }
+        });
     }
 
     /**
      * Displays a message at the end of video playback.
-     * @param parent the invoking PApplet
+     * @param parent the invoking BeeTracker
      * @param msg the message to display
-     * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
-     *   JOptionPane.CANCEL_OPTION
+     * @param fileName the name of the summary file 
      */
-    public static int endVideoMessage(PApplet parent, String msg) {
-        javax.swing.JTextArea textArea = new javax.swing.JTextArea(msg);  
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true); 
+    public static void endVideoMessage(
+        final BeeTracker parent,
+        final String msg,
+        final String fileName
+    ) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                javax.swing.JTextArea textArea = new javax.swing.JTextArea(msg);  
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true); 
 
-        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
-        scrollPane.setPreferredSize(new java.awt.Dimension(400, 250));
+                javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+                scrollPane.setPreferredSize(new java.awt.Dimension(400, 250));
 
-        return JOptionPane.showOptionDialog(parent, scrollPane, "Session Summary",
-            JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, endOptions, null);
+                if(
+                    JOptionPane.showOptionDialog(
+                        parent,
+                        scrollPane,
+                        "Session Summary",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        endOptions,
+                        null
+                    ) == JOptionPane.YES_OPTION
+                ) {
+                    parent.rewindVideo();
+                }
+                
+                else {        
+                    if(MessageDialogue.saveStatisticsMessage(parent, fileName) ==
+                        JOptionPane.YES_OPTION)
+                    {
+                        parent.writeFramePointsToJSON();
+                    }
+            
+                    parent.stopPlayback();
+                }
+            }
+        });
     }
 
     /**
      * Displays a program crash message.
-     * @param parent the invoking PApplet
+     * @param parent the invoking BeeTracker
      * @param msg the cause of the crash
      */
-    public static void crashMessage(PApplet parent, String msg) {
-        StringBuilder builder = new StringBuilder(crashMsg[0]);
-        builder.append(msg).append(crashMsg[1]);
+    public static void crashMessage(final BeeTracker parent, final String msg) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                StringBuilder builder = new StringBuilder(crashMsg[0]);
+                builder.append(msg).append(crashMsg[1]);
 
-        JOptionPane.showMessageDialog(parent, builder.toString(), "Fatal Error",
-            JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(parent, builder.toString(),
+                    "Fatal Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
     /**
      * Displays a message listing the location of the saved video statistics
      *   and prompts the user for confirmation on whether or not to save the
      *   individual frame data.
-     * @param parent the invoking PApplet
+     * @param parent the invoking BeeTracker
      * @param filePath the path to the saved statistics file
      * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
      *   JOptionPane.CANCEL_OPTION
      */
-    public static int saveStatisticsmessage(PApplet parent, String filePath) {
+    private static int saveStatisticsMessage(BeeTracker parent, String filePath) {
         return JOptionPane.showConfirmDialog(
             parent,
             "Video statistics have been saved to \"" + filePath +

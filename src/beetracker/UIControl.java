@@ -273,6 +273,7 @@ public class UIControl {
      */
     public void toggleOpenButton() {
         openButton.setVisible(!openButton.isVisible());
+        openButton.setBroadcast(openButton.isVisible());
     }
 
     /**

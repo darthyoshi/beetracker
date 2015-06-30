@@ -7,6 +7,7 @@
 
 package beetracker;
 
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,10 +18,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.swing.JOptionPane;
 
 import controlP5.ControlEvent;
-
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.data.FloatList;
@@ -35,6 +36,7 @@ public class BeeTracker extends PApplet {
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
     private static final String[] thresholdKeys = {"hue", "sat", "val"};
+    private static final String[] videoExt = {"mov", "mpg", "mpeg", "avi", "mp4"};
 
     private processing.data.IntList colors;
     private int[] movieDims;
@@ -46,7 +48,7 @@ public class BeeTracker extends PApplet {
 
     private int[] crossingCounts;
 
-    private File currentDir = null;
+    private File currentFile = null;
 
     private float[] insetBox, exitRadial;
     private boolean isDrag = false;
@@ -72,6 +74,8 @@ public class BeeTracker extends PApplet {
 
     private String videoName = null;
 
+    private Calendar videoDate = null;
+
     /**
      *
      */
@@ -80,6 +84,32 @@ public class BeeTracker extends PApplet {
         size(800, 600);
         frameRate(60);
         strokeWeight(1);
+
+        frame.addWindowListener(new java.awt.event.WindowListener() {
+            @Override
+            public void windowActivated(WindowEvent arg0) {}
+
+            @Override
+            public void windowClosed(WindowEvent arg0) {}
+
+            @Override
+            public void windowClosing(WindowEvent arg0) {
+                exit();
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent arg0) {}
+
+            @Override
+            public void windowDeiconified(WindowEvent arg0) {}
+
+            @Override
+            public void windowIconified(WindowEvent arg0) {}
+
+            @Override
+            public void windowOpened(WindowEvent arg0) {}
+            
+        });
 
         controlP5.ControlP5 cp5 = new controlP5.ControlP5(this);
 
@@ -519,67 +549,32 @@ public class BeeTracker extends PApplet {
 
                 //end of movie reached
                 if(isPlaying && movie.duration() - time < 1f/movie.frameRate) {
+                    isPlaying = false;
+
                     StringBuilder msg = new StringBuilder("End of video reached.\n\n");
-                    msg.append("bees tracked: ").append(colors.size()).append('\n');
+                    msg.append("Summary of events: ").append(colors.size()).append('\n');
 
-                    HashMap<String, HashMap<Integer, List<Float>>> timeStamps = tu.getTimeStamps();
+                    HashMap<Float, String> summary = tu.getSummary();
+                    FloatList timeStamps = new FloatList(summary.size());
 
-                    for(int color : colors) {
-                        msg.append("color: ").append(String.format("%06x", color))
-                            .append("\n-arrival times:\n");
+                    for(Float timeStamp : summary.keySet()) {
+                        timeStamps.append(timeStamp);
+                    }
+                    timeStamps.sort();
 
-                        for(float arriveTime : timeStamps.get("arrivals").get(color)) {
-                            msg.append("--").append(arriveTime).append('\n');
-                        }
-
-                        msg.append("number of arrivals: ")
-                            .append(timeStamps.get("arrivals").get(color).size())
-                            .append("\n-departure times:\n");
-
-                        for(float departTime : timeStamps.get("departures").get(color)) {
-                            msg.append("--").append(departTime).append('\n');
-                        }
-
-                        msg.append("number of departures: ")
-                            .append(timeStamps.get("departures").get(color).size())
+                    for(float timeStamp : timeStamps) {
+                        msg.append(timeStamp)
+                            .append(": ")
+                            .append(summary.get(timeStamp))
                             .append('\n');
                     }
 
                     if(debug) {
-                        println("\n" + msg.toString());
+                        println('\n' + msg.toString());
                     }
 
-                    if(MessageDialogue.endVideoMessage(this, msg.toString()) ==
-                        JOptionPane.YES_OPTION)
-                    {
-                        movie.jump(0f);
-
-                        if(record) {
-                            replay = true;
-                            recordButton();
-                            uic.setRecordVisibility(false);
-
-                            timeStampIndex = 0;
-
-                            centroids = new HashMap<>();
-                            List<float[]> tmpList = new ArrayList<>();
-                            for(int tmp : colors) {
-                                centroids.put(tmp, tmpList);
-                            }
-                        }
-                    }
-
-                    else {
-                        if(
-                            MessageDialogue.saveStatisticsmessage(
-                                this, writeTimeStampsToJSON(timeStamps)
-                            ) == JOptionPane.YES_OPTION
-                        ) {
-                            writeFramePointsToJSON();
-                        }
-
-                        stopPlayback();
-                    }
+                    MessageDialogue.endVideoMessage(this, msg.toString(),
+                        saveSummaryResults(timeStamps, summary));
                 }
             }
 
@@ -603,58 +598,52 @@ public class BeeTracker extends PApplet {
 
     /**
      * Saves the statistics of the current video to file.
-     * @param times an array containing HashMaps mapping six-digit hexadecimal
-     *   RGB values to Lists of floating point timestamps
-     * @return the name of the new file in the format "dd.mmm.yyyy-hhmm.json"
+     * @param timeStamps a sorted FloatList of time stamps
+     * @param summary a HashMap mapping float time stamps to string event
+     *   descriptions
+     * @return the name of the new file in the format
+     *   "<video filename>-dd.mmm.yyyy-hhmm.json"
      */
-    private String writeTimeStampsToJSON(
-        HashMap<String, HashMap<Integer, List<Float>>> times)
-    {
-        JSONObject stats = new JSONObject();
-        JSONObject beeStat, tmp;
-
-        stats.setString("file", movie.filename);
-
-        String[] keys = {"arrivals", "departures"};
-
-        int i;
-        for(int color : colors) {
-            beeStat = new JSONObject();
-
-            //list arrival timestamps
-            tmp = new JSONObject();
-            i = 0;
-            for(Float arrive : times.get(keys[0]).get(color)) {
-                tmp.setFloat(String.valueOf(i), Float.parseFloat(String.format("%.3f", arrive)));
-                i++;
-            }
-            beeStat.setJSONObject(keys[0], tmp);
-
-            //list departure timestamps
-            tmp = new JSONObject();
-            i = 0;
-            for(Float depart : times.get(keys[1]).get(color)) {
-                tmp.setFloat(String.valueOf(i), Float.parseFloat(String.format("%.3f", depart)));
-                i++;
-            }
-            beeStat.setJSONObject(keys[1], tmp);
-
-            //associate arrivals and departures with hexadecimal color key
-            stats.setJSONObject(String.format("%06x", color), beeStat);
-        }
-
+    private String saveSummaryResults(
+        FloatList timeStamps,
+        HashMap<Float, String> summary
+    ) {
         Calendar date = Calendar.getInstance();
-        String fileName = System.getProperty("user.dir") +
-            File.separatorChar + videoName +
-            String.format("-%02d.%s.%d-%02d%02d.json",
-                date.get(Calendar.DAY_OF_MONTH),
-                months[date.get(Calendar.MONTH)],
-                date.get(Calendar.YEAR),
-                date.get(Calendar.HOUR_OF_DAY),
-                date.get(Calendar.MINUTE)
+        String fileName = String.format(
+            "%s%c%s-%02d.%s.%d-%02d%02d.json",
+            System.getProperty("user.dir"),
+            File.separatorChar,
+            videoName,
+            date.get(Calendar.DAY_OF_MONTH),
+            months[date.get(Calendar.MONTH)],
+            date.get(Calendar.YEAR),
+            date.get(Calendar.HOUR_OF_DAY),
+            date.get(Calendar.MINUTE)
+        );
+
+        java.io.BufferedWriter writer = null;
+        try {
+            writer = new java.io.BufferedWriter(
+                new java.io.FileWriter(new File(fileName))
             );
 
-        saveJSONObject(stats, fileName);
+            for(float timeStamp : timeStamps) {
+                writer.append(Float.toString(timeStamp))
+                    .append(',')
+                    .append(summary.get(timeStamp))
+                    .append('\n');
+            }
+        } catch (IOException e) {
+            e.printStackTrace(log);
+        } finally {
+            if(writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace(log);
+                }
+            }
+        }
 
         return fileName;
     }
@@ -753,7 +742,11 @@ public class BeeTracker extends PApplet {
                 }
 
                 else {
-                    MessageDialogue.playButtonError(this, errors);
+                    MessageDialogue.playButtonErrorMessage(this, errors);
+
+                    if(debug) {
+                        println("error");
+                    }
                 }
             }
 
@@ -778,21 +771,13 @@ public class BeeTracker extends PApplet {
                 uic.setRangeVisibility(!isPlaying);
             }
         }
-
     }
+
     /**
      * ControlP5 callback method.
      */
     public void ejectButton() {
-        if(MessageDialogue.stopButtonWarning(this) ==
-            JOptionPane.YES_OPTION)
-        {
-            if(debug) {
-                println("stopping playback...");
-            }
-
-            stopPlayback();
-        }
+        MessageDialogue.stopButtonWarning(this);
     }
 
     /**
@@ -911,54 +896,13 @@ public class BeeTracker extends PApplet {
      * ControlP5 callback method.
      */
     public void openButton() {
-        File video = VideoBrowser.getVideoFile(this, currentDir);
-
-        String videoPath = null;
-
-        if(video != null) {
-            try {
-                videoPath = video.getCanonicalPath();
-            } catch (IOException e) {
-                e.printStackTrace(log);
-                crash(e.toString());
-            }
-
-            currentDir = video.getParentFile();
-
-            if(videoPath != null) {
-                movie = new Movie(this, videoPath);
-
-                movie.volume(0f);
-                movie.play();
-                isPlaying = false;
-
-                uic.toggleSetup();
-                uic.toggleOpenButton();
-                uic.togglePlay();
-                uic.setRangeVisibility(true);
-
-                videoName = video.getName();
-
-                crossingCounts = new int[2];
-                crossingCounts[0] = crossingCounts[1] = 0;
-
-                replay = readFramePointsFromJSON();
-                uic.setRecordVisibility(!replay);
-
-                String msg = "loaded " + videoPath + '\n';
-
-                if(debug) {
-                    print(msg);
-                }
-                log.append(msg).flush();
-            }
-        }
+        VideoBrowser.getVideoFile(this, currentFile, log);
     }
 
     /**
      * Handles all operations necessary for stopping video playback.
      */
-    private void stopPlayback() {
+    void stopPlayback() {
         if(record) {
             record = false;
             uic.setRecordState(false);
@@ -1374,7 +1318,7 @@ public class BeeTracker extends PApplet {
     /**
      * Writes the generated blob information to a file.
      */
-    private void writeFramePointsToJSON() {
+    void writeFramePointsToJSON() {
         JSONObject json = new JSONObject();
         JSONObject jsonCoords, jsonBlobs, jsonColors;
 
@@ -1388,31 +1332,132 @@ public class BeeTracker extends PApplet {
         for(Float timeStamp : allFrameTimes) {
             colorMap = allFramePoints.get(timeStamp);
 
-            jsonColors = new JSONObject();
+            if(colorMap != null) {
+                jsonColors = new JSONObject();
 
-            for(int color : colors) {
-                points = colorMap.get(color);
+                for(int color : colors) {
+                    points = colorMap.get(color);
 
-                jsonBlobs = new JSONObject();
+                    jsonBlobs = new JSONObject();
 
-                for(i = 0; i < points.size(); i++) {
-                    point = points.get(i);
+                    for(i = 0; i < points.size(); i++) {
+                        point = points.get(i);
 
-                    jsonCoords = new JSONObject();
-                    jsonCoords.setFloat("x", point[0]);
-                    jsonCoords.setFloat("y", point[1]);
+                        jsonCoords = new JSONObject();
+                        jsonCoords.setFloat("x", point[0]);
+                        jsonCoords.setFloat("y", point[1]);
 
-                    jsonBlobs.setJSONObject(Integer.toString(i), jsonCoords);
+                        jsonBlobs.setJSONObject(Integer.toString(i), jsonCoords);
+                    }
+
+                    jsonColors.setJSONObject(String.format("%06x", color), jsonBlobs);
                 }
 
-                jsonColors.setJSONObject(String.format("%06x", color), jsonBlobs);
+                json.setJSONObject(Float.toString(timeStamp), jsonColors);
             }
-
-            json.setJSONObject(Float.toString(timeStamp), jsonColors);
         }
 
         saveJSONObject(json, System.getProperty("user.dir") +
             File.separatorChar + videoName + "-points.json");
+    }
+
+    /**
+     * Loads the selected video file.
+     * @param file a File object representing the video to load
+     * @param date a Calendar object representing the initial timestamp of the 
+     *   video
+     */
+    void loadVideo(File file, Calendar date) {
+        if(file != null) {
+            log.append("selected file: \"")
+                .append(file.getAbsolutePath())
+                .append("\"\n")
+                .flush();
+
+            currentFile = file;
+
+            String[] nameParts = file.getName().split("\\.");
+
+            //check file extension
+            boolean isValidType = false;
+            for(String ext : videoExt) {
+                if(ext.equalsIgnoreCase(nameParts[nameParts.length-1])) {
+                    isValidType = true;
+                    break;
+                }
+            }
+
+            if(isValidType) {
+                movie = new Movie(this, file.getAbsolutePath());
+    
+                log.append("video loaded\n").flush();
+
+                movie.volume(0f);
+                movie.play();
+                isPlaying = false;
+    
+                log.append("toggling UI elements\n").flush();
+    
+                uic.toggleSetup();
+                uic.toggleOpenButton();
+                uic.togglePlay();
+                uic.setRangeVisibility(true);
+
+                StringBuilder builder = new StringBuilder(nameParts[0]);
+                for(int i = 1; i < nameParts.length - 1; i++) {
+                    builder.append('.').append(nameParts[i]);
+                }
+                videoName = builder.toString();
+    
+                crossingCounts = new int[2];
+                crossingCounts[0] = crossingCounts[1] = 0;
+    
+                log.append("reading frame annotations... ").flush();
+    
+                replay = readFramePointsFromJSON();
+                uic.setRecordVisibility(!replay);
+
+                log.append(replay ? "success" : "failure").append('\n').flush();
+            } 
+
+            else {
+                log.append("invalid file type: ")
+                    .append(nameParts[nameParts.length-1])
+                    .append('\n')
+                    .flush();
+            }
+
+            videoDate = date;
+        }
+
+        else {
+            log.append("file selection canceled\n").flush();
+        }
+
+        if(frame != null) {
+            requestFocusInWindow();
+        }
+    }
+
+    /**
+     * Handles all operations necessary for restarting video playback.
+     */
+    void rewindVideo() {
+        movie.jump(0f);
+
+        if(record) {
+            replay = true;
+            recordButton();
+            uic.setRecordVisibility(false);
+
+            timeStampIndex = 0;
+
+            centroids = new HashMap<>();
+            List<float[]> tmpList = new ArrayList<>();
+            for(int tmp : colors) {
+                centroids.put(tmp, tmpList);
+            }
+        }
     }
 
     /**

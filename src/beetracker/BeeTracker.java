@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import controlP5.ControlEvent;
+
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.data.FloatList;
@@ -108,7 +109,6 @@ public class BeeTracker extends PApplet {
 
             @Override
             public void windowOpened(WindowEvent arg0) {}
-            
         });
 
         controlP5.ControlP5 cp5 = new controlP5.ControlP5(this);
@@ -136,103 +136,116 @@ public class BeeTracker extends PApplet {
         colors = new processing.data.IntList();
         insetBox = new float[4];
         exitRadial = new float[4];
-        boolean[] settingsErrors = {true, false, false, false, false};
-        try {
-            JSONObject jsonSettings = loadJSONObject(
+
+        File settings = new File(
                 System.getProperty("user.dir") +
                 File.separatorChar +
                 "settings.json"
-            );
+        );
 
-            settingsErrors[0] = false;
+        boolean[] settingsErrors = {!settings.exists(), false, false, false, false};
 
-            int tmp;
-            String jsonKey;
-            JSONObject json;
-            Iterator<?> jsonIter;
+        log.append("reading settings\n").flush();
 
-            //initialize color list
+        if(!settingsErrors[0]) {
             try {
-                json = jsonSettings.getJSONObject("colors");
-                jsonIter = json.keyIterator();
-                while(jsonIter.hasNext()) {
-                    tmp = (int)Long.parseLong(
-                        json.getString((String) jsonIter.next()), 16);
+                JSONObject jsonSettings = loadJSONObject(settings.getAbsolutePath());
 
-                    uic.addListItem(String.format("%06x", tmp));
+                int tmp;
+                String jsonKey;
+                JSONObject json;
+                Iterator<?> jsonIter;
 
-                    colors.append(tmp);
-                }
-            } catch(NumberFormatException e1) {
-                settingsErrors[1] = true;
-                e1.printStackTrace(log);
-            }
+                //initialize color list
+                try {
+                    json = jsonSettings.getJSONObject("colors");
+                    jsonIter = json.keyIterator();
+                    while(jsonIter.hasNext()) {
+                        tmp = (int)Long.parseLong(
+                            json.getString((String) jsonIter.next()), 16);
 
-            //initialize selection box
-            try {
-                json = jsonSettings.getJSONObject("insetBox");
-                jsonIter = json.keyIterator();
-                while(jsonIter.hasNext()) {
-                    jsonKey = (String) jsonIter.next();
-                    tmp = Integer.parseInt(jsonKey);
+                        uic.addListItem(String.format("%06x", tmp));
 
-                    insetBox[tmp] = json.getFloat(jsonKey, (tmp*.5f < 1 ? 0f: 1f));
-                }
-            } catch(Exception e2) {
-                settingsErrors[2] = true;
-                e2.printStackTrace(log);
-            }
-
-            //initialize exit circle
-            try {
-                json = jsonSettings.getJSONObject("exitRadial");
-                jsonIter = json.keyIterator();
-                while(jsonIter.hasNext()) {
-                    jsonKey = (String) jsonIter.next();
-                    tmp = Integer.parseInt(jsonKey);
-
-                    exitRadial[tmp] = json.getFloat(jsonKey, 0f);
-                }
-            } catch(Exception e3) {
-                settingsErrors[3] = true;
-                e3.printStackTrace(log);
-            }
-
-            //set thresholds
-            try {
-                json = jsonSettings.getJSONObject("thresholds");
-                int i = 0;
-
-                for(String keyString : thresholdKeys) {
-                    switch(keyString) {
-                    case "hue": i = 0; break;
-
-                    case "sat": i = 1; break;
-
-                    case "val": i = 2;
+                        colors.append(tmp);
                     }
-
-                    bdu.setThresholdValue(i, json.getInt(keyString));
+                } catch(NumberFormatException e1) {
+                    settingsErrors[1] = true;
+                    e1.printStackTrace(log);
                 }
-            } catch(Exception e4) {
-                settingsErrors[4] = true;
-                e4.printStackTrace(log);
+
+                //initialize selection box
+                try {
+                    json = jsonSettings.getJSONObject("insetBox");
+                    jsonIter = json.keyIterator();
+                    while(jsonIter.hasNext()) {
+                        jsonKey = (String) jsonIter.next();
+                        tmp = Integer.parseInt(jsonKey);
+
+                        insetBox[tmp] = json.getFloat(jsonKey, (tmp*.5f < 1 ? 0f: 1f));
+                    }
+                } catch(Exception e2) {
+                    settingsErrors[2] = true;
+                    e2.printStackTrace(log);
+                }
+
+                //initialize exit circle
+                try {
+                    json = jsonSettings.getJSONObject("exitRadial");
+                    jsonIter = json.keyIterator();
+                    while(jsonIter.hasNext()) {
+                        jsonKey = (String) jsonIter.next();
+                        tmp = Integer.parseInt(jsonKey);
+
+                        exitRadial[tmp] = json.getFloat(jsonKey, 0f);
+                    }
+                } catch(Exception e3) {
+                    settingsErrors[3] = true;
+                    e3.printStackTrace(log);
+                }
+
+                //set thresholds
+                try {
+                    json = jsonSettings.getJSONObject("thresholds");
+                    int i = 0;
+
+                    for(String keyString : thresholdKeys) {
+                        switch(keyString) {
+                        case "hue": i = 0; break;
+
+                        case "sat": i = 1; break;
+
+                        case "val": i = 2;
+                        }
+
+                        bdu.setThresholdValue(i, json.getInt(keyString));
+                    }
+                } catch(Exception e4) {
+                    settingsErrors[4] = true;
+                    e4.printStackTrace(log);
+                }
+            } catch(RuntimeException ex) {
+                ex.printStackTrace(log);
             }
-        } catch(RuntimeException ex) {
-            ex.printStackTrace(log);
+        }
+
+        else {
+            log.append("settings file not found\n").flush();
         }
 
         if(settingsErrors[0] || settingsErrors[1]) {
             colors.clear();
         }
+
         if(settingsErrors[0] || settingsErrors[2]) {
             insetBox[0] = insetBox[1] = 0f;
             insetBox[2] = insetBox[3] = 1f;
         }
+
         if(settingsErrors[0] || settingsErrors[3]) {
             exitRadial[0] = exitRadial[1] = 0f;
             exitRadial[2] = exitRadial[3] = 0f;
         }
+
         if(settingsErrors[0] || settingsErrors[4]) {
             bdu.setThresholdValue(0, 40);
             bdu.setThresholdValue(1, 90);
@@ -289,7 +302,9 @@ public class BeeTracker extends PApplet {
                 frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
 
                 imageMode(CENTER);
+          //      if(!pip) {
                 image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
+          //      }
 
                 noSmooth();
 

@@ -20,6 +20,10 @@ import processing.core.PConstants;
 import processing.core.PImage;
 import processing.data.IntList;
 
+/**
+ *
+ * @author Kay Choi
+ */
 public class BlobDetectionUtils {
     private final BeeTracker parent;
     private int hueThreshold, satThreshold, valThreshold;
@@ -185,7 +189,7 @@ public class BlobDetectionUtils {
         }
 
         for(int tmpColor : colors) {
-            result.put(tmpColor, new ArrayList<float[]>());
+            result.put(tmpColor, new ArrayList<>());
         }
 
         //iterate through blobs
@@ -278,7 +282,7 @@ public class BlobDetectionUtils {
      *   0 = hue
      *   1 = saturation
      *   2 = brightness
-     * @param loVal the new value
+     * @param val the new value
      */
     public void setThresholdValue(int type, int val) {
         switch(type) {

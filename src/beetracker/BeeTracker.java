@@ -20,8 +20,6 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JOptionPane;
-
 import controlP5.ControlEvent;
 
 import processing.core.PApplet;
@@ -30,6 +28,10 @@ import processing.data.FloatList;
 import processing.data.JSONObject;
 import processing.video.Movie;
 
+/**
+ *
+ * @author Kay Choi
+ */
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
     private static final int[] mainBounds = {50, 50, 750, 550};
@@ -80,7 +82,7 @@ public class BeeTracker extends PApplet {
     private Calendar videoDate = null;
 
     /**
-     *
+     * Inherited from PApplet.
      */
     @Override
     public void setup() {
@@ -266,7 +268,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     *
+     * Inherited from PApplet.
      */
     @Override
     public void draw() {
@@ -722,22 +724,28 @@ public class BeeTracker extends PApplet {
      * ControlP5 callback method.
      */
     public void editColor() {
-        int editColor = ColorPicker.getColor(this);
+        ColorPicker.getColor(this);
+    }
 
+    /**
+     * Edits the selected color in the color list.
+     * @param newColor the new 6-digit hexadecimal RGB value
+     */
+    void setColor(int newColor) {
         if(listVal < 0) {
-            if(!colors.hasValue(editColor)) {
-                String code = String.format("%06x", editColor);
+            if(!colors.hasValue(newColor)) {
+                String code = String.format("%06x", newColor);
 
                 uic.addListItem(code);
 
-                colors.append(editColor);
+                colors.append(newColor);
             }
         }
 
         else {
-            colors.set(listVal, editColor);
+            colors.set(listVal, newColor);
 
-            uic.setListItem(String.format("%06x", editColor), listVal);
+            uic.setListItem(String.format("%06x", newColor), listVal);
         }
     }
 
@@ -1010,7 +1018,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     *
+     * Inherited from PApplet.
      */
     @Override
     public void exit() {
@@ -1069,7 +1077,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     *
+     * Inherited from PApplet.
      */
     @Override
     public void mousePressed() {
@@ -1118,7 +1126,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     *
+     * Inherited from PApplet.
      */
     @Override
     public void mouseDragged() {
@@ -1241,7 +1249,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     *
+     * Inherited from PApplet.
      */
     @Override
     public void mouseReleased() {

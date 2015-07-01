@@ -15,6 +15,10 @@ import java.util.List;
 import processing.core.PApplet;
 import processing.data.IntList;
 
+/**
+ *
+ * @author Kay Choi
+ */
 public class TrackingUtils {
     private final boolean debug;
     private HashMap<Integer, List<float[]>> allPoints;
@@ -282,10 +286,10 @@ public class TrackingUtils {
             if(!colors.hasValue(color)) {
                 colors.append(color);
 
-                allPoints.put(color, new ArrayList<float[]>());
+                allPoints.put(color, new ArrayList<>());
 
-                departureTimes.put(color, new LinkedList<Float>());
-                arrivalTimes.put(color, new LinkedList<Float>());
+                departureTimes.put(color, new LinkedList<>());
+                arrivalTimes.put(color, new LinkedList<>());
 
                 allTimeOuts.put(color, new IntList());
             }

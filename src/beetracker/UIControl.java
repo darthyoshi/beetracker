@@ -19,6 +19,10 @@ import controlP5.Tooltip;
 
 import processing.core.PImage;
 
+/**
+ *
+ * @author Kay Choi
+ */
 public class UIControl {
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;

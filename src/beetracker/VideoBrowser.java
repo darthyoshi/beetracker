@@ -13,8 +13,10 @@ import java.util.Date;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import processing.core.PApplet;
-
+/**
+ *
+ * @author Kay Choi
+ */
 public class VideoBrowser {
     private static final FileNameExtensionFilter movType =
         new FileNameExtensionFilter("*.mov", "mov");
@@ -31,44 +33,42 @@ public class VideoBrowser {
      * Displays a file browser that filters for video files.
      * @param parent the invoking BeeTracker
      * @param currentDir the initial directory to browse from
-     * @return a Java File object
+     * @param log
      */
     public static void getVideoFile(
-        final BeeTracker parent,
-        final java.io.File currentDir,
-        final java.io.PrintStream log
+        BeeTracker parent,
+        java.io.File currentDir,
+        java.io.PrintStream log
     ) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                java.io.File selectedFile = null;
-                Calendar dateTime = null;
+        java.awt.EventQueue.invokeLater(() -> {
+            java.io.File selectedFile = null;
+            Calendar dateTime = null;
 
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setDialogTitle("Select video");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Select video");
 
-                log.append("setting directory\n").flush();
-                if(currentDir != null) {
-                    fileChooser.setCurrentDirectory(currentDir);
-                }
-                log.append("setting filters\n").flush();
-                fileChooser.setFileFilter(allType);
-                fileChooser.addChoosableFileFilter(aviType);
-                fileChooser.addChoosableFileFilter(mpgType);
-                fileChooser.addChoosableFileFilter(mp4Type);
-                fileChooser.addChoosableFileFilter(movType);
-                fileChooser.removeChoosableFileFilter(fileChooser.getAcceptAllFileFilter());
-
-                if(fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
-                    selectedFile = fileChooser.getSelectedFile();
-                }
-
-                if(selectedFile != null) {
-                    log.append("setting time stamp\n").flush();
-                    dateTime = getDateTime(parent);
-                }
-
-                parent.loadVideo(selectedFile, dateTime);
+            log.append("setting directory\n").flush();
+            if(currentDir != null) {
+                fileChooser.setCurrentDirectory(currentDir);
             }
+            log.append("setting filters\n").flush();
+            fileChooser.setFileFilter(allType);
+            fileChooser.addChoosableFileFilter(aviType);
+            fileChooser.addChoosableFileFilter(mpgType);
+            fileChooser.addChoosableFileFilter(mp4Type);
+            fileChooser.addChoosableFileFilter(movType);
+            fileChooser.removeChoosableFileFilter(fileChooser.getAcceptAllFileFilter());
+
+            if(fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+                selectedFile = fileChooser.getSelectedFile();
+            }
+
+            if(selectedFile != null) {
+                log.append("setting time stamp\n").flush();
+                dateTime = getDateTime(parent);
+            }
+
+            parent.loadVideo(selectedFile, dateTime);
         });
     }
 
@@ -84,7 +84,7 @@ public class VideoBrowser {
         Date start = calendar.getTime();
         calendar.add(Calendar.YEAR, 200);
         Date stop = calendar.getTime();
-    
+
         javax.swing.JSpinner dateTimeSpinner = new javax.swing.JSpinner(
             new javax.swing.SpinnerDateModel(
                 now,
@@ -93,17 +93,17 @@ public class VideoBrowser {
                 Calendar.DATE
             )
         );
-    
+
         javax.swing.JPanel panel = new javax.swing.JPanel();
         panel.add(dateTimeSpinner);
-    
+
         javax.swing.JOptionPane.showMessageDialog(
             parent,
             panel,
             "Set the initial video time stamp",
             javax.swing.JOptionPane.PLAIN_MESSAGE
         );
-    
+
         calendar.setTime((Date)dateTimeSpinner.getValue());
 
         return calendar;

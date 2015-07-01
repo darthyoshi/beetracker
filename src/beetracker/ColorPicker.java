@@ -8,22 +8,27 @@
 
 package beetracker;
 
+/**
+ *
+ * @author Kay Choi
+ */
 public class ColorPicker {
     /**
      * Displays a color picker.
-     * @param parent the instantiating PApplet
-     * @return the six-digit hexadecimal RGB value of the selected color or 0
-     *   for a non-valid selection
+     * @param parent the instantiating BeeTracker
      */
-    public static int getColor(processing.core.PApplet parent) {
-        java.awt.Color newColor = javax.swing.JColorChooser
-            .showDialog(parent, "Select Color", java.awt.Color.BLACK);
-        int result = 0;
+    public static void getColor(BeeTracker parent) {
+        java.awt.EventQueue.invokeLater(() -> {
+            java.awt.Color newColor = javax.swing.JColorChooser
+                .showDialog(parent, "Select Color", java.awt.Color.BLACK);
+            int result = 0;
 
-        if(newColor != null) {
-            result = (newColor.getRed() << 16) + (newColor.getGreen() << 8) + newColor.getBlue();
-        }
+            if(newColor != null) {
+                result = (newColor.getRed() << 16) +
+                    (newColor.getGreen() << 8) + newColor.getBlue();
+            }
 
-        return result;
+            parent.setColor(result);
+        });
     }
 }

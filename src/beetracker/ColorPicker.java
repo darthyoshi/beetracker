@@ -17,18 +17,21 @@ public class ColorPicker {
      * Displays a color picker.
      * @param parent the instantiating BeeTracker
      */
-    public static void getColor(BeeTracker parent) {
-        java.awt.EventQueue.invokeLater(() -> {
-            java.awt.Color newColor = javax.swing.JColorChooser
-                .showDialog(parent, "Select Color", java.awt.Color.BLACK);
-            int result = 0;
+    public static void getColor(final BeeTracker parent) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                java.awt.Color newColor = javax.swing.JColorChooser
+                    .showDialog(parent, "Select Color", java.awt.Color.BLACK);
+                int result = 0;
 
-            if(newColor != null) {
-                result = (newColor.getRed() << 16) +
-                    (newColor.getGreen() << 8) + newColor.getBlue();
+                if(newColor != null) {
+                    result = (newColor.getRed() << 16) +
+                        (newColor.getGreen() << 8) + newColor.getBlue();
+                }
+
+                parent.setColor(result);
             }
-
-            parent.setColor(result);
         });
     }
 }

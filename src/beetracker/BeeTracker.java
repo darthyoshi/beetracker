@@ -34,13 +34,18 @@ import processing.video.Movie;
  */
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
-    private static final int[] mainBounds = {50, 50, 750, 550};
+    private static final int[] viewBounds = {50, 50, 749, 549};
     private static final String months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
     private static final String[] thresholdKeys = {"hue", "sat", "val"};
-    private static final String[] videoExt = {"mov", "mpg", "mpeg", "avi", "mp4"};
+    private static final String[] modes = {
+        "Config Mode",
+        "Replay Mode",
+        "Annotation Mode",
+        "Playback Mode"
+    };
 
     private processing.data.IntList colors;
     private int[] movieDims = null, movieOffset, frameDims, frameOffset;
@@ -68,9 +73,9 @@ public class BeeTracker extends PApplet {
 
     private PrintStream log = null;
 
-    private PImage titleImg;
+    private final PImage titleImg = requestImage("data/img/title.png");
 
-    private final boolean debug = true;
+    private static final boolean debug = true;
 
     private HashMap<Float, HashMap<Integer, List<float[]>>> allFramePoints = null;
     private HashMap<Integer, List<float[]>> centroids;
@@ -258,8 +263,6 @@ public class BeeTracker extends PApplet {
 
         tu = new TrackingUtils(debug);
 
-        titleImg = loadImage("data/img/title.png");
-
         movieOffset = new int[2];
         frameDims = new int[2];
         frameOffset = new int[2];
@@ -274,11 +277,21 @@ public class BeeTracker extends PApplet {
     public void draw() {
         background(0x222222);
 
+        textAlign(CENTER, CENTER);
+
         fill(0xff444444);
         rectMode(CORNERS);
-        rect(mainBounds[0]-1, mainBounds[1]-1, mainBounds[2]+1, mainBounds[3]+1);
+        rect(viewBounds[0]-1, viewBounds[1]-1, viewBounds[2]+1, viewBounds[3]+1);
 
         if(movie != null) {
+            rectMode(CENTER);
+            noStroke();
+            fill(0xff02344d);
+            rect(145, 25, 190, 40);
+            fill(0xffffffff);
+
+            text(modes[(isPlaying ? (replay ? 1 : (record ? 2 : 3)) : 0)], 145, 25);
+
             float time = movie.time();
 
             if(movie.available()) {
@@ -295,10 +308,22 @@ public class BeeTracker extends PApplet {
             }
 
             if(movieDims != null) {
-                imageMode(CENTER);
-          //      if(!pip) {
-                    image(movie, width*.5f, height*.5f, movieDims[0], movieDims[1]);
-          //      }
+                PImage viewFrame = createImage(
+                    viewBounds[2] - viewBounds[1] + 1,
+                    viewBounds[3] - viewBounds[1] + 1,
+                    ARGB
+                );
+                viewFrame.copy(
+                    movie,
+                    0,
+                    0,
+                    movie.width,
+                    movie.height,
+                    (viewFrame.width-movieDims[0])/2,
+                    (viewFrame.height-movieDims[1])/2,
+                    movieDims[0],
+                    movieDims[1]
+                );
 
                 noSmooth();
 
@@ -306,26 +331,28 @@ public class BeeTracker extends PApplet {
 
                 if(insetFrame != null) {
                     if(replay) {
-                        float timeStamp = allFrameTimes.get(timeStampIndex);
+                        if(timeStampIndex >= 0 &&
+                            timeStampIndex < allFrameTimes.size())
+                        {
+                            float timeStamp = allFrameTimes.get(timeStampIndex);
 
-                        if(
-                            timeStampIndex >= 0 &&
-                            timeStampIndex < allFrameTimes.size() &&
-                            timeStamp < time
-                        ) {
-                            if(debug) {
-                                println("frame info for " + timeStamp +
-                                    "s, actual time " + time + 's');
-                            }
+                            if(timeStamp < time) {
+                                if(debug) {
+                                    println("frame info for " + timeStamp +
+                                        "s, actual time " + time + 's');
+                                }
 
-                            if(allFramePoints.containsKey(timeStamp)) {
-                                centroids = allFramePoints.get(timeStamp);
+                                if(allFramePoints.containsKey(timeStamp)) {
+                                    centroids = allFramePoints.get(timeStamp);
+                                }
+                                timeStampIndex++;
                             }
-                            timeStampIndex++;
                         }
                     }
 
                     else {
+                        //BlobDetection expects certain image size
+                        insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
                         bdu.filterImg(insetFrame, colors);
 
                         centroids = bdu.getCentroids(insetFrame, colors);
@@ -358,29 +385,57 @@ public class BeeTracker extends PApplet {
                         }
                     }
 
-                    imageMode(CORNER);
+                    int[] insetOffset = new int[2];
 
                     //zoomed
                     if(pip) {
                         PImage zoomedInset = copyInsetFrame();
 
+                        insetOffset[0] = (viewFrame.width-frameDims[0])/2 + 1;
+                        insetOffset[1] = (viewFrame.height-frameDims[1])/2 + 1;
+
                         if(zoomedInset != null) {
-                            image(
+                            viewFrame.copy(
                                 zoomedInset,
-                                frameOffset[0],
-                                frameOffset[1],
+                                0,
+                                0,
+                                zoomedInset.width,
+                                zoomedInset.height,
+                                (viewFrame.width-frameDims[0])/2 + 1,
+                                (viewFrame.height-frameDims[1])/2 + 1,
                                 frameDims[0],
                                 frameDims[1]
                             );
                         }
                     }
 
-                    image(
+                    else {
+                        insetOffset[0] = (int)(insetBox[0]*movieDims[0]) + 1 +
+                            movieOffset[0] - viewBounds[0];
+                        insetOffset[1] = (int)(insetBox[1]*movieDims[1]) + 1 +
+                            movieOffset[1] - viewBounds[1];
+                    }
+
+                    imageMode(CORNERS);
+
+                    viewFrame.blend(
                         insetFrame,
-                        frameOffset[0],
-                        frameOffset[1],
+                        0,
+                        0,
+                        insetFrame.width,
+                        insetFrame.height,
+                        insetOffset[0],
+                        insetOffset[1],
                         frameDims[0],
-                        frameDims[1]
+                        frameDims[1],
+                        ADD
+                    );
+                    image(
+                        viewFrame,
+                        viewBounds[0],
+                        viewBounds[1],
+                        viewBounds[2],
+                        viewBounds[3]
                     );
 
                     smooth();
@@ -430,39 +485,20 @@ public class BeeTracker extends PApplet {
                     allFrameTimes.append(time);
                 }
 
-
-                textAlign(CENTER, CENTER);
-                rectMode(CENTER);
-                noStroke();
-                fill(0xff02344d);
-                rect(145, 25, 190, 40);
-
                 //bee count
                 if(isPlaying) {
+                    rectMode(CENTER);
+                    noStroke();
+                    fill(0xff02344d);
                     rect(535, 25, 430, 40);
 
                     fill(0xffffffff);
-
                     text("total #arrivals: " + crossingCounts[1] +
                         ", total #departures: " + crossingCounts[0], 534, 25);
 
-                    if(record) {
-                        text("Annotation Mode", 145, 25);
-
-                        if(debug) {
-                            println("---------END FRAME---------");
-                        }
+                    if(record && debug) {
+                        println("---------END FRAME---------");
                     }
-
-                    else {
-                        text("Replay Mode", 145, 25);
-                    }
-                }
-
-                //status box
-                else {
-                    fill(0xffffffff);
-                    text("Config Mode", 145, 25);
                 }
 
                 strokeWeight(1);
@@ -494,7 +530,7 @@ public class BeeTracker extends PApplet {
                 else {
                     //inset box
                     rectMode(CENTER);
-                    rect(.5f*width, .5f*height, frameDims[0], frameDims[1]);
+                    rect(width/2, height/2, frameDims[0]-1, frameDims[1]-1);
 
                     //exit circle
                     ellipse(
@@ -564,7 +600,32 @@ public class BeeTracker extends PApplet {
                     }
                     timeStamps.sort();
 
+                    Calendar date = Calendar.getInstance();
+                    StringBuilder builder;
+                    HashMap<Float, String> formattedTime = new HashMap<>();
+
+                    int sec;
                     for(float timeStamp : timeStamps) {
+                        sec = (int)timeStamp;
+                        date.setTime(videoDate.getTime());
+                        date.add(Calendar.SECOND, sec);
+
+                        builder = new StringBuilder();
+                        builder.append(months[date.get(Calendar.MONTH)])
+                            .append(' ')
+                            .append(Integer.toString(date.get(Calendar.DATE)))
+                            .append(' ')
+                            .append(Integer.toString(date.get(Calendar.YEAR)))
+                            .append(',')
+                            .append(String.format(
+                                "%02d:%02d:%.5f",
+                                date.get(Calendar.HOUR_OF_DAY),
+                                date.get(Calendar.MINUTE),
+                                (date.get(Calendar.SECOND)-sec)+timeStamp
+                            ));
+
+                        formattedTime.put(timeStamp, builder.toString());
+
                         msg.append(timeStamp)
                             .append(": ")
                             .append(summary.get(timeStamp))
@@ -575,38 +636,47 @@ public class BeeTracker extends PApplet {
                         println('\n' + msg.toString());
                     }
 
-                    MessageDialogue.endVideoMessage(this, msg.toString(),
-                        saveSummaryResults(timeStamps, summary));
+                    MessageDialogue.endVideoMessage(
+                        this, msg.toString(),
+                        saveSummaryResults(
+                            date,
+                            timeStamps,
+                            formattedTime,
+                            summary
+                        )
+                    );
                 }
             }
 
-            else if(movie.height > 0) {
-                uic.setSeekRange(movie.duration());
+            else {
+                text("Loading...", width*.5f, height*.5f);
 
-                movieDims = scaledDims(
-                    movie.width,
-                    movie.height
-                );
+                if(movie.height > 0) {
+                    uic.setSeekRange(movie.duration());
 
-                movieOffset[0] = (int)((width-movieDims[0])*.5f);
-                movieOffset[1] = (int)((height-movieDims[1])*.5f);
+                    movieDims = scaledDims(
+                        movie.width,
+                        movie.height
+                    );
 
-                frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
-                frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
+                    movieOffset[0] = (int)((width-movieDims[0])*.5f);
+                    movieOffset[1] = (int)((height-movieDims[1])*.5f);
 
-                frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
-                frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+                    frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
+                    frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
 
-                updateExitCenter();
+                    frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
+                    frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+
+                    updateExitCenter();
+                }
             }
         }
 
         else {
             imageMode(CENTER);
-            image(titleImg, .5f*width, .5f*height-50);
-
-            if(movieDims != null) {
-                movieDims = null;
+            if(titleImg.width > 0) {
+                image(titleImg, .5f*width, .5f*height-50);
             }
         }
 
@@ -614,11 +684,11 @@ public class BeeTracker extends PApplet {
         stroke(0xffffffff);
         noFill();
         rectMode(CORNERS);
-        rect(mainBounds[0]-1, mainBounds[1]-1, mainBounds[2]+1, mainBounds[3]+1);
+        rect(viewBounds[0]-1, viewBounds[1]-1, viewBounds[2]+1, viewBounds[3]+1);
     }
 
     /**
-     * TODO
+     * Updates the coordinates of the exit center on the screen.
      */
     private void updateExitCenter() {
         if(!pip) {
@@ -636,19 +706,24 @@ public class BeeTracker extends PApplet {
 
     /**
      * Saves the statistics of the current video to file.
+     * @param date a Calendar object
      * @param timeStamps a sorted FloatList of time stamps
+     * @param formattedTime a HashMap mapping float time stamps to formatted
+     *   time stamp strings
      * @param summary a HashMap mapping float time stamps to string event
      *   descriptions
      * @return the name of the new file in the format
      *   "<video filename>-dd.mmm.yyyy-hhmm.json"
      */
     private String saveSummaryResults(
+        Calendar date,
         FloatList timeStamps,
+        HashMap<Float, String> formattedTime,
         HashMap<Float, String> summary
     ) {
-        Calendar date = Calendar.getInstance();
+        date.setTimeInMillis(System.currentTimeMillis());
         String fileName = String.format(
-            "%s%c%s-%02d.%s.%d-%02d%02d.json",
+            "%s%c%s-%02d.%s.%d-%02d%02d.csv",
             System.getProperty("user.dir"),
             File.separatorChar,
             videoName,
@@ -661,15 +736,17 @@ public class BeeTracker extends PApplet {
 
         java.io.BufferedWriter writer = null;
         try {
-            writer = new java.io.BufferedWriter(
-                new java.io.FileWriter(new File(fileName))
+            writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(
+                new java.io.FileOutputStream(fileName), "UTF-8")
             );
 
+            writer.append("date,time,color,type\n").flush();
             for(float timeStamp : timeStamps) {
-                writer.append(Float.toString(timeStamp))
+                writer.append(formattedTime.get(timeStamp))
                     .append(',')
                     .append(summary.get(timeStamp))
-                    .append('\n');
+                    .append('\n')
+                    .flush();
             }
         } catch (IOException e) {
             e.printStackTrace(log);
@@ -710,11 +787,11 @@ public class BeeTracker extends PApplet {
                 (int)(movie.height*insetBox[1]),
                 (int)(movie.width*(insetBox[2] - insetBox[0])),
                 (int)(movie.height*(insetBox[3] - insetBox[1])),
-                0, 0, result.width, result.height
+                0,
+                0,
+                result.width,
+                result.height
             );
-
-            //BlobDetection expects certain image size
-            result.resize(bdu.getImageWidth(), bdu.getImageHeight());
         }
 
         return result;
@@ -811,9 +888,9 @@ public class BeeTracker extends PApplet {
                     println("done");
                 }
 
-                uic.toggleSetup();
+                uic.setSetupGroupVisibility(!isPlaying);
                 uic.setPlayState(isPlaying);
-                uic.setRangeVisibility(!isPlaying);
+                uic.setThresholdVisibility(!isPlaying);
             }
         }
     }
@@ -831,7 +908,7 @@ public class BeeTracker extends PApplet {
      */
     public void controlEvent(ControlEvent event) {
         if(debug) {
-            println(event.getName());
+            println("ControlEvent: " + event.getName());
         }
 
         switch(event.getName()) {
@@ -847,6 +924,10 @@ public class BeeTracker extends PApplet {
                     )
                 );
             }
+
+            break;
+
+        default: //do nothing
         }
     }
 
@@ -903,7 +984,7 @@ public class BeeTracker extends PApplet {
      * @param value
      */
     public void radioButtons(int value) {
-        uic.setRangeValues(bdu.getThresholdValue(value));
+        uic.setThresholdValue(bdu.getThresholdValue(value));
     }
 
     /**
@@ -921,28 +1002,33 @@ public class BeeTracker extends PApplet {
 
         //update playback mode timestamp
         if(replay) {
-            int i = 0, start = 0, stop = allFrameTimes.size() - 1;
             float time;
+            int i = 0, start = 0, stop = allFrameTimes.size() - 1;
 
-            while(start < stop) {
+            while(start <= stop) {
                 i = (stop+start)/2;
                 time = allFrameTimes.get(i);
 
-                if(time == value) {
-                    break;
-                }
-
-                else if(time > value) {
+                if(time - value > 0.000001f) {
                     stop = i - 1;
                 }
 
-                else {
+                else if(value - time > 0.000001f) {
                     start = i + 1;
+                }
+
+                else {
+                    break;
                 }
             }
 
-            timeStampIndex = i + 1;
-          }
+            //if no match found, get next largest frame time
+            if(start > stop && value - allFrameTimes.get(i) > 0.000001f) {
+                i++;
+            }
+
+            timeStampIndex = i;
+        }
 
         movie.jump(value);
         uic.setSeekTime(value);
@@ -954,10 +1040,6 @@ public class BeeTracker extends PApplet {
     public void recordButton() {
         record = !record;
         uic.setRecordState(record);
-
-        if(!isPlaying) {
-            playButton();
-        }
     }
 
     /**
@@ -971,33 +1053,29 @@ public class BeeTracker extends PApplet {
      * Handles all operations necessary for stopping video playback.
      */
     void stopPlayback() {
-        if(record) {
-            record = false;
-            uic.setRecordState(false);
-        }
-
-        if(isPlaying) {
-            isPlaying = false;
-            uic.setPlayState(false);
-        }
-
-        else {
-            uic.toggleSetup();
-        }
-
         if(movie != null) {
             movie.stop();
             movie = null;
+            movieDims = null;
             videoName = null;
 
             allFrameTimes = null;
             allFramePoints = null;
             timeStampIndex = -1;
+
+            settingIndex = 0;
         }
 
-        uic.toggleOpenButton();
-        uic.togglePlay();
-        uic.setRangeVisibility(false);
+        record = false;
+        uic.setRecordState(false);
+
+        isPlaying = false;
+        uic.setPlayState(false);
+
+        uic.setSetupGroupVisibility(false);
+        uic.setOpenButtonVisibility(true);
+        uic.setPlayVisibility(false);
+        uic.setThresholdVisibility(false);
         uic.selectRadioButton(0);
         uic.setSeekTime(0f);
         radioButtons(0);
@@ -1013,8 +1091,6 @@ public class BeeTracker extends PApplet {
      */
     public void crash(String msg) {
         MessageDialogue.crashMessage(this, msg);
-
-        this.exit();
     }
 
     /**
@@ -1256,7 +1332,16 @@ public class BeeTracker extends PApplet {
         if(isDrag) {
             if(!selectExit) {
                 //selection box has area of zero
-                if(insetBox[0] == insetBox[2] || insetBox[1] == insetBox[3]) {
+                if(
+                    (
+                        insetBox[0] - insetBox[2] <= 0.000001f &&
+                        insetBox[0] - insetBox[2] >= -0.000001f
+                    ) ||
+                    (
+                        insetBox[1] - insetBox[3] <= 0.000001f &&
+                        insetBox[1] - insetBox[3] >= -0.000001f
+                    )
+                ) {
                     insetBox[0] = insetBox[1] = 0f;
                     insetBox[2] = insetBox[3] = 1f;
                 }
@@ -1313,12 +1398,12 @@ public class BeeTracker extends PApplet {
         float ratio = imgWidth/imgHeight;
 
         //scale by width
-        result[0] = width - 102;
+        result[0] = width - 100;
         result[1] = (int)(result[0]/ratio);
 
         //scale by height
-        if(result[1] > height - 102) {
-            result[1] = height - 102;
+        if(result[1] > height - 100) {
+            result[1] = height - 100;
             result[0] = (int)(result[1]*ratio);
         }
 
@@ -1470,7 +1555,7 @@ public class BeeTracker extends PApplet {
                     jsonColors.setJSONObject(String.format("%06x", color), jsonBlobs);
                 }
 
-                json.setJSONObject(Float.toString(timeStamp), jsonColors);
+                json.setJSONObject(String.format("%.7f", timeStamp), jsonColors);
             }
         }
 
@@ -1481,70 +1566,42 @@ public class BeeTracker extends PApplet {
     /**
      * Loads the selected video file.
      * @param file a File object representing the video to load
-     * @param date a Calendar object representing the initial timestamp of the
-     *   video
      */
-    void loadVideo(File file, Calendar date) {
+    public void loadVideo(File file) {
         if(file != null) {
-            log.append("selected file: \"")
-                .append(file.getAbsolutePath())
-                .append("\"\n")
-                .flush();
-
             currentFile = file;
 
+            movie = new Movie(this, file.getAbsolutePath());
+
+            log.append("video loaded\n").flush();
+
+            movie.volume(0f);
+            movie.play();
+            isPlaying = false;
+
+            log.append("toggling UI elements\n").flush();
+
+            uic.setSetupGroupVisibility(true);
+            uic.setOpenButtonVisibility(false);
+            uic.setPlayVisibility(true);
+            uic.setThresholdVisibility(true);
+
             String[] nameParts = file.getName().split("\\.");
-
-            //check file extension
-            boolean isValidType = false;
-            for(String ext : videoExt) {
-                if(ext.equalsIgnoreCase(nameParts[nameParts.length-1])) {
-                    isValidType = true;
-                    break;
-                }
+            StringBuilder builder = new StringBuilder(nameParts[0]);
+            for(int i = 1; i < nameParts.length - 1; i++) {
+                builder.append('.').append(nameParts[i]);
             }
+            videoName = builder.toString();
 
-            if(isValidType) {
-                movie = new Movie(this, file.getAbsolutePath());
+            crossingCounts = new int[2];
+            crossingCounts[0] = crossingCounts[1] = 0;
 
-                log.append("video loaded\n").flush();
+            log.append("reading frame annotations... ").flush();
 
-                movie.volume(0f);
-                movie.play();
-                isPlaying = false;
+            replay = readFramePointsFromJSON();
+            uic.setRecordVisibility(!replay);
 
-                log.append("toggling UI elements\n").flush();
-
-                uic.toggleSetup();
-                uic.toggleOpenButton();
-                uic.togglePlay();
-                uic.setRangeVisibility(true);
-
-                StringBuilder builder = new StringBuilder(nameParts[0]);
-                for(int i = 1; i < nameParts.length - 1; i++) {
-                    builder.append('.').append(nameParts[i]);
-                }
-                videoName = builder.toString();
-
-                crossingCounts = new int[2];
-                crossingCounts[0] = crossingCounts[1] = 0;
-
-                log.append("reading frame annotations... ").flush();
-
-                replay = readFramePointsFromJSON();
-                uic.setRecordVisibility(!replay);
-
-                log.append(replay ? "success" : "failure").append('\n').flush();
-            }
-
-            else {
-                log.append("invalid file type: ")
-                    .append(nameParts[nameParts.length-1])
-                    .append('\n')
-                    .flush();
-            }
-
-            videoDate = date;
+            log.append(replay ? "success" : "failure").append('\n').flush();
         }
 
         else {
@@ -1554,6 +1611,14 @@ public class BeeTracker extends PApplet {
         if(frame != null) {
             requestFocusInWindow();
         }
+    }
+
+    /**
+     * Sets the starting time stamp of the video.
+     * @param date a Calendar object representing the new time stamp
+     */
+    void setTime(Calendar date) {
+        videoDate = date;
     }
 
     /**

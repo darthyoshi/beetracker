@@ -52,8 +52,9 @@ public class UIControl {
     public UIControl(BeeTracker parent, ControlP5 cp5) {
         cp5.setFont(cp5.getFont().getFont(), 15);
 
-        toolTip = cp5.getTooltip().setPositionOffset(0f, -30f).setAlpha(0);
-        toolTip.getLabel()
+        toolTip = cp5.getTooltip().setPositionOffset(0f, -15f).setAlpha(0);
+        toolTip.setDelay(100)
+            .getLabel()
             .setFont(cp5.getFont())
             .setColorBackground(0xffffffff)
             .getStyle()
@@ -95,7 +96,7 @@ public class UIControl {
 
         openButton = cp5.addButton("openButton").setSize(120, 50);
         openButton.setPosition(
-                (parent.width - openButton.getWidth())/2,
+                (parent.width - openButton.getWidth())*.5f,
                 parent.height - 150
             ).setCaptionLabel("Open video file")
             .getCaptionLabel()
@@ -146,6 +147,8 @@ public class UIControl {
                 playButton.getPosition().x + 120,
                 playButton.getPosition().y
             ).setGroup(playGroup)
+            .showTickMarks(true)
+            .setSliderMode(Slider.FLEXIBLE)
             .setBroadcast(true);
 
         Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
@@ -165,21 +168,37 @@ public class UIControl {
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(selectToggle, "Boundary selection");
+        toolTip.register(selectToggle, "Selection type");
 
-        Toggle tmp = cp5.addToggle("Hue").setBroadcast(false).toggle();
-        tmp.getCaptionLabel()
+        Toggle hue = cp5.addToggle("Hue").setBroadcast(false).toggle();
+        hue.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
+        toolTip.register(hue, "Select hue threshold");
+
+        Toggle sat = cp5.addToggle("Sat").setBroadcast(false);
+        sat.getCaptionLabel()
+            .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
+            .setPaddingX(5);
+
+        toolTip.register(sat, "Select saturation threshold");
+
+        Toggle val = cp5.addToggle("Val").setBroadcast(false);
+        val.getCaptionLabel()
+            .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
+            .setPaddingX(5);
+
+        toolTip.register(val, "Select value threshold");
+
         radioButtons = cp5.addRadioButton("radioButtons")
-            .setPosition(255, 27)
+            .setPosition(355, 27)
             .setItemsPerRow(3)
-            .setSpacingColumn(50)
-            .addItem(tmp, 0)
-            .addItem("Sat", 1)
-            .addItem("Val", 2)
-            .setSize(15,15)
+            .setSpacingColumn(40)
+            .addItem(hue, 0)
+            .addItem(sat, 1)
+            .addItem(val, 2)
+            .setSize(15, 15)
             .setNoneSelectedAllowed(false)
             .setGroup(thresholdGroup);
 
@@ -188,22 +207,24 @@ public class UIControl {
             .setRange(0, 255)
             .setValue(40f)
             .setPosition(
-                radioButtons.getPosition().x,
+                radioButtons.getPosition().x - 100,
                 radioButtons.getPosition().y - 20
-            ).setCaptionLabel("Threshold")
+            ).setCaptionLabel("Threshold:")
             .setGroup(thresholdGroup)
             .setBroadcast(true)
             .getCaptionLabel()
-            .align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE)
-            .setPaddingX(5)
-            .setPaddingY(6);
+            .align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE)
+            .setPadding(0, 6);
+
+        toolTip.register(thresholdSlider, "Adjust the selected threshold");
     }
 
     /**
      * Toggles the visibility of the playback controls.
+     * @param visible the visibility state
      */
-    public void togglePlay() {
-        playGroup.setVisible(!playGroup.isVisible());
+    public void setPlayVisibility(boolean visible) {
+        playGroup.setVisible(visible);
     }
 
     /**
@@ -267,24 +288,26 @@ public class UIControl {
 
     /**
      * Toggles the visibility of the setup mode components.
+     * @param visible the visibility state
      */
-    public void toggleSetup() {
-        setupGroup.setVisible(!setupGroup.isVisible());
+    public void setSetupGroupVisibility(boolean visible) {
+        setupGroup.setVisible(visible);
     }
 
     /**
      * Toggles the visibility of the "open video" button.
+     * @param visible the visibility state
      */
-    public void toggleOpenButton() {
-        openButton.setVisible(!openButton.isVisible());
-        openButton.setBroadcast(openButton.isVisible());
+    public void setOpenButtonVisibility(boolean visible) {
+        openButton.setVisible(visible);
+        openButton.setBroadcast(visible);
     }
 
     /**
      * Toggles the visibility of the "threshold" slider.
      * @param visible the visibility state
      */
-    public void setRangeVisibility(boolean visible) {
+    public void setThresholdVisibility(boolean visible) {
         thresholdGroup.setVisible(visible);
     }
 
@@ -292,7 +315,7 @@ public class UIControl {
      * Updates the slider values.
      * @param val the new slider value
      */
-    public void setRangeValues(int val) {
+    public void setThresholdValue(int val) {
         thresholdSlider.setBroadcast(false).setValue(val).setBroadcast(true);
     }
 
@@ -323,7 +346,11 @@ public class UIControl {
     private void formatSeekLabel() {
         int tmp = (int)(seekBar.getValue()*100);
         seekBar.setValueLabel(String.format("%02d:%02d.%02d", tmp/6000, (tmp/100)%60, tmp%100))
-            .getCaptionLabel()
+            .getValueLabel()
+            .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
+            .setPaddingX(0)
+            .setPaddingY(5);
+        seekBar.getCaptionLabel()
             .align(ControlP5Constants.RIGHT, ControlP5Constants.BOTTOM_OUTSIDE)
             .setPaddingX(0)
             .setPaddingY(5);

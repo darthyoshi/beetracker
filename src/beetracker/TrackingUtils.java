@@ -97,11 +97,11 @@ public class TrackingUtils {
 
             if(debug) {
                 PApplet.println(String.format(
-                    "---checking blobs colored %06x---\n%s %d\n%s %d",
+                    "---checking blobs colored %06x---%s %d%s %d",
                     color,
-                    "points in last frame:",
+                    "\npoints in last frame:",
                     oldPoints.size(),
-                    "points in current frame:",
+                    "\npoints in current frame:",
                     newPoints.size()
                 ));
             }
@@ -286,10 +286,10 @@ public class TrackingUtils {
             if(!colors.hasValue(color)) {
                 colors.append(color);
 
-                allPoints.put(color, new ArrayList<>());
+                allPoints.put(color, new ArrayList<float[]>());
 
-                departureTimes.put(color, new LinkedList<>());
-                arrivalTimes.put(color, new LinkedList<>());
+                departureTimes.put(color, new LinkedList<Float>());
+                arrivalTimes.put(color, new LinkedList<Float>());
 
                 allTimeOuts.put(color, new IntList());
             }
@@ -306,10 +306,10 @@ public class TrackingUtils {
 
         for(int color : colors) {
             for(Float time : arrivalTimes.get(color)) {
-                result.put(time, String.format("06x,arrival", color));
+                result.put(time, String.format("#%06x,arrival", color));
             }
             for(Float time : departureTimes.get(color)) {
-                result.put(time, String.format("06x,departure", color));
+                result.put(time, String.format("#%06x,departure", color));
             }
         }
 

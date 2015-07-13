@@ -7,68 +7,110 @@
 
 package beetracker;
 
+import java.awt.FileDialog;
 import java.util.Calendar;
 import java.util.Date;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
  * @author Kay Choi
  */
 public class VideoBrowser {
-    private static final FileNameExtensionFilter movType =
-        new FileNameExtensionFilter("*.mov", "mov");
-    private static final FileNameExtensionFilter allType =
-        new FileNameExtensionFilter("All video files", "mov", "mpg", "mpeg", "avi", "mp4");
-    private static final FileNameExtensionFilter aviType =
-        new FileNameExtensionFilter("*.avi", "avi");
-    private static final FileNameExtensionFilter mpgType =
-        new FileNameExtensionFilter("*.mpg, *.mpeg", "mpg", "mpeg");
-    private static final FileNameExtensionFilter mp4Type =
-        new FileNameExtensionFilter("*.mp4", "mp4");
+    private static final String[] videoExts = {"mov", "mpg", "mpeg", "avi", "mp4"};
+    private static final String OS = System.getProperty("os.name");
 
     /**
      * Displays a file browser that filters for video files.
      * @param parent the invoking BeeTracker
-     * @param currentDir the initial directory to browse from
-     * @param log
+     * @param currentFile the most recently selected file
+     * @param log a PrintStream object used for logging
      */
     public static void getVideoFile(
-        BeeTracker parent,
-        java.io.File currentDir,
-        java.io.PrintStream log
+        final BeeTracker parent,
+        final java.io.File currentFile,
+        final java.io.PrintStream log
     ) {
-        java.awt.EventQueue.invokeLater(() -> {
-            java.io.File selectedFile = null;
-            Calendar dateTime = null;
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                java.io.File selectedFile = null;
 
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Select video");
+                FileDialog fd = new FileDialog(parent.frame, "Select video", FileDialog.LOAD);
 
-            log.append("setting directory\n").flush();
-            if(currentDir != null) {
-                fileChooser.setCurrentDirectory(currentDir);
+                if(currentFile != null) {
+                    fd.setDirectory(currentFile.getParentFile().getAbsolutePath());
+                }
+
+                //FilenameFilter has no functionality on Windows
+                if(OS.toLowerCase(java.util.Locale.ROOT).contains("windows")) {
+                    fileCheck:
+                    do {
+                        fd.setVisible(true);
+
+                        if(fd.getFile() != null) {
+                            log.append("selected file: \"")
+                                .append(fd.getFile())
+                                .append("\"\n")
+                                .flush();
+
+                            String nameParts[] = fd.getFiles()[0].getName().split("\\.");
+
+                            for(String ext : videoExts) {
+                                if(ext.equalsIgnoreCase(nameParts[nameParts.length-1])) {
+                                    selectedFile = fd.getFiles()[0];
+
+                                    break fileCheck;
+                                }
+                            }
+
+                            MessageDialogue.wrongFileTypeMessage(parent);
+
+                            log.append("invalid file extension: ")
+                                .append(nameParts[nameParts.length-1])
+                                .append('\n')
+                                .flush();
+                        }
+                    } while(fd.getFile() != null);
+                }
+
+                else {
+                    fd.setFilenameFilter(new java.io.FilenameFilter() {
+                        @Override
+                        public boolean accept(java.io.File dir, String name) {
+                            boolean result = false;
+                            String[] parts = name.split("\\.");
+
+                            for(String type : videoExts) {
+                                if(type.equalsIgnoreCase(parts[parts.length-1])) {
+                                    result = true;
+                                    break;
+                                }
+                            }
+
+                            return result;
+                        }
+                    });
+
+                    fd.setVisible(true);
+
+                    if(fd.getFile() != null) {
+                        log.append("selected file: \"")
+                            .append(fd.getFile())
+                            .append("\"\n")
+                            .flush();
+
+                        selectedFile = fd.getFiles()[0];
+                    }
+                }
+
+                if(selectedFile != null) {
+                    log.append("setting time stamp\n").flush();
+
+                    parent.setTime(getDateTime(parent));
+                }
+
+                parent.loadVideo(selectedFile);
             }
-            log.append("setting filters\n").flush();
-            fileChooser.setFileFilter(allType);
-            fileChooser.addChoosableFileFilter(aviType);
-            fileChooser.addChoosableFileFilter(mpgType);
-            fileChooser.addChoosableFileFilter(mp4Type);
-            fileChooser.addChoosableFileFilter(movType);
-            fileChooser.removeChoosableFileFilter(fileChooser.getAcceptAllFileFilter());
-
-            if(fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
-                selectedFile = fileChooser.getSelectedFile();
-            }
-
-            if(selectedFile != null) {
-                log.append("setting time stamp\n").flush();
-                dateTime = getDateTime(parent);
-            }
-
-            parent.loadVideo(selectedFile, dateTime);
         });
     }
 

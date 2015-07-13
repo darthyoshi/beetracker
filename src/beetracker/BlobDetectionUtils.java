@@ -61,14 +61,20 @@ public class BlobDetectionUtils {
      * @param colors a list of the integer RGB values to scan for
      */
     public void filterImg(PImage img, IntList colors) {
-        int pixelHue, listHue, pixelSat, pixelVal;
+        int pixelHue, pixelSat, pixelVal;
         int i, j;
+
+        int[] listHues = new int[colors.size()];
+        for(i = 0; i < listHues.length; i++) {
+            listHues[i] = (int)parent.hue(colors.get(i));
+        }
 
         img.loadPixels();
 
         parent.colorMode(PConstants.HSB, 255);
 
         //scan every pixel in image
+        scanPixel:
         for(i = 0; i < img.pixels.length; i++) {
             pixelHue = (int)parent.hue(img.pixels[i]);
             pixelSat = (int)parent.saturation(img.pixels[i]);
@@ -76,23 +82,19 @@ public class BlobDetectionUtils {
 
             //for color matches, brighten pixel
             for(j = 0; j < colors.size(); j++) {
-                listHue = (int)parent.hue(colors.get(j));
-
-                if(pixelHue > listHue - hueThreshold &&
-                    pixelHue < listHue + hueThreshold &&
+                if(pixelHue > listHues[j] - hueThreshold &&
+                    pixelHue < listHues[j] + hueThreshold &&
                     pixelSat > satThreshold &&
                     pixelVal > valThreshold)
                 {
-                    img.pixels[i] = parent.color(listHue, 255, 255);
+                    img.pixels[i] = parent.color(listHues[j], 255, 255);
 
-                    break;
+                    continue scanPixel;
                 }
             }
 
             //if no matches found, darken pixel
-            if(j == colors.size()) {
-                img.pixels[i] = 0;
-            }
+            img.pixels[i] = 0;
         }
 
         //remove noise
@@ -130,7 +132,7 @@ public class BlobDetectionUtils {
                     eA = b.getEdgeVertexA(m);
                     eB = b.getEdgeVertexB(m);
 
-                    if (eA !=null && eB !=null) {
+                    if (eA != null && eB != null) {
                         parent.line(
                             eA.x*frameDims[0] + offset[0],
                             eA.y*frameDims[1] + offset[1],
@@ -189,7 +191,7 @@ public class BlobDetectionUtils {
         }
 
         for(int tmpColor : colors) {
-            result.put(tmpColor, new ArrayList<>());
+            result.put(tmpColor, new ArrayList<float[]>());
         }
 
         //iterate through blobs
@@ -290,7 +292,9 @@ public class BlobDetectionUtils {
 
         case 1: satThreshold = val; break;
 
-        case 2: valThreshold = val;
+        case 2: valThreshold = val; break;
+
+        default: //do nothing
         }
     }
 
@@ -308,11 +312,16 @@ public class BlobDetectionUtils {
             tmp[i] = 0;
         }
 
+        //iterate image x-axis
         for(i = filterRadius; i < bd.imgWidth - filterRadius; i++) {
+            //iterate image y-axis
             for(j = filterRadius; j < bd.imgHeight - filterRadius; j++) {
                 erodeProbe:
+                //iterate colors
                 for(m = 0; m < colors.size(); m++) {
+                    //iterate filter x-axis
                     for(k = -filterRadius; k <= filterRadius; k++) {
+                        //iterate filter y-axis
                         for(l = -filterRadius; l <= filterRadius; l++) {
                             if(Math.abs(k) + Math.abs(l) <= filterRadius) {
                                 offset = (i+k) + (j+l)*bd.imgWidth;
@@ -322,6 +331,7 @@ public class BlobDetectionUtils {
                                     (int)parent.hue(colors.get(m)) &&
                                     parent.brightness(pixels[offset]) > 0f
                                 )) {
+                                    //current pixel is miss, go to next color
                                     continue erodeProbe;
                                 }
                             }
@@ -348,10 +358,14 @@ public class BlobDetectionUtils {
         int[] tmp = new int[pixels.length];
         int i, j, k, l, m, n, offset;
 
+        //iterate image x-axis
         for(i = 0; i < bd.imgWidth; i++) {
             dilateProbe:
+            //iterate image y-axis
             for(j = 0; j < bd.imgHeight; j++) {
+                //iterate filter x-axis
                 for(k = -filterRadius; k <= filterRadius; k++) {
+                    //iterate filter y-axis
                     for(l = -filterRadius; l <= filterRadius; l++) {
                         m = i + k;
                         n = j + l;
@@ -366,6 +380,7 @@ public class BlobDetectionUtils {
                             if(parent.brightness(pixels[offset]) > 0) {
                                 tmp[i + j*bd.imgWidth] = pixels[offset];
 
+                                //current image pixel is hit, go to next pixel
                                 continue dilateProbe;
                             }
                         }
@@ -396,7 +411,9 @@ public class BlobDetectionUtils {
 
         case 1: result = satThreshold; break;
 
-        case 2: result = valThreshold;
+        case 2: result = valThreshold; break;
+
+        default: //do nothing
         }
 
         return result;

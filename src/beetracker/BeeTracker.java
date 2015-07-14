@@ -308,11 +308,11 @@ public class BeeTracker extends PApplet {
             }
 
             if(movieDims != null) {
-                PImage viewFrame = createImage(
+                processing.core.PGraphics viewFrame = createGraphics(
                     viewBounds[2] - viewBounds[1] + 1,
-                    viewBounds[3] - viewBounds[1] + 1,
-                    ARGB
+                    viewBounds[3] - viewBounds[1] + 1
                 );
+                viewFrame.beginDraw();
                 viewFrame.copy(
                     movie,
                     0,
@@ -325,11 +325,11 @@ public class BeeTracker extends PApplet {
                     movieDims[1]
                 );
 
-                noSmooth();
-
                 PImage insetFrame = copyInsetFrame();
 
                 if(insetFrame != null) {
+                    noSmooth();
+
                     if(replay) {
                         if(timeStampIndex >= 0 &&
                             timeStampIndex < allFrameTimes.size())
@@ -391,8 +391,8 @@ public class BeeTracker extends PApplet {
                     if(pip) {
                         PImage zoomedInset = copyInsetFrame();
 
-                        insetOffset[0] = (viewFrame.width-frameDims[0])/2 + 1;
-                        insetOffset[1] = (viewFrame.height-frameDims[1])/2 + 1;
+                        insetOffset[0] = (viewFrame.width-frameDims[0])/2;
+                        insetOffset[1] = (viewFrame.height-frameDims[1])/2;
 
                         if(zoomedInset != null) {
                             viewFrame.copy(
@@ -401,8 +401,8 @@ public class BeeTracker extends PApplet {
                                 0,
                                 zoomedInset.width,
                                 zoomedInset.height,
-                                (viewFrame.width-frameDims[0])/2 + 1,
-                                (viewFrame.height-frameDims[1])/2 + 1,
+                                insetOffset[0],
+                                insetOffset[1],
                                 frameDims[0],
                                 frameDims[1]
                             );
@@ -410,11 +410,13 @@ public class BeeTracker extends PApplet {
                     }
 
                     else {
-                        insetOffset[0] = (int)(insetBox[0]*movieDims[0]) + 1 +
+                        insetOffset[0] = (int)(insetBox[0]*movieDims[0]) +
                             movieOffset[0] - viewBounds[0];
-                        insetOffset[1] = (int)(insetBox[1]*movieDims[1]) + 1 +
+                        insetOffset[1] = (int)(insetBox[1]*movieDims[1]) +
                             movieOffset[1] - viewBounds[1];
                     }
+
+                    smooth();
 
                     imageMode(CORNERS);
 
@@ -430,19 +432,11 @@ public class BeeTracker extends PApplet {
                         frameDims[1],
                         ADD
                     );
-                    image(
-                        viewFrame,
-                        viewBounds[0],
-                        viewBounds[1],
-                        viewBounds[2],
-                        viewBounds[3]
-                    );
-
-                    smooth();
 
                     //draw detected blobs
                     if(!replay) {
-                        bdu.drawBlobs(frameDims, frameOffset, exitCenter);
+                        bdu.drawBlobs(viewFrame, viewBounds,
+                    		frameDims, frameOffset, exitCenter);
                     }
 
                     //mark bees
@@ -459,9 +453,11 @@ public class BeeTracker extends PApplet {
                             centroidList = centroids.get(color);
                             if(centroidList != null) {
                                 for(float[] centroid : centroidList) {
-                                    ellipse(
-                                        centroid[0]*frameDims[0] + frameOffset[0],
-                                        centroid[1]*frameDims[1] + frameOffset[1],
+                                    viewFrame.ellipse(
+                                        centroid[0]*frameDims[0] +
+                                        	frameOffset[0] - viewBounds[0],
+                                        centroid[1]*frameDims[1] +
+                                        	frameOffset[1] - viewBounds[1],
                                         .02f*frameDims[1],
                                         .02f*frameDims[1]
                                     );
@@ -470,6 +466,9 @@ public class BeeTracker extends PApplet {
                         }
                     }
                 }
+
+                viewFrame.endDraw();
+                image(viewFrame, viewBounds[0], viewBounds[1]);
 
                 if(isPlaying && record) {
                     for(Integer color : centroids.keySet()) {
@@ -505,16 +504,16 @@ public class BeeTracker extends PApplet {
                 stroke(0xffffa600);
                 ellipseMode(RADIUS);
                 noFill();
+                rectMode(CORNERS);
 
                 //unzoomed
                 if(!pip) {
                     //inset box
-                    rectMode(CORNERS);
                     rect(
                         insetBox[0]*movieDims[0] + movieOffset[0],
                         insetBox[1]*movieDims[1] + movieOffset[1],
-                        insetBox[2]*movieDims[0] + movieOffset[0],
-                        insetBox[3]*movieDims[1] + movieOffset[1]
+                        insetBox[2]*movieDims[0] + movieOffset[0] - 1,
+                        insetBox[3]*movieDims[1] + movieOffset[1] - 1
                     );
 
                     //exit circle
@@ -529,8 +528,12 @@ public class BeeTracker extends PApplet {
                 //zoomed
                 else {
                     //inset box
-                    rectMode(CENTER);
-                    rect(width/2, height/2, frameDims[0]-1, frameDims[1]-1);
+                    rect(
+                        frameOffset[0],
+                        frameOffset[1],
+                        frameDims[0] - 1 + frameOffset[0],
+                        frameDims[1] - 1 + frameOffset[1]
+                    );
 
                     //exit circle
                     ellipse(
@@ -1062,8 +1065,6 @@ public class BeeTracker extends PApplet {
             allFrameTimes = null;
             allFramePoints = null;
             timeStampIndex = -1;
-
-            settingIndex = 0;
         }
 
         record = false;

@@ -110,56 +110,64 @@ public class BlobDetectionUtils {
 
     /**
      * Draws the blobs in the current frame.
+     * @param buf the buffer image to draw to
+     * @param bufOffset the xy coordinates of the buffer image
      * @param frameDims the dimensions of the image frame for which blob
      *   detection is being performed, in pixels
-     * @param offset the xy coordinates of the image frame origin, in pixels
+     * @param frameOffset the xy coordinates of the inset frame origin, in pixels
      * @param exitXY the xy coordinates of the exit center, in pixels
      */
-    public void drawBlobs(int[] frameDims, int[] offset, float[] exitXY) {
+    public void drawBlobs(
+		processing.core.PGraphics buf,
+		int[] bufOffset,
+		int[] frameDims,
+		int[] frameOffset,
+		float[] exitXY
+	) {
         EdgeVertex eA,eB;
         Blob b;
 
-        parent.noFill();
+        buf.noFill();
 
         for (int n = 0; n < bd.getBlobNb(); n++) {
             b = bd.getBlob(n);
             if (b != null) {
-                parent.strokeWeight(1);
+                buf.strokeWeight(1);
 
                 //mark edges all blobs
-                parent.stroke(0xFFFF00AA);
+                buf.stroke(0xFFFF00AA);
                 for (int m = 0; m < b.getEdgeNb(); m++) {
                     eA = b.getEdgeVertexA(m);
                     eB = b.getEdgeVertexB(m);
 
                     if (eA != null && eB != null) {
-                        parent.line(
-                            eA.x*frameDims[0] + offset[0],
-                            eA.y*frameDims[1] + offset[1],
-                            eB.x*frameDims[0] + offset[0],
-                            eB.y*frameDims[1] + offset[1]
+                        buf.line(
+                            eA.x*frameDims[0] + frameOffset[0] - bufOffset[0],
+                            eA.y*frameDims[1] + frameOffset[1] - bufOffset[1],
+                            eB.x*frameDims[0] + frameOffset[0] - bufOffset[0],
+                            eB.y*frameDims[1] + frameOffset[1] - bufOffset[1]
                         );
                     }
                 }
 
                 //bounding boxes
-                parent.stroke(blobColors.get(n));
-                parent.rectMode(PConstants.CORNER);
-                parent.rect(
-                    b.xMin*frameDims[0] + offset[0],
-                    b.yMin*frameDims[1] + offset[1],
+                buf.stroke(blobColors.get(n));
+                buf.rectMode(PConstants.CORNER);
+                buf.rect(
+                    b.xMin*frameDims[0] + frameOffset[0] - bufOffset[0],
+                    b.yMin*frameDims[1] + frameOffset[1] - bufOffset[1],
                     b.w*frameDims[0],
                     b.h*frameDims[1]
                 );
 
                 //line to exit center
-                parent.strokeWeight(2);
-                parent.stroke(255, 0, 255);
-                parent.line(
-                    b.x*frameDims[0]+offset[0],
-                    b.y*frameDims[1]+offset[1],
-                    exitXY[0],
-                    exitXY[1]
+                buf.strokeWeight(2);
+                buf.stroke(255, 0, 255);
+                buf.line(
+                    b.x*frameDims[0] + frameOffset[0] - bufOffset[0],
+                    b.y*frameDims[1] + frameOffset[1] - bufOffset[1],
+                    exitXY[0] - bufOffset[0],
+                    exitXY[1] - bufOffset[1]
                 );
             }
         }

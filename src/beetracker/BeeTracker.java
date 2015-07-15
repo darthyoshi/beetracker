@@ -51,7 +51,7 @@ public class BeeTracker extends PApplet {
     private int[] movieDims = null, movieOffset, frameDims, frameOffset;
     private float[] exitCenter;
 
-    private boolean isPlaying = false;
+    private boolean isPlaying = false, unload = false;
     private boolean record = false, replay = false;
     private boolean pip = false, selectExit = true;
     private int listVal = -1;
@@ -420,23 +420,25 @@ public class BeeTracker extends PApplet {
 
                     imageMode(CORNERS);
 
-                    viewFrame.blend(
-                        insetFrame,
-                        0,
-                        0,
-                        insetFrame.width,
-                        insetFrame.height,
-                        insetOffset[0],
-                        insetOffset[1],
-                        frameDims[0],
-                        frameDims[1],
-                        ADD
-                    );
+                    if(!replay) {
+                        viewFrame.blend(
+                            insetFrame,
+                            0,
+                            0,
+                            insetFrame.width,
+                            insetFrame.height,
+                            insetOffset[0],
+                            insetOffset[1],
+                            frameDims[0],
+                            frameDims[1],
+                            ADD
+                        );
+                    }
 
                     //draw detected blobs
                     if(!replay) {
                         bdu.drawBlobs(viewFrame, viewBounds,
-                    		frameDims, frameOffset, exitCenter);
+                            frameDims, frameOffset, exitCenter);
                     }
 
                     //mark bees
@@ -681,6 +683,19 @@ public class BeeTracker extends PApplet {
             if(titleImg.width > 0) {
                 image(titleImg, .5f*width, .5f*height-50);
             }
+        }
+
+        //thread unsafe operations
+        if(unload) {
+            unload = false;
+
+            movie = null;
+            movieDims = null;
+            videoName = null;
+
+            allFrameTimes = null;
+            allFramePoints = null;
+            timeStampIndex = -1;
         }
 
         //main window border
@@ -1058,13 +1073,8 @@ public class BeeTracker extends PApplet {
     void stopPlayback() {
         if(movie != null) {
             movie.stop();
-            movie = null;
-            movieDims = null;
-            videoName = null;
 
-            allFrameTimes = null;
-            allFramePoints = null;
-            timeStampIndex = -1;
+            unload = true;
         }
 
         record = false;
@@ -1626,7 +1636,11 @@ public class BeeTracker extends PApplet {
      * Handles all operations necessary for restarting video playback.
      */
     void rewindVideo() {
-        movie.jump(0f);
+        seek(0f);
+
+        uic.setSetupGroupVisibility(!isPlaying);
+        uic.setPlayState(isPlaying);
+        uic.setThresholdVisibility(!isPlaying);
 
         if(record) {
             replay = true;

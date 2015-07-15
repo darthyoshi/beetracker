@@ -147,9 +147,9 @@ public class BeeTracker extends PApplet {
         exitRadial = new float[4];
 
         File settings = new File(
-                System.getProperty("user.dir") +
-                File.separatorChar +
-                "settings.json"
+            System.getProperty("user.dir") +
+            File.separatorChar +
+            "settings.json"
         );
 
         boolean[] settingsErrors = {!settings.exists(), false, false, false, false};
@@ -487,7 +487,7 @@ public class BeeTracker extends PApplet {
                 }
 
                 //bee count
-                if(isPlaying) {
+                if(isPlaying && (record || replay)) {
                     rectMode(CENTER);
                     noStroke();
                     fill(0xff02344d);
@@ -1636,6 +1636,12 @@ public class BeeTracker extends PApplet {
      * Handles all operations necessary for restarting video playback.
      */
     void rewindVideo() {
+        log.append("rewinding video\n").flush();
+
+        if(debug) {
+            print("rewinding video... ");
+        }
+
         seek(0f);
 
         uic.setSetupGroupVisibility(!isPlaying);
@@ -1654,6 +1660,10 @@ public class BeeTracker extends PApplet {
             for(int tmp : colors) {
                 centroids.put(tmp, tmpList);
             }
+        }
+
+        if(debug) {
+            println("done");
         }
     }
 

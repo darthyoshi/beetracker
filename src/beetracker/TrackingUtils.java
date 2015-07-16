@@ -203,12 +203,12 @@ public class TrackingUtils {
                 isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
 
                 if(debug) {
-                    PApplet.println(String.format(
+                    PApplet.println(
                         "pair " + i + ":\nold point " + validPairs[i][0] +
                         " is inside exit: " + (isOldPointInExit ? "true" : "false") +
                         "\nnew point " + validPairs[i][1] +" is inside exit: " +
                         (isNewPointInExit ? "true" : "false")
-                    ));
+                    );
                 }
 
                 if(isOldPointInExit) {
@@ -240,7 +240,7 @@ public class TrackingUtils {
                     oldPoints.add(newPoint);
                     timeOuts.append(0);
 
-                    j++;
+                    j++;    //index offset for updating timeout values later
                 }
             }
 
@@ -256,7 +256,7 @@ public class TrackingUtils {
                     }
 
                     else {
-                        PApplet.print("(point is an old point)");
+                        PApplet.print("(point was matched to an old point)");
                     }
                 }
                 PApplet.println("\ntotal: "+newPoints.size());

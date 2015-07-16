@@ -591,7 +591,9 @@ public class BeeTracker extends PApplet {
                 }
 
                 //end of movie reached
-                if(isPlaying && movie.duration() - time < 1f/movie.frameRate) {
+                if(!unload && isPlaying &&
+            		movie.duration() - time < 1f/movie.frameRate)
+                {
                     isPlaying = false;
 
                     StringBuilder msg = new StringBuilder("End of video reached.\n\n");

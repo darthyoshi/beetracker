@@ -1,4 +1,3 @@
-//TODO multiple settings for single file (per video settings files?)
 /**
  * @file BeeTracker.java
  * @author Kay Choi, 909926828
@@ -89,6 +88,12 @@ public class BeeTracker extends PApplet {
 
     private Calendar videoDate = null;
 
+    private FloatList settingsTimeStamps;
+    private HashMap<Float, float[]> insets, radials;
+    private HashMap<Float, int[]> thresholds;
+    private int settingIndex = 0;
+    private int[] threshold;
+
     /**
      * Inherited from PApplet.
      */
@@ -97,6 +102,10 @@ public class BeeTracker extends PApplet {
         size(800, 600);
         frameRate(60);
         strokeWeight(1);
+
+        File outputDir = new File(System.getProperty("user.dir") +
+            File.separatorChar + "output");
+        outputDir.mkdir();
 
         frame.addWindowListener(new java.awt.event.WindowListener() {
             @Override
@@ -145,9 +154,9 @@ public class BeeTracker extends PApplet {
         bdu = new BlobDetectionUtils(this, width/2, height/2, debug);
 
         //read settings file
+        //TODO maybe per video file settings?
         colors = new processing.data.IntList();
-        insetBox = new float[4];
-        exitRadial = new float[4];
+        settingsTimeStamps = new FloatList();
 
         File settings = new File(
             System.getProperty("user.dir") +
@@ -155,7 +164,7 @@ public class BeeTracker extends PApplet {
             "settings.json"
         );
 
-        boolean[] settingsErrors = {!settings.exists(), false, false, false, false};
+        boolean[] settingsErrors = {!settings.exists(), false, false};
 
         log.append("reading settings\n").flush();
 
@@ -164,17 +173,17 @@ public class BeeTracker extends PApplet {
                 JSONObject jsonSettings = loadJSONObject(settings.getAbsolutePath());
 
                 int tmp;
-                String jsonKey;
-                JSONObject json;
-                Iterator<?> jsonIter;
+                String jsonKey, timeKey;
+                JSONObject jsonSetting, timeSetting, setting;
+                Iterator<?> jsonIter, settingIter;
 
                 //initialize color list
                 try {
-                    json = jsonSettings.getJSONObject("colors");
-                    jsonIter = json.keyIterator();
+                    jsonSetting = jsonSettings.getJSONObject("colors");
+                    jsonIter = jsonSetting.keyIterator();
                     while(jsonIter.hasNext()) {
                         tmp = (int)Long.parseLong(
-                            json.getString((String) jsonIter.next()), 16);
+                            jsonSetting.getString((String) jsonIter.next()), 16);
 
                         uic.addListItem(String.format("%06x", tmp));
 
@@ -182,58 +191,94 @@ public class BeeTracker extends PApplet {
                     }
                 } catch(NumberFormatException e1) {
                     settingsErrors[1] = true;
+
                     e1.printStackTrace(log);
                 }
 
-                //initialize selection box
+                thresholds = new HashMap<>();
+                radials = new HashMap<>();
+                insets = new HashMap<>();
+
                 try {
-                    json = jsonSettings.getJSONObject("insetBox");
-                    jsonIter = json.keyIterator();
-                    while(jsonIter.hasNext()) {
-                        jsonKey = (String) jsonIter.next();
-                        tmp = Integer.parseInt(jsonKey);
+                    jsonSetting = jsonSettings.getJSONObject("time");
+                    settingIter = jsonSetting.keyIterator();
+                    float timeStamp;
+                    while(settingIter.hasNext()) {
+                        timeKey = (String)settingIter.next();
+                        timeStamp = Float.parseFloat(timeKey);
+                        settingsTimeStamps.append(timeStamp);
 
-                        insetBox[tmp] = json.getFloat(jsonKey, (tmp*.5f < 1 ? 0f: 1f));
-                    }
-                } catch(Exception e2) {
-                    settingsErrors[2] = true;
-                    e2.printStackTrace(log);
-                }
+                        timeSetting = jsonSetting.getJSONObject(timeKey);
 
-                //initialize exit circle
-                try {
-                    json = jsonSettings.getJSONObject("exitRadial");
-                    jsonIter = json.keyIterator();
-                    while(jsonIter.hasNext()) {
-                        jsonKey = (String) jsonIter.next();
-                        tmp = Integer.parseInt(jsonKey);
+                        //initialize selection box
+                        try {
+                            insetBox = new float[4];
 
-                        exitRadial[tmp] = json.getFloat(jsonKey, 0f);
-                    }
-                } catch(Exception e3) {
-                    settingsErrors[3] = true;
-                    e3.printStackTrace(log);
-                }
+                            setting = timeSetting.getJSONObject("insetBox");
+                            jsonIter = setting.keyIterator();
 
-                //set thresholds
-                try {
-                    json = jsonSettings.getJSONObject("thresholds");
-                    int i = 0;
+                            while(jsonIter.hasNext()) {
+                                jsonKey = (String) jsonIter.next();
+                                tmp = Integer.parseInt(jsonKey);
 
-                    for(String keyString : thresholdKeys) {
-                        switch(keyString) {
-                        case "hue": i = 0; break;
+                                insetBox[tmp] = setting.getFloat(jsonKey);
+                            }
+                        } catch(Exception e2) {
+                            insetBox[0] = insetBox[1] = 0f;
+                            insetBox[2] = insetBox[3] = 1f;
 
-                        case "sat": i = 1; break;
-
-                        case "val": i = 2;
+                            e2.printStackTrace(log);
+                        } finally {
+                            insets.put(timeStamp, insetBox);
                         }
 
-                        bdu.setThresholdValue(i, json.getInt(keyString));
+                        //initialize exit circle
+                        try {
+                            exitRadial = new float[4];
+
+                            setting = timeSetting.getJSONObject("exitRadial");
+                            jsonIter = setting.keyIterator();
+
+                            while(jsonIter.hasNext()) {
+                                jsonKey = (String) jsonIter.next();
+                                tmp = Integer.parseInt(jsonKey);
+
+                                exitRadial[tmp] = setting.getFloat(jsonKey);
+                            }
+                        } catch(Exception e3) {
+                            exitRadial[0] = exitRadial[1] = 0.5f;
+                            exitRadial[2] = exitRadial[3] = 0.5f;
+
+                            e3.printStackTrace(log);
+                        } finally {
+                            radials.put(timeStamp, exitRadial);
+                        }
+
+                        //set thresholds
+                        threshold = new int[3];
+                        try {
+
+                            setting = timeSetting.getJSONObject("thresholds");
+
+                            for(tmp = 0; tmp < thresholdKeys.length; tmp++) {
+                                threshold[tmp] = setting.getInt(thresholdKeys[tmp]);
+                            }
+                        } catch(Exception e4) {
+                            threshold[0] = 40;
+                            threshold[1] = 90;
+                            threshold[2] = 20;
+
+                            e4.printStackTrace(log);
+                        } finally {
+                            thresholds.put(timeStamp, threshold);
+                        }
+
+                        uic.addSeekTick(timeStamp);
                     }
-                } catch(Exception e4) {
-                    settingsErrors[4] = true;
-                    e4.printStackTrace(log);
+                } catch(RuntimeException e5) {
+                    settingsErrors[2] = true;
+
+                    e5.printStackTrace(log);
                 }
             } catch(RuntimeException ex) {
                 ex.printStackTrace(log);
@@ -249,19 +294,29 @@ public class BeeTracker extends PApplet {
         }
 
         if(settingsErrors[0] || settingsErrors[2]) {
+            settingsTimeStamps.clear();
+            settingsTimeStamps.append(0f);
+
+            thresholds = new HashMap<>();
+            threshold = new int[3];
+            threshold[0] = 40;
+            threshold[1] = 90;
+            threshold[2] = 20;
+            thresholds.put(0f, threshold);
+
+            radials = new HashMap<>();
+            exitRadial = new float[4];
+            exitRadial[0] = exitRadial[1] = 0.5f;
+            exitRadial[2] = exitRadial[3] = 0.5f;
+            radials.put(0f, exitRadial);
+
+            insets = new HashMap<>();
+            insetBox = new float[4];
             insetBox[0] = insetBox[1] = 0f;
             insetBox[2] = insetBox[3] = 1f;
-        }
+            insets.put(0f, insetBox);
 
-        if(settingsErrors[0] || settingsErrors[3]) {
-            exitRadial[0] = exitRadial[1] = 0f;
-            exitRadial[2] = exitRadial[3] = 0f;
-        }
-
-        if(settingsErrors[0] || settingsErrors[4]) {
-            bdu.setThresholdValue(0, 40);
-            bdu.setThresholdValue(1, 90);
-            bdu.setThresholdValue(2, 20);
+            uic.addSeekTick(0f);
         }
 
         tu = new TrackingUtils(debug);
@@ -336,13 +391,30 @@ public class BeeTracker extends PApplet {
                     if(insetFrame != null) {
                         noSmooth();
 
+                        float timeStamp;
+
+                        if(settingIndex >= 0 &&
+                            settingIndex < settingsTimeStamps.size() - 1)
+                        {
+                            timeStamp = settingsTimeStamps.get(settingIndex + 1);
+
+                            if(time - timeStamp > 0.000001f) {
+                                threshold = thresholds.get(timeStamp);
+                                bdu.setThresholdValues(threshold);
+
+                                exitRadial = radials.get(timeStamp);
+                                insetBox = insets.get(timeStamp);
+                                settingIndex++;
+                            }
+                        }
+
                         if(replay) {
                             if(timeStampIndex >= 0 &&
                                 timeStampIndex < allFrameTimes.size())
                             {
-                            float timeStamp = allFrameTimes.get(timeStampIndex);
+                                timeStamp = allFrameTimes.get(timeStampIndex);
 
-                                if(timeStamp < time) {
+                                if(time - timeStamp > 0.000001f) {
                                     if(debug) {
                                         println("frame info for " + timeStamp +
                                             "s, actual time " + time + 's');
@@ -738,11 +810,15 @@ public class BeeTracker extends PApplet {
         HashMap<Float, String> summary
     ) {
         date.setTimeInMillis(System.currentTimeMillis());
+
+        File dir = new File(System.getProperty("user.dir") +
+            File.separatorChar + "output" + File.separatorChar + videoName);
+        dir.mkdir();
+
         String fileName = String.format(
-            "%s%c%s-%02d.%s.%d-%02d%02d.csv",
-            System.getProperty("user.dir"),
+            "%s%c%02d.%s.%d-%02d%02d.csv",
+            dir.getAbsolutePath(),
             File.separatorChar,
-            videoName,
             date.get(Calendar.DAY_OF_MONTH),
             months[date.get(Calendar.MONTH)],
             date.get(Calendar.YEAR),
@@ -952,13 +1028,15 @@ public class BeeTracker extends PApplet {
      * @param value
      */
     public void thresholdSlider(float value) {
-        int thresholdType = uic.getThresholdType();
+        int type = uic.getThresholdType();
 
         if(debug) {
-            println("slider value: " + value);
+            println("threshold slider value: " + value);
         }
 
-        bdu.setThresholdValue(thresholdType, (int)value);
+        threshold[type] = (int)value;
+
+        bdu.setThresholdValue(type, (int)value);
     }
 
     /**
@@ -1015,6 +1093,8 @@ public class BeeTracker extends PApplet {
         if(debug) {
             println("seek to: " + value + 's');
         }
+
+        updateSettings(value);
 
         //update playback mode timestamp
         if(replay) {
@@ -1142,6 +1222,8 @@ public class BeeTracker extends PApplet {
         //save current color and selection settings
         JSONObject settings = new JSONObject();
         JSONObject setting = new JSONObject();
+        JSONObject sets = new JSONObject();
+        JSONObject set;
         int i;
 
         for(i = 0; i < colors.size(); i++) {
@@ -1150,26 +1232,35 @@ public class BeeTracker extends PApplet {
         }
         settings.setJSONObject("colors", setting);
 
-        setting = new JSONObject();
-        for(i = 0; i < insetBox.length; i++) {
-            setting.setFloat(Integer.toString(i), insetBox[i]);
-        }
-        settings.setJSONObject("insetBox", setting);
+        for(float timeStamp : settingsTimeStamps) {
+            set = new JSONObject();
 
-        setting = new JSONObject();
-        for(i = 0; i < exitRadial.length; i++) {
-            setting.setFloat(Integer.toString(i), exitRadial[i]);
-        }
-        settings.setJSONObject("exitRadial", setting);
+            setting = new JSONObject();
+            insetBox = insets.get(timeStamp);
+            for(i = 0; i < insetBox.length; i++) {
+                setting.setFloat(Integer.toString(i), insetBox[i]);
+            }
+            set.setJSONObject("insetBox", setting);
 
-        setting = new JSONObject();
-        i = 0;
-        for(String keyString : thresholdKeys) {
-            setting.setInt(keyString, bdu.getThresholdValue(i));
+            setting = new JSONObject();
+            exitRadial = radials.get(timeStamp);
+            for(i = 0; i < exitRadial.length; i++) {
+                setting.setFloat(Integer.toString(i), exitRadial[i]);
+            }
+            set.setJSONObject("exitRadial", setting);
 
-            i++;
+            setting = new JSONObject();
+            threshold = thresholds.get(timeStamp);
+            for(i = 0; i < threshold.length; i++) {
+                //setting.setInt(keyString, bdu.getThresholdValue(i));
+                setting.setInt(thresholdKeys[i], threshold[i]);
+            }
+            set.setJSONObject("thresholds", setting);
+
+            sets.setJSONObject(String.format("%.7f",timeStamp), set);
         }
-        settings.setJSONObject("thresholds", setting);
+
+        settings.setJSONObject("time", sets);
 
         saveJSONObject(settings, "settings.json");
 
@@ -1447,8 +1538,9 @@ public class BeeTracker extends PApplet {
         boolean result = false;
         List<float[]> tmpList = new ArrayList<>(1);
 
-        String path = System.getProperty("user.dir") +
-            File.separatorChar + videoName + "-points.json";
+        String path = System.getProperty("user.dir") + File.separatorChar +
+            "output" + File.separatorChar + videoName + File.separatorChar +
+            "points.json";
 
         if(debug) {
             println("attempting to read points from \"" + path + "\"...");
@@ -1587,8 +1679,12 @@ public class BeeTracker extends PApplet {
             }
         }
 
-        saveJSONObject(json, System.getProperty("user.dir") +
-            File.separatorChar + videoName + "-points.json");
+        File dir = new File(System.getProperty("user.dir") +
+            File.separatorChar + "output" + File.separatorChar + videoName);
+        dir.mkdir();
+
+        saveJSONObject(json, dir.getAbsolutePath() + File.separatorChar +
+            "points.json");
     }
 
     /**
@@ -1681,6 +1777,107 @@ public class BeeTracker extends PApplet {
 
         if(debug) {
             println("done");
+        }
+    }
+
+    /**
+     * ControlP5 callback method.
+     */
+    public void addSetting() {
+        float time = movie.time();
+
+        //duplicate current settings
+        float[] newExit = new float[4], newBox = new float[4];
+        int[] newThreshold = new int[3];
+        short i;
+
+        for(i = 0; i < 4; i++) {
+            newExit[i] = exitRadial[i];
+            newBox[i] = insetBox[i];
+        }
+
+        for(i = 0; i < 3; i++) {
+            newThreshold[i] = threshold[i];
+        }
+
+        //add new settings to appropriate data structures
+        insets.put(time, newBox);
+        radials.put(time, newExit);
+        thresholds.put(time, newThreshold);
+
+        settingsTimeStamps.append(time);
+        settingsTimeStamps.sort();
+
+        updateSettings(time);
+
+        uic.addSeekTick(time);
+    }
+
+    /**
+     * Finds the settings index corresponding to the specified time stamp.
+     * @param seek the time stamp
+     * @return the index
+     */
+    private void updateSettings(float seek) {
+        int i = 0, start = 0, stop = settingsTimeStamps.size() - 1;
+        float time;
+
+        while(start <= stop) {
+            i = (stop+start)/2;
+            time = settingsTimeStamps.get(i);
+
+            if(time - seek > 0.000001f) {
+                stop = i - 1;
+            }
+
+            else if(seek - time > 0.000001f) {
+                start = i + 1;
+            }
+
+            else {
+                break;
+            }
+        }
+
+        //if no match found, get next smallest setting time
+        if(start > stop && settingsTimeStamps.get(i) - seek > 0.000001f) {
+            i--;
+        }
+
+        settingIndex = i;
+
+        float settingsStamp = settingsTimeStamps.get(i);
+
+        threshold = thresholds.get(settingsStamp);
+        bdu.setThresholdValues(threshold);
+
+        uic.setThresholdValue(threshold[uic.getThresholdType()]);
+
+        exitRadial = radials.get(settingsStamp);
+        insetBox = insets.get(settingsStamp);
+    }
+
+    /**
+     * ControlP5 callback method.
+     */
+    public void removeSetting() {
+        //more than one settings saved
+        if(settingsTimeStamps.size() > 1) {
+            float time = movie.time();
+
+            //find timestamp of current settings
+            int index = settingIndex;
+
+            //TODO: remove setting
+            //if current timestamp is 0
+            //  replace current settings with next settings
+            //  removed next settings
+            //else
+            //  remove current settings
+
+            updateSettings(time);
+
+            uic.removeSeekTick(time);
         }
     }
 

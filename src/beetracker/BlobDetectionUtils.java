@@ -118,12 +118,12 @@ public class BlobDetectionUtils {
      * @param exitXY the xy coordinates of the exit center, in pixels
      */
     public void drawBlobs(
-		processing.core.PGraphics buf,
-		int[] bufOffset,
-		int[] frameDims,
-		int[] frameOffset,
-		float[] exitXY
-	) {
+        processing.core.PGraphics buf,
+        int[] bufOffset,
+        int[] frameDims,
+        int[] frameOffset,
+        float[] exitXY
+    ) {
         EdgeVertex eA,eB;
         Blob b;
 
@@ -287,7 +287,7 @@ public class BlobDetectionUtils {
     }
 
     /**
-     * Sets the filter threshold values.
+     * Sets a filter threshold value.
      * @param type the threshold type:
      *   0 = hue
      *   1 = saturation
@@ -304,6 +304,16 @@ public class BlobDetectionUtils {
 
         default: //do nothing
         }
+    }
+
+    /**
+     * Sets all filter threshold values.
+     * @param vals the new values
+     */
+    public void setThresholdValues(int[] vals) {
+        hueThreshold = vals[0];
+        satThreshold = vals[1];
+        valThreshold = vals[2];
     }
 
     /**

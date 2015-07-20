@@ -65,9 +65,9 @@ public class UIControl {
             .getStyle()
             .setPadding(5, 5, 5, 5);
 
-        setupGroup = cp5.addGroup("setup").setLabel("").setVisible(false);
-        playGroup = cp5.addGroup("playback").setLabel("").setVisible(false);
-        thresholdGroup = cp5.addGroup("threshold").setLabel("").setVisible(false);
+        setupGroup = cp5.addGroup("setup").setLabel("").close();
+        playGroup = cp5.addGroup("playback").setLabel("").close();
+        thresholdGroup = cp5.addGroup("threshold").setLabel("").close();
 
         Button editColor = cp5.addButton("editColor").setSize(90, 20);
         editColor.setPosition(parent.width - 270, 25)
@@ -256,7 +256,12 @@ public class UIControl {
      * @param visible the visibility state
      */
     public void setPlayVisibility(boolean visible) {
-        playGroup.setVisible(visible);
+        if(visible) {
+            playGroup.open();
+        }
+        else {
+            playGroup.close();
+        }
     }
 
     /**
@@ -323,7 +328,12 @@ public class UIControl {
      * @param visible the visibility state
      */
     public void setSetupGroupVisibility(boolean visible) {
-        setupGroup.setVisible(visible);
+        if(visible) {
+            setupGroup.open();
+        }
+        else {
+            setupGroup.close();
+        }
     }
 
     /**
@@ -340,7 +350,12 @@ public class UIControl {
      * @param visible the visibility state
      */
     public void setThresholdVisibility(boolean visible) {
-        thresholdGroup.setVisible(visible);
+        if(visible) {
+            thresholdGroup.open();
+        }
+        else {
+            thresholdGroup.close();
+        }
     }
 
     /**

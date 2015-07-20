@@ -401,6 +401,7 @@ public class BeeTracker extends PApplet {
                             if(time - timeStamp > 0.000001f) {
                                 threshold = thresholds.get(timeStamp);
                                 bdu.setThresholdValues(threshold);
+                                uic.setThresholdValue(threshold[uic.getThresholdType()]);
 
                                 exitRadial = radials.get(timeStamp);
                                 insetBox = insets.get(timeStamp);
@@ -1863,21 +1864,36 @@ public class BeeTracker extends PApplet {
     public void removeSetting() {
         //more than one settings saved
         if(settingsTimeStamps.size() > 1) {
-            float time = movie.time();
+            float timeStamp;
 
             //find timestamp of current settings
             int index = settingIndex;
 
-            //TODO: remove setting
-            //if current timestamp is 0
-            //  replace current settings with next settings
-            //  removed next settings
-            //else
-            //  remove current settings
+            //replace current settings with next settings
+            //remove next settings
+            if(settingIndex == 0) {
+                timeStamp = settingsTimeStamps.get(index);
+                float tmp = settingsTimeStamps.remove(index + 1);
 
-            updateSettings(time);
+                uic.removeSeekTick(tmp);
 
-            uic.removeSeekTick(time);
+                radials.replace(timeStamp, radials.remove(tmp));
+                insets.replace(timeStamp, insets.remove(tmp));
+                thresholds.replace(timeStamp, thresholds.remove(tmp));
+            }
+
+            //remove current settings
+            else {
+                timeStamp = settingsTimeStamps.remove(index);
+
+                uic.removeSeekTick(timeStamp);
+
+                radials.remove(timeStamp);
+                insets.remove(timeStamp);
+                thresholds.remove(timeStamp);
+            }
+
+            updateSettings(movie.time());
         }
     }
 

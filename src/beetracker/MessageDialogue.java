@@ -167,12 +167,18 @@ public class MessageDialogue {
      *   JOptionPane.CANCEL_OPTION
      */
     private static int saveStatisticsMessage(BeeTracker parent, String filePath) {
-        return JOptionPane.showConfirmDialog(
-            parent,
-            "Video statistics have been saved to \"" + filePath +
-                "\"\nSave frame annotations?",
-            "Results Saved",
-            JOptionPane.YES_NO_OPTION
-        );
+        int result = JOptionPane.NO_OPTION;
+
+        if(filePath != null) {
+            result = JOptionPane.showConfirmDialog(
+                parent,
+                "Video statistics have been saved to \"" + filePath +
+                    "\"\nSave frame annotations?",
+                "Results Saved",
+                JOptionPane.YES_NO_OPTION
+            );
+        }
+
+        return result;
     }
 }

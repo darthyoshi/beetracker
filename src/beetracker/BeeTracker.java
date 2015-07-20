@@ -153,16 +153,32 @@ public class BeeTracker extends PApplet {
 
         bdu = new BlobDetectionUtils(this, width/2, height/2, debug);
 
-        //read settings file
         //TODO maybe per video file settings?
-        colors = new processing.data.IntList();
-        settingsTimeStamps = new FloatList();
-
-        File settings = new File(
+        loadSettings(
             System.getProperty("user.dir") +
             File.separatorChar +
             "settings.json"
         );
+
+        tu = new TrackingUtils(debug);
+
+        movieOffset = new int[2];
+        frameDims = new int[2];
+        frameOffset = new int[2];
+
+        exitCenter = new float[2];
+    }
+
+    /**
+     * Loads a settings file.
+     * @param filePath the path to the file
+     */
+    private void loadSettings(String filePath) {
+        //read settings file
+        colors = new processing.data.IntList();
+        settingsTimeStamps = new FloatList();
+
+        File settings = new File(filePath);
 
         boolean[] settingsErrors = {!settings.exists(), false, false};
 
@@ -319,13 +335,6 @@ public class BeeTracker extends PApplet {
             uic.addSeekTick(0f);
         }
 
-        tu = new TrackingUtils(debug);
-
-        movieOffset = new int[2];
-        frameDims = new int[2];
-        frameOffset = new int[2];
-
-        exitCenter = new float[2];
     }
 
     /**

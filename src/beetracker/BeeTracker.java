@@ -153,6 +153,7 @@ public class BeeTracker extends PApplet {
 
         bdu = new BlobDetectionUtils(this, width/2, height/2, debug);
 
+        //read settings file
         //TODO maybe per video file settings?
         loadSettings(
             System.getProperty("user.dir") +
@@ -174,7 +175,6 @@ public class BeeTracker extends PApplet {
      * @param filePath the path to the file
      */
     private void loadSettings(String filePath) {
-        //read settings file
         colors = new processing.data.IntList();
         settingsTimeStamps = new FloatList();
 
@@ -1245,6 +1245,24 @@ public class BeeTracker extends PApplet {
         }
 
         //save current color and selection settings
+        saveSettings(
+            System.getProperty("user.dir") +
+            File.separatorChar +
+            "settings.json"
+        );
+
+        if(debug) {
+            println(" - done");
+        }
+
+        super.exit();
+    }
+
+    /**
+     * Saves a settings file.
+     * @param filePath the path to the file
+     */
+    private void saveSettings(String filePath) {
         JSONObject settings = new JSONObject();
         JSONObject setting = new JSONObject();
         JSONObject sets = new JSONObject();
@@ -1277,23 +1295,16 @@ public class BeeTracker extends PApplet {
             setting = new JSONObject();
             threshold = thresholds.get(timeStamp);
             for(i = 0; i < threshold.length; i++) {
-                //setting.setInt(keyString, bdu.getThresholdValue(i));
                 setting.setInt(thresholdKeys[i], threshold[i]);
             }
             set.setJSONObject("thresholds", setting);
 
-            sets.setJSONObject(String.format("%.7f",timeStamp), set);
+            sets.setJSONObject(String.format("%.8f",timeStamp), set);
         }
 
         settings.setJSONObject("time", sets);
 
-        saveJSONObject(settings, "settings.json");
-
-        if(debug) {
-            println(" - done");
-        }
-
-        super.exit();
+        saveJSONObject(settings, filePath);
     }
 
     /**

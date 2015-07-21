@@ -107,37 +107,37 @@ public class BeeTracker extends PApplet {
             File.separatorChar + "output");
         outputDir.mkdir();
 
-        frame.addWindowListener(new java.awt.event.WindowListener() {
-            @Override
-            public void windowActivated(WindowEvent arg0) {}
-
-            @Override
-            public void windowClosed(WindowEvent arg0) {}
-
-            @Override
-            public void windowClosing(WindowEvent arg0) {
-                exit();
-            }
-
-            @Override
-            public void windowDeactivated(WindowEvent arg0) {}
-
-            @Override
-            public void windowDeiconified(WindowEvent arg0) {}
-
-            @Override
-            public void windowIconified(WindowEvent arg0) {}
-
-            @Override
-            public void windowOpened(WindowEvent arg0) {}
-        });
-
         controlP5.ControlP5 cp5 = new controlP5.ControlP5(this);
 
         textFont(cp5.getFont().getFont(), 24);
 
         if(frame != null) {
+            frame.setIconImage((java.awt.Image)loadImage("data/img/icon.png").getNative());
             frame.setTitle("BeeTracker");
+            frame.addWindowListener(new java.awt.event.WindowListener() {
+                @Override
+                public void windowActivated(WindowEvent arg0) {}
+
+                @Override
+                public void windowClosed(WindowEvent arg0) {}
+
+                @Override
+                public void windowClosing(WindowEvent arg0) {
+                    exit();
+                }
+
+                @Override
+                public void windowDeactivated(WindowEvent arg0) {}
+
+                @Override
+                public void windowDeiconified(WindowEvent arg0) {}
+
+                @Override
+                public void windowIconified(WindowEvent arg0) {}
+
+                @Override
+                public void windowOpened(WindowEvent arg0) {}
+            });
         }
 
         //create log file

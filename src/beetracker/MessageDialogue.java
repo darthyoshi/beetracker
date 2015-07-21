@@ -27,7 +27,7 @@ public class MessageDialogue {
     private static final String endOptions[] = {"Replay video", "Close video"};
 
     /**
-     * Displays an errpr message if setup parameters have not been set.
+     * Displays an error message if setup parameters have not been set.
      * @param parent the invoking BeeTracker
      * @param errors the setup error flags
      */

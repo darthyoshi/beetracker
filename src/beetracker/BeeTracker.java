@@ -9,10 +9,8 @@ package beetracker;
 
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -95,7 +93,7 @@ public class BeeTracker extends PApplet {
     private int[] threshold;
 
     /**
-     * Inherited from PApplet.
+     * Overrides from PApplet.
      */
     @Override
     public void setup() {
@@ -143,7 +141,9 @@ public class BeeTracker extends PApplet {
         //create log file
         try {
             log = new PrintStream(new File("Console.log"), "UTF-8");
-        } catch (FileNotFoundException | UnsupportedEncodingException ex) {
+        } catch (java.io.FileNotFoundException |
+            java.io.UnsupportedEncodingException ex)
+        {
             java.util.logging.Logger.getLogger(BeeTracker.class.getName())
                 .log(java.util.logging.Level.SEVERE, null, ex);
             crash(ex.toString());
@@ -152,14 +152,6 @@ public class BeeTracker extends PApplet {
         uic = new UIControl(this, cp5);
 
         bdu = new BlobDetectionUtils(this, width/2, height/2, debug);
-
-        //read settings file
-        //TODO maybe per video file settings?
-        loadSettings(
-            System.getProperty("user.dir") +
-            File.separatorChar +
-            "settings.json"
-        );
 
         tu = new TrackingUtils(debug);
 
@@ -182,7 +174,7 @@ public class BeeTracker extends PApplet {
 
         boolean[] settingsErrors = {!settings.exists(), false, false};
 
-        log.append("reading settings\n").flush();
+        log.append("initializing settings... ").flush();
 
         if(!settingsErrors[0]) {
             try {
@@ -192,6 +184,8 @@ public class BeeTracker extends PApplet {
                 String jsonKey, timeKey;
                 JSONObject jsonSetting, timeSetting, setting;
                 Iterator<?> jsonIter, settingIter;
+
+                log.append("reading from file\n").flush();
 
                 //initialize color list
                 try {
@@ -302,7 +296,7 @@ public class BeeTracker extends PApplet {
         }
 
         else {
-            log.append("settings file not found\n").flush();
+            log.append("file not found\n").flush();
         }
 
         if(settingsErrors[0] || settingsErrors[1]) {
@@ -335,10 +329,11 @@ public class BeeTracker extends PApplet {
             uic.addSeekTick(0f);
         }
 
+        log.append("done\n").flush();
     }
 
     /**
-     * Inherited from PApplet.
+     * Overrides from PApplet.
      */
     @Override
     public void draw() {
@@ -350,442 +345,429 @@ public class BeeTracker extends PApplet {
         rectMode(CORNERS);
         rect(viewBounds[0]-1, viewBounds[1]-1, viewBounds[2]+1, viewBounds[3]+1);
 
+        //begin critical section
         try {
             sem.acquire();
-
-            if(movie != null) {
-                rectMode(CENTER);
-                noStroke();
-                fill(0xff02344d);
-                rect(145, 25, 190, 40);
-                fill(0xffffffff);
-
-                text(modes[(isPlaying ? (replay ? 1 : (record ? 2 : 3)) : 0)], 145, 25);
-
-                float time = movie.time();
-
-                if(movie.available()) {
-                    movie.read();
-
-                    if(!isPlaying) {
-                        movie.pause();
-                        movie.jump(uic.getSeekTime());
-                    }
-
-                    else {
-                        uic.setSeekTime(time);
-                    }
-                }
-
-                if(movieDims != null) {
-                    processing.core.PGraphics viewFrame = createGraphics(
-                        viewBounds[2] - viewBounds[1] + 1,
-                        viewBounds[3] - viewBounds[1] + 1
-                    );
-                    viewFrame.beginDraw();
-                    viewFrame.copy(
-                        movie,
-                        0,
-                        0,
-                        movie.width,
-                        movie.height,
-                        (viewFrame.width-movieDims[0])/2,
-                        (viewFrame.height-movieDims[1])/2,
-                        movieDims[0],
-                        movieDims[1]
-                    );
-
-                    PImage insetFrame = copyInsetFrame();
-
-                    if(insetFrame != null) {
-                        noSmooth();
-
-                        float timeStamp;
-
-                        if(settingIndex >= 0 &&
-                            settingIndex < settingsTimeStamps.size() - 1)
-                        {
-                            timeStamp = settingsTimeStamps.get(settingIndex + 1);
-
-                            if(time - timeStamp > 0.000001f) {
-                                threshold = thresholds.get(timeStamp);
-                                bdu.setThresholdValues(threshold);
-                                uic.setThresholdValue(threshold[uic.getThresholdType()]);
-
-                                exitRadial = radials.get(timeStamp);
-                                insetBox = insets.get(timeStamp);
-                                settingIndex++;
-                            }
-                        }
-
-                        if(replay) {
-                            if(timeStampIndex >= 0 &&
-                                timeStampIndex < allFrameTimes.size())
-                            {
-                                timeStamp = allFrameTimes.get(timeStampIndex);
-
-                                if(time - timeStamp > 0.000001f) {
-                                    if(debug) {
-                                        println("frame info for " + timeStamp +
-                                            "s, actual time " + time + 's');
-                                    }
-
-                                    if(allFramePoints.containsKey(timeStamp)) {
-                                        centroids = allFramePoints.get(timeStamp);
-                                    }
-                                    timeStampIndex++;
-                                }
-                            }
-                        }
-
-                        else {
-                            //BlobDetection expects certain image size
-                            insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
-                            bdu.filterImg(insetFrame, colors);
-
-                            centroids = bdu.getCentroids(insetFrame, colors);
-                        }
-
-                        if(isPlaying) {
-                            if(record) {
-                                allFramePoints.put(time, centroids);
-                                allFrameTimes.append(time);
-                            }
-
-                            if(record || replay) {
-                                if(debug) {
-                                    println(
-                                        "---------BEGIN FRAME (" +
-                                        String.format("%.2f", time) +
-                                        "s)---------\npip: " + pip
-                                    );
-                                }
-
-                                int[] counts = tu.trackCentroids(
-                                    centroids,
-                                    frameDims, frameOffset,
-                                    exitRadial,
-                                    movieDims, movieOffset,
-                                    time
-                                );
-                                crossingCounts[0] += counts[0];
-                                crossingCounts[1] += counts[1];
-                            }
-                        }
-
-                        int[] insetOffset = new int[2];
-
-                        //zoomed
-                        if(pip) {
-                            PImage zoomedInset = copyInsetFrame();
-
-                            insetOffset[0] = (viewFrame.width-frameDims[0])/2;
-                            insetOffset[1] = (viewFrame.height-frameDims[1])/2;
-
-                            if(zoomedInset != null) {
-                                viewFrame.copy(
-                                    zoomedInset,
-                                    0,
-                                    0,
-                                    zoomedInset.width,
-                                    zoomedInset.height,
-                                    insetOffset[0],
-                                    insetOffset[1],
-                                    frameDims[0],
-                                    frameDims[1]
-                                );
-                            }
-                        }
-
-                        else {
-                            insetOffset[0] = (int)(insetBox[0]*movieDims[0]) +
-                                movieOffset[0] - viewBounds[0];
-                            insetOffset[1] = (int)(insetBox[1]*movieDims[1]) +
-                                movieOffset[1] - viewBounds[1];
-                        }
-
-                        smooth();
-
-                        imageMode(CORNERS);
-
-                        if(!replay) {
-                            viewFrame.blend(
-                                insetFrame,
-                                0,
-                                0,
-                                insetFrame.width,
-                                insetFrame.height,
-                                insetOffset[0],
-                                insetOffset[1],
-                                frameDims[0],
-                                frameDims[1],
-                                ADD
-                            );
-                        }
-
-                        //draw detected blobs
-                        if(!replay) {
-                            bdu.drawBlobs(viewFrame, viewBounds,
-                                frameDims, frameOffset, exitCenter);
-                        }
-
-                        //mark bees
-                        else {
-                            stroke(0xffdddd00);
-                            ellipseMode(CENTER);
-                            colorMode(RGB, 255);
-
-                            List<float[]> centroidList;
-                            for(int color : colors) {
-                                fill(0xff000000 + color);
-
-                                centroidList = centroids.get(color);
-                                if(centroidList != null) {
-                                    for(float[] centroid : centroidList) {
-                                        viewFrame.ellipse(
-                                            centroid[0]*frameDims[0] +
-                                                frameOffset[0] - viewBounds[0],
-                                            centroid[1]*frameDims[1] +
-                                                frameOffset[1] - viewBounds[1],
-                                            .02f*frameDims[1],
-                                            .02f*frameDims[1]
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    viewFrame.endDraw();
-                    image(viewFrame, viewBounds[0], viewBounds[1]);
-
-                    if(isPlaying && record) {
-                        for(Integer color : centroids.keySet()) {
-                            if(centroids.get(color).isEmpty()) {
-                                centroids.remove(color);
-                            }
-                        }
-                        if(centroids.isEmpty()) {
-                            centroids = null;
-                        }
-
-                        allFramePoints.put(time, centroids);
-                        allFrameTimes.append(time);
-                    }
-
-                    //bee count
-                    if(isPlaying && (record || replay)) {
-                        rectMode(CENTER);
-                        noStroke();
-                        fill(0xff02344d);
-                        rect(535, 25, 430, 40);
-
-                        fill(0xffffffff);
-                        text("total #arrivals: " + crossingCounts[1] +
-                            ", total #departures: " + crossingCounts[0], 534, 25);
-
-                        if(record && debug) {
-                            println("---------END FRAME---------");
-                        }
-                    }
-
-                    stroke(0xffffa600);
-                    ellipseMode(RADIUS);
-                    noFill();
-                    rectMode(CORNERS);
-
-                    //unzoomed
-                    if(!pip) {
-                        //inset box
-                        rect(
-                            insetBox[0]*movieDims[0] + movieOffset[0],
-                            insetBox[1]*movieDims[1] + movieOffset[1],
-                            insetBox[2]*movieDims[0] + movieOffset[0] - 1,
-                            insetBox[3]*movieDims[1] + movieOffset[1] - 1
-                        );
-
-                        //exit circle
-                        ellipse(
-                            exitRadial[0]*movieDims[0] + movieOffset[0],
-                            exitRadial[1]*movieDims[1] + movieOffset[1],
-                            exitRadial[2]*movieDims[0],
-                            exitRadial[3]*movieDims[1]
-                        );
-                    }
-
-                    //zoomed
-                    else {
-                        //inset box
-                        rect(
-                            frameOffset[0],
-                            frameOffset[1],
-                            frameDims[0] - 1 + frameOffset[0],
-                            frameDims[1] - 1 + frameOffset[1]
-                        );
-
-                        //exit circle
-                        ellipse(
-                            exitCenter[0],
-                            exitCenter[1],
-                            exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
-                            exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
-                        );
-                    }
-
-                    if(isDrag && !selectExit) {
-                        //draw selection box diagonals
-                        line(
-                            insetBox[0]*movieDims[0] + movieOffset[0],
-                            insetBox[1]*movieDims[1] + movieOffset[1],
-                            insetBox[2]*movieDims[0] + movieOffset[0],
-                            insetBox[3]*movieDims[1] + movieOffset[1]
-                        );
-                        line(
-                            insetBox[0]*movieDims[0] + movieOffset[0],
-                            insetBox[3]*movieDims[1] + movieOffset[1],
-                            insetBox[2]*movieDims[0] + movieOffset[0],
-                            insetBox[1]*movieDims[1] + movieOffset[1]
-                        );
-                    }
-
-                    else {
-                        int[] tmpDims;
-
-                        if(pip) {
-                            tmpDims = new int[2];
-                            tmpDims[0] = (int)(frameDims[0]/(insetBox[2]-insetBox[0]));
-                            tmpDims[1] = (int)(frameDims[1]/(insetBox[3]-insetBox[1]));
-                        }
-
-                        else {
-                            tmpDims = movieDims;
-                        }
-
-                        //draw selection circle interior lines
-                        line(
-                            exitCenter[0],
-                            exitCenter[1] - exitRadial[3]*tmpDims[1],
-                            exitCenter[0],
-                            exitCenter[1] + exitRadial[3]*tmpDims[1]
-                        );
-                        line(
-                            exitCenter[0] - exitRadial[2]*tmpDims[0],
-                            exitCenter[1],
-                            exitCenter[0] + exitRadial[2]*tmpDims[0],
-                            exitCenter[1]
-                        );
-                    }
-
-                    //end of movie reached
-                    if(isPlaying && movie.duration() - time < 1f/movie.frameRate) {
-                        isPlaying = false;
-
-                        StringBuilder msg = new StringBuilder("End of video reached.\n\n");
-
-                        Calendar date = Calendar.getInstance();
-                        HashMap<Float, String> formattedTime = new HashMap<>();
-                        HashMap<Float, String> summary = tu.getSummary();
-                        FloatList timeStamps = new FloatList(summary.size());
-
-                        if(allFramePoints.isEmpty()) {
-                            msg.append("No points saved!")
-                                .append(" Enable recording to generate events.\n");
-                        }
-
-                        else {
-                            msg.append("Summary of events: \n");
-
-                            for(Float timeStamp : summary.keySet()) {
-                                timeStamps.append(timeStamp);
-                            }
-                            timeStamps.sort();
-
-                            StringBuilder builder;
-
-                            int sec;
-                            for(float timeStamp : timeStamps) {
-                                sec = (int)timeStamp;
-                                date.setTime(videoDate.getTime());
-                                date.add(Calendar.SECOND, sec);
-
-                                builder = new StringBuilder();
-                                builder.append(months[date.get(Calendar.MONTH)])
-                                    .append(' ')
-                                    .append(Integer.toString(date.get(Calendar.DATE)))
-                                    .append(' ')
-                                    .append(Integer.toString(date.get(Calendar.YEAR)))
-                                    .append(',')
-                                    .append(String.format(
-                                        "%02d:%02d:%.5f",
-                                        date.get(Calendar.HOUR_OF_DAY),
-                                        date.get(Calendar.MINUTE),
-                                        (date.get(Calendar.SECOND)-sec)+timeStamp
-                                    ));
-
-                                formattedTime.put(timeStamp, builder.toString());
-
-                                msg.append(timeStamp)
-                                    .append(": ")
-                                    .append(summary.get(timeStamp))
-                                    .append('\n');
-                            }
-                        }
-
-                        if(debug) {
-                            println('\n' + msg.toString());
-                        }
-
-                        MessageDialogue.endVideoMessage(
-                            this,
-                            msg.toString(),
-                            saveSummaryResults(
-                                date,
-                                timeStamps,
-                                formattedTime,
-                                summary
-                            )
-                        );
-                    }
-                }
-
-                else {
-                    text("Loading...", width*.5f, height*.5f);
-
-                    if(movie.height > 0) {
-                        uic.setSeekRange(movie.duration());
-
-                        movieDims = scaledDims(
-                            movie.width,
-                            movie.height
-                        );
-
-                        movieOffset[0] = (int)((width-movieDims[0])*.5f);
-                        movieOffset[1] = (int)((height-movieDims[1])*.5f);
-
-                        frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
-                        frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
-
-                        frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
-                        frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
-
-                        updateExitCenter();
-                    }
-                }
-            }
-
-            else {
-                imageMode(CENTER);
-                if(titleImg.width > 0) {
-                    image(titleImg, .5f*width, .5f*height-50);
-                }
-            }
-
-            sem.release();
         } catch (InterruptedException ex) {
             ex.printStackTrace(log);
 
             Thread.currentThread().interrupt();
         }
+
+        if(movie != null) {
+            rectMode(CENTER);
+            noStroke();
+            fill(0xff02344d);
+            rect(145, 25, 190, 40);
+            fill(0xffffffff);
+
+            text(modes[(isPlaying ? (replay ? 1 : (record ? 2 : 3)) : 0)], 145, 25);
+
+            float time = movie.time();
+
+            if(movie.available()) {
+                movie.read();
+
+                if(!isPlaying) {
+                    movie.pause();
+                    movie.jump(uic.getSeekTime());
+                }
+
+                else {
+                    uic.setSeekTime(time);
+                }
+            }
+
+            if(movieDims != null) {
+                processing.core.PGraphics viewFrame = createGraphics(
+                    viewBounds[2] - viewBounds[1] + 1,
+                    viewBounds[3] - viewBounds[1] + 1
+                );
+                viewFrame.beginDraw();
+                viewFrame.copy(
+                    movie,
+                    0,
+                    0,
+                    movie.width,
+                    movie.height,
+                    (viewFrame.width-movieDims[0])/2,
+                    (viewFrame.height-movieDims[1])/2,
+                    movieDims[0],
+                    movieDims[1]
+                );
+
+                PImage insetFrame = copyInsetFrame();
+
+                if(insetFrame != null) {
+                    noSmooth();
+
+                    float timeStamp;
+
+                    if(settingIndex >= 0 &&
+                        settingIndex < settingsTimeStamps.size() - 1)
+                    {
+                        timeStamp = settingsTimeStamps.get(settingIndex + 1);
+
+                        if(time - timeStamp > 0.000001f) {
+                            threshold = thresholds.get(timeStamp);
+                            bdu.setThresholdValues(threshold);
+                            uic.setThresholdValue(threshold[uic.getThresholdType()]);
+
+                            exitRadial = radials.get(timeStamp);
+                            insetBox = insets.get(timeStamp);
+                            settingIndex++;
+                        }
+                    }
+
+                    if(replay) {
+                        if(timeStampIndex >= 0 &&
+                            timeStampIndex < allFrameTimes.size())
+                        {
+                            timeStamp = allFrameTimes.get(timeStampIndex);
+
+                            if(time - timeStamp > 0.000001f) {
+                                if(debug) {
+                                    println("frame info for " + timeStamp +
+                                        "s, actual time " + time + 's');
+                                }
+
+                                centroids = allFramePoints.get(timeStamp);
+
+                                timeStampIndex++;
+                            }
+                        }
+                    }
+
+                    else {
+                        //BlobDetection expects certain image size
+                        insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
+                        bdu.filterImg(insetFrame, colors);
+
+                        centroids = bdu.getCentroids(insetFrame, colors);
+                    }
+
+                    if(isPlaying) {
+                        if(record && !allFrameTimes.hasValue(time)) {
+                            allFrameTimes.append(time);
+                            allFramePoints.put(time, centroids);
+                        }
+
+                        if(record || replay) {
+                            if(debug) {
+                                println(
+                                    "---------BEGIN FRAME (" +
+                                    String.format("%.2f", time) +
+                                    "s)---------\npip: " + pip
+                                );
+                            }
+
+                            int[] counts = tu.trackCentroids(
+                                centroids,
+                                frameDims, frameOffset,
+                                exitRadial,
+                                movieDims, movieOffset,
+                                time
+                            );
+                            crossingCounts[0] += counts[0];
+                            crossingCounts[1] += counts[1];
+                        }
+                    }
+
+                    int[] insetOffset = new int[2];
+
+                    //zoomed
+                    if(pip) {
+                        PImage zoomedInset = copyInsetFrame();
+
+                        insetOffset[0] = (viewFrame.width-frameDims[0])/2;
+                        insetOffset[1] = (viewFrame.height-frameDims[1])/2;
+
+                        if(zoomedInset != null) {
+                            viewFrame.copy(
+                                zoomedInset,
+                                0,
+                                0,
+                                zoomedInset.width,
+                                zoomedInset.height,
+                                insetOffset[0],
+                                insetOffset[1],
+                                frameDims[0],
+                                frameDims[1]
+                            );
+                        }
+                    }
+
+                    else {
+                        insetOffset[0] = (int)(insetBox[0]*movieDims[0]) +
+                            movieOffset[0] - viewBounds[0];
+                        insetOffset[1] = (int)(insetBox[1]*movieDims[1]) +
+                            movieOffset[1] - viewBounds[1];
+                    }
+
+                    smooth();
+
+                    imageMode(CORNERS);
+
+                    if(!replay) {
+                        viewFrame.blend(
+                            insetFrame,
+                            0,
+                            0,
+                            insetFrame.width,
+                            insetFrame.height,
+                            insetOffset[0],
+                            insetOffset[1],
+                            frameDims[0],
+                            frameDims[1],
+                            ADD
+                        );
+                    }
+
+                    //draw detected blobs
+                    if(!replay) {
+                        bdu.drawBlobs(viewFrame, viewBounds,
+                            frameDims, frameOffset, exitCenter);
+                    }
+
+                    //mark bees
+                    else {
+                        stroke(0xffdddd00);
+                        ellipseMode(CENTER);
+                        colorMode(RGB, 255);
+
+                        List<float[]> centroidList;
+                        for(int color : colors) {
+                            fill(0xff000000 + color);
+
+                            centroidList = centroids.get(color);
+                            if(centroidList != null) {
+                                for(float[] centroid : centroidList) {
+                                    viewFrame.ellipse(
+                                        centroid[0]*frameDims[0] +
+                                            frameOffset[0] - viewBounds[0],
+                                        centroid[1]*frameDims[1] +
+                                            frameOffset[1] - viewBounds[1],
+                                        .02f*frameDims[1],
+                                        .02f*frameDims[1]
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                viewFrame.endDraw();
+                image(viewFrame, viewBounds[0], viewBounds[1]);
+
+                //bee count
+                if(isPlaying && (record || replay)) {
+                    rectMode(CENTER);
+                    noStroke();
+                    fill(0xff02344d);
+                    rect(535, 25, 430, 40);
+
+                    fill(0xffffffff);
+                    text("total #arrivals: " + crossingCounts[1] +
+                        ", total #departures: " + crossingCounts[0], 534, 25);
+
+                    if(record && debug) {
+                        println("---------END FRAME---------");
+                    }
+                }
+
+                stroke(0xffffa600);
+                ellipseMode(RADIUS);
+                noFill();
+                rectMode(CORNERS);
+
+                //unzoomed
+                if(!pip) {
+                    //inset box
+                    rect(
+                        insetBox[0]*movieDims[0] + movieOffset[0],
+                        insetBox[1]*movieDims[1] + movieOffset[1],
+                        insetBox[2]*movieDims[0] + movieOffset[0] - 1,
+                        insetBox[3]*movieDims[1] + movieOffset[1] - 1
+                    );
+
+                    //exit circle
+                    ellipse(
+                        exitRadial[0]*movieDims[0] + movieOffset[0],
+                        exitRadial[1]*movieDims[1] + movieOffset[1],
+                        exitRadial[2]*movieDims[0],
+                        exitRadial[3]*movieDims[1]
+                    );
+                }
+
+                //zoomed
+                else {
+                    //inset box
+                    rect(
+                        frameOffset[0],
+                        frameOffset[1],
+                        frameDims[0] - 1 + frameOffset[0],
+                        frameDims[1] - 1 + frameOffset[1]
+                    );
+
+                    //exit circle
+                    ellipse(
+                        exitCenter[0],
+                        exitCenter[1],
+                        exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
+                        exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
+                    );
+                }
+
+                if(isDrag && !selectExit) {
+                    //draw selection box diagonals
+                    line(
+                        insetBox[0]*movieDims[0] + movieOffset[0],
+                        insetBox[1]*movieDims[1] + movieOffset[1],
+                        insetBox[2]*movieDims[0] + movieOffset[0],
+                        insetBox[3]*movieDims[1] + movieOffset[1]
+                    );
+                    line(
+                        insetBox[0]*movieDims[0] + movieOffset[0],
+                        insetBox[3]*movieDims[1] + movieOffset[1],
+                        insetBox[2]*movieDims[0] + movieOffset[0],
+                        insetBox[1]*movieDims[1] + movieOffset[1]
+                    );
+                }
+
+                else {
+                    int[] tmpDims;
+
+                    if(pip) {
+                        tmpDims = new int[2];
+                        tmpDims[0] = (int)(frameDims[0]/(insetBox[2]-insetBox[0]));
+                        tmpDims[1] = (int)(frameDims[1]/(insetBox[3]-insetBox[1]));
+                    }
+
+                    else {
+                        tmpDims = movieDims;
+                    }
+
+                    //draw selection circle interior lines
+                    line(
+                        exitCenter[0],
+                        exitCenter[1] - exitRadial[3]*tmpDims[1],
+                        exitCenter[0],
+                        exitCenter[1] + exitRadial[3]*tmpDims[1]
+                    );
+                    line(
+                        exitCenter[0] - exitRadial[2]*tmpDims[0],
+                        exitCenter[1],
+                        exitCenter[0] + exitRadial[2]*tmpDims[0],
+                        exitCenter[1]
+                    );
+                }
+
+                //end of movie reached
+                if(isPlaying && movie.duration() - time < 1f/movie.frameRate) {
+                    isPlaying = false;
+
+                    StringBuilder msg = new StringBuilder("End of video reached.\n\n");
+
+                    Calendar date = Calendar.getInstance();
+                    HashMap<Float, String> formattedTime = new HashMap<>();
+                    HashMap<Float, String> summary = tu.getSummary();
+                    FloatList timeStamps = new FloatList(summary.size());
+
+                    if(allFramePoints.isEmpty()) {
+                        msg.append("No points saved!")
+                            .append(" Enable recording to generate events.\n");
+                    }
+
+                    else {
+                        msg.append("Summary of events: \n");
+
+                        for(Float timeStamp : summary.keySet()) {
+                            timeStamps.append(timeStamp);
+                        }
+                        timeStamps.sort();
+
+                        StringBuilder builder;
+
+                        int sec;
+                        for(float timeStamp : timeStamps) {
+                            sec = (int)timeStamp;
+                            date.setTime(videoDate.getTime());
+                            date.add(Calendar.SECOND, sec);
+
+                            builder = new StringBuilder();
+                            builder.append(months[date.get(Calendar.MONTH)])
+                                .append(' ')
+                                .append(Integer.toString(date.get(Calendar.DATE)))
+                                .append(' ')
+                                .append(Integer.toString(date.get(Calendar.YEAR)))
+                                .append(',')
+                                .append(String.format(
+                                    "%02d:%02d:%.5f",
+                                    date.get(Calendar.HOUR_OF_DAY),
+                                    date.get(Calendar.MINUTE),
+                                    (date.get(Calendar.SECOND)-sec)+timeStamp
+                                ));
+
+                            formattedTime.put(timeStamp, builder.toString());
+
+                            msg.append(timeStamp)
+                                .append(": ")
+                                .append(summary.get(timeStamp))
+                                .append('\n');
+                        }
+                    }
+
+                    if(debug) {
+                        println('\n' + msg.toString());
+                    }
+
+                    MessageDialogue.endVideoMessage(
+                        this,
+                        msg.toString(),
+                        saveSummaryResults(
+                            date,
+                            timeStamps,
+                            formattedTime,
+                            summary
+                        )
+                    );
+                }
+            }
+
+            else {
+                text("Loading...", width*.5f, height*.5f);
+
+                if(movie.height > 0) {
+                    uic.setSeekRange(movie.duration());
+
+                    movieDims = scaledDims(
+                        movie.width,
+                        movie.height
+                    );
+
+                    movieOffset[0] = (int)((width-movieDims[0])*.5f);
+                    movieOffset[1] = (int)((height-movieDims[1])*.5f);
+
+                    frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
+                    frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
+
+                    frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
+                    frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+
+                    updateExitCenter();
+                }
+            }
+        }
+
+        else {
+            imageMode(CENTER);
+            if(titleImg.width > 0) {
+                image(titleImg, .5f*width, .5f*height-50);
+            }
+        }
+
+        //end critical section
+        sem.release();
 
         //main window border
         stroke(0xffffffff);
@@ -1174,48 +1156,54 @@ public class BeeTracker extends PApplet {
      * Handles all operations necessary for stopping video playback.
      */
     void stopPlayback() {
+        saveSettings(
+            System.getProperty("user.dir") + File.separatorChar +
+            "output" + File.separatorChar +
+            videoName + File.separatorChar +
+            "settings.json"
+        );
+
+        //begin critical section
         try {
             sem.acquire();
-
-            if(movie != null) {
-
-                movie.stop();
-                movie = null;
-
-                movieDims = null;
-                videoName = null;
-
-                allFrameTimes = null;
-                allFramePoints = null;
-                timeStampIndex = -1;
-
-                settingIndex = 0;
-            }
-
-            record = false;
-            uic.setRecordState(false);
-
-            isPlaying = false;
-            uic.setPlayState(false);
-
-            uic.setSetupGroupVisibility(false);
-            uic.setOpenButtonVisibility(true);
-            uic.setPlayVisibility(false);
-            uic.setThresholdVisibility(false);
-            uic.selectRadioButton(0);
-            uic.setSeekTime(0f);
-            radioButtons(0);
-
-            log.append("video closed\n------\n").flush();
-
-            tu.init();
-
-            sem.release();
         } catch (InterruptedException e) {
             e.printStackTrace(log);
 
             Thread.currentThread().interrupt();
         }
+
+        movie.stop();
+        movie = null;
+
+        movieDims = null;
+        videoName = null;
+
+        allFrameTimes = null;
+        allFramePoints = null;
+        timeStampIndex = -1;
+
+        settingIndex = 0;
+
+        //end critical section
+        sem.release();
+
+        record = false;
+        uic.setRecordState(false);
+
+        isPlaying = false;
+        uic.setPlayState(false);
+
+        uic.setSetupGroupVisibility(false);
+        uic.setOpenButtonVisibility(true);
+        uic.setPlayVisibility(false);
+        uic.setThresholdVisibility(false);
+        uic.selectRadioButton(0);
+        uic.setSeekTime(0f);
+        radioButtons(0);
+
+        log.append("video closed\n------\n").flush();
+
+        tu.init();
     }
 
     /**
@@ -1227,7 +1215,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * Inherited from PApplet.
+     * Overrides from PApplet.
      */
     @Override
     public void exit() {
@@ -1238,21 +1226,22 @@ public class BeeTracker extends PApplet {
         if(movie != null) {
             movie.stop();
             movie = null;
-        }
 
-        if(debug) {
-            print("saving settings");
-        }
+            if(debug) {
+                print("saving settings");
+            }
 
-        //save current color and selection settings
-        saveSettings(
-            System.getProperty("user.dir") +
-            File.separatorChar +
-            "settings.json"
-        );
+            //save current color and selection settings
+            saveSettings(
+                System.getProperty("user.dir") + File.separatorChar +
+                "output" + File.separatorChar +
+                videoName + File.separatorChar +
+                "settings.json"
+            );
 
-        if(debug) {
-            println(" - done");
+            if(debug) {
+                println(" - done");
+            }
         }
 
         super.exit();
@@ -1308,7 +1297,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * Inherited from PApplet.
+     * Overrides from PApplet.
      */
     @Override
     public void mousePressed() {
@@ -1357,7 +1346,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * Inherited from PApplet.
+     * Overrides from PApplet.
      */
     @Override
     public void mouseDragged() {
@@ -1480,7 +1469,7 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * Inherited from PApplet.
+     * Overrides from PApplet.
      */
     @Override
     public void mouseReleased() {
@@ -1731,14 +1720,6 @@ public class BeeTracker extends PApplet {
         if(file != null) {
             currentFile = file;
 
-            movie = new Movie(this, file.getAbsolutePath());
-
-            log.append("video loaded\n").flush();
-
-            movie.volume(0f);
-            movie.play();
-            isPlaying = false;
-
             log.append("toggling UI elements\n").flush();
 
             uic.setSetupGroupVisibility(true);
@@ -1752,6 +1733,21 @@ public class BeeTracker extends PApplet {
                 builder.append('.').append(nameParts[i]);
             }
             videoName = builder.toString();
+
+            loadSettings(
+                System.getProperty("user.dir") + File.separatorChar +
+                "output" + File.separatorChar +
+                videoName + File.separatorChar +
+                "settings.json"
+            );
+
+            movie = new Movie(this, file.getAbsolutePath());
+
+            log.append("video loaded\n").flush();
+
+            movie.volume(0f);
+            movie.play();
+            isPlaying = false;
 
             crossingCounts = new int[2];
             crossingCounts[0] = crossingCounts[1] = 0;
@@ -1814,6 +1810,12 @@ public class BeeTracker extends PApplet {
         if(debug) {
             println("done");
         }
+
+        println(allFrameTimes.size()+" "+allFramePoints.size());
+        for(float stamp : allFrameTimes) {
+        	println(stamp+" "+(allFramePoints.get(stamp)==null));
+        }
+
     }
 
     /**

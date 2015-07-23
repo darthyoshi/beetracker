@@ -463,9 +463,20 @@ public class BeeTracker extends PApplet {
                     }
 
                     if(isPlaying) {
-                        if(record && !allFrameTimes.hasValue(time)) {
-                            allFrameTimes.append(time);
-                            allFramePoints.put(time, centroids);
+                        if(record) {
+                            boolean frameIsEmpty = true;
+
+                            for(int color : colors) {
+                                if(!centroids.get(color).isEmpty()) {
+                                    frameIsEmpty = false;
+                                    break;
+                                }
+                            }
+
+                            if(!frameIsEmpty && !allFrameTimes.hasValue(time)) {
+                                allFrameTimes.append(time);
+                                allFramePoints.put(time, centroids);
+                            }
                         }
 
                         if(record || replay) {
@@ -1296,9 +1307,12 @@ public class BeeTracker extends PApplet {
         JSONObject set;
         int i;
 
+        String lbl;
         for(i = 0; i < colors.size(); i++) {
-            setting.setString(Integer.toString(i),
-                String.format("%06x", colors.get(i)));
+        	lbl = String.format("%06x", colors.get(i));
+            setting.setString(Integer.toString(i), lbl);
+
+            uic.removeListItem(lbl);
         }
         settings.setJSONObject("colors", setting);
 
@@ -1692,7 +1706,7 @@ public class BeeTracker extends PApplet {
 
         timeStampIndex = 0;
 
-        centroids = new HashMap<>();
+        centroids = new HashMap<>(colors.size());
         for(int tmp : colors) {
             centroids.put(tmp, tmpList);
         }
@@ -1717,27 +1731,29 @@ public class BeeTracker extends PApplet {
         for(Float timeStamp : allFrameTimes) {
             colorMap = allFramePoints.get(timeStamp);
 
-            if(colorMap != null) {
-                jsonColors = new JSONObject();
+            jsonColors = new JSONObject();
 
-                for(int color : colors) {
-                    points = colorMap.get(color);
+            for(int color : colors) {
+                points = colorMap.get(color);
 
-                    jsonBlobs = new JSONObject();
+                jsonBlobs = new JSONObject();
 
-                    for(i = 0; i < points.size(); i++) {
-                        point = points.get(i);
+                for(i = 0; i < points.size(); i++) {
+                    point = points.get(i);
 
-                        jsonCoords = new JSONObject();
-                        jsonCoords.setFloat("x", point[0]);
-                        jsonCoords.setFloat("y", point[1]);
+                    jsonCoords = new JSONObject();
+                    jsonCoords.setFloat("x", point[0]);
+                    jsonCoords.setFloat("y", point[1]);
 
-                        jsonBlobs.setJSONObject(Integer.toString(i), jsonCoords);
-                    }
-
-                    jsonColors.setJSONObject(String.format("%06x", color), jsonBlobs);
+                    jsonBlobs.setJSONObject(Integer.toString(i), jsonCoords);
                 }
 
+                if(points.size() > 0) {
+                    jsonColors.setJSONObject(String.format("%06x", color), jsonBlobs);
+                }
+            }
+
+            if(jsonColors.size() > 0) {
                 json.setJSONObject(String.format("%.7f", timeStamp), jsonColors);
             }
         }

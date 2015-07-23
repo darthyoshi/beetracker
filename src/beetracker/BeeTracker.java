@@ -399,7 +399,7 @@ public class BeeTracker extends PApplet {
                 PImage insetFrame = copyInsetFrame();
 
                 if(insetFrame != null) {
-                    noSmooth();
+                    viewFrame.noSmooth();
 
                     float timeStamp;
 
@@ -521,10 +521,6 @@ public class BeeTracker extends PApplet {
                             movieOffset[1] - viewBounds[1];
                     }
 
-                    smooth();
-
-                    imageMode(CORNERS);
-
                     if(!replay) {
                         viewFrame.blend(
                             insetFrame,
@@ -548,13 +544,13 @@ public class BeeTracker extends PApplet {
 
                     //mark bees
                     else {
-                        stroke(0xffdddd00);
-                        ellipseMode(CENTER);
-                        colorMode(RGB, 255);
+                        viewFrame.stroke(0xffdddd00);
+                        viewFrame.ellipseMode(CENTER);
+                        viewFrame.colorMode(RGB, 255);
 
                         List<float[]> centroidList;
                         for(int color : colors) {
-                            fill(0xff000000 + color);
+                            viewFrame.fill(0xff000000 + color);
 
                             centroidList = centroids.get(color);
                             if(centroidList != null) {
@@ -574,6 +570,8 @@ public class BeeTracker extends PApplet {
                 }
 
                 viewFrame.endDraw();
+
+                imageMode(CORNER);
                 image(viewFrame, viewBounds[0], viewBounds[1]);
 
                 //bee count
@@ -584,8 +582,12 @@ public class BeeTracker extends PApplet {
                     rect(535, 25, 430, 40);
 
                     fill(0xffffffff);
-                    text("total #arrivals: " + crossingCounts[1] +
-                        ", total #departures: " + crossingCounts[0], 534, 25);
+                    text(
+                        "total #arrivals: " + crossingCounts.get("arrivals") +
+                        ", total #departures: " + crossingCounts.get("departures"),
+                        534,
+                        25
+                    );
 
                     if(record && debug) {
                         println("---------END FRAME---------");
@@ -1835,8 +1837,8 @@ public class BeeTracker extends PApplet {
 
             timeStampIndex = 0;
 
-            centroids = new HashMap<>();
-            List<float[]> tmpList = new ArrayList<>();
+            centroids = new HashMap<>(colors.size());
+            List<float[]> tmpList = new ArrayList<>(1);
             for(int tmp : colors) {
                 centroids.put(tmp, tmpList);
             }

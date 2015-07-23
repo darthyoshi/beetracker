@@ -26,7 +26,6 @@ import processing.data.IntList;
  */
 public class BlobDetectionUtils {
     private final BeeTracker parent;
-    private int hueThreshold, satThreshold, valThreshold;
     private static final int filterRadius = 5;
     private final BlobDetection bd;
     private IntList blobColors;
@@ -59,8 +58,9 @@ public class BlobDetectionUtils {
      *   maxed out, while all other pixels are set to 0x000000.
      * @param img the PImage to preprocess
      * @param colors a list of the integer RGB values to scan for
+     * @param threshold an array containing the HSV thresholds
      */
-    public void filterImg(PImage img, IntList colors) {
+    public void filterImg(PImage img, IntList colors, int[] threshold) {
         int pixelHue, pixelSat, pixelVal;
         int i, j;
 
@@ -82,10 +82,10 @@ public class BlobDetectionUtils {
 
             //for color matches, brighten pixel
             for(j = 0; j < colors.size(); j++) {
-                if(pixelHue > listHues[j] - hueThreshold &&
-                    pixelHue < listHues[j] + hueThreshold &&
-                    pixelSat > satThreshold &&
-                    pixelVal > valThreshold)
+                if(pixelHue > listHues[j] - threshold[0] &&
+                    pixelHue < listHues[j] + threshold[0] &&
+                    pixelSat > threshold[1] &&
+                    pixelVal > threshold[2])
                 {
                     img.pixels[i] = parent.color(listHues[j], 255, 255);
 
@@ -183,7 +183,7 @@ public class BlobDetectionUtils {
     public HashMap<Integer, List<float[]>> getCentroids(PImage frame,
         IntList colors)
     {
-        HashMap<Integer, List<float[]>> result = new HashMap<>();
+        HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
         float[] point;
         Blob b;
         int i, j, color, pixel, hue;
@@ -287,36 +287,6 @@ public class BlobDetectionUtils {
     }
 
     /**
-     * Sets a filter threshold value.
-     * @param type the threshold type:
-     *   0 = hue
-     *   1 = saturation
-     *   2 = brightness
-     * @param val the new value
-     */
-    public void setThresholdValue(int type, int val) {
-        switch(type) {
-        case 0: hueThreshold = val; break;
-
-        case 1: satThreshold = val; break;
-
-        case 2: valThreshold = val; break;
-
-        default: //do nothing
-        }
-    }
-
-    /**
-     * Sets all filter threshold values.
-     * @param vals the new values
-     */
-    public void setThresholdValues(int[] vals) {
-        hueThreshold = vals[0];
-        satThreshold = vals[1];
-        valThreshold = vals[2];
-    }
-
-    /**
      * Performs a morphological erosion operation. Any blobs consisting of the
      *   specified colors will shrink. All other pixels will be set to black.
      * @param pixels the operand pixel array
@@ -412,28 +382,5 @@ public class BlobDetectionUtils {
         for(i = 0; i < tmp.length; i++) {
             pixels[i] = tmp[i];
         }
-    }
-
-    /**
-     * Retrieves the values of the specified threshold.
-     * @param type the threshold type:
-     *   0 = hue
-     *   1 = saturation
-     *   2 = brightness
-     * @return an integer array
-     */
-    public int getThresholdValue(int type) {
-        int result = 0;
-        switch(type) {
-        case 0: result = hueThreshold; break;
-
-        case 1: result = satThreshold; break;
-
-        case 2: result = valThreshold; break;
-
-        default: //do nothing
-        }
-
-        return result;
     }
 }

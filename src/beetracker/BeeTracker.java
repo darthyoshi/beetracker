@@ -409,7 +409,6 @@ public class BeeTracker extends PApplet {
 
                         if(time - timeStamp > 0.000001f) {
                             threshold = thresholds.get(timeStamp);
-                            bdu.setThresholdValues(threshold);
                             uic.setThresholdValue(threshold[uic.getThresholdType()]);
 
                             exitRadial = radials.get(timeStamp);
@@ -440,7 +439,7 @@ public class BeeTracker extends PApplet {
                     else {
                         //BlobDetection expects certain image size
                         insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
-                        bdu.filterImg(insetFrame, colors);
+                        bdu.filterImg(insetFrame, colors, threshold);
 
                         centroids = bdu.getCentroids(insetFrame, colors);
                     }
@@ -1062,8 +1061,6 @@ public class BeeTracker extends PApplet {
         }
 
         threshold[type] = (int)value;
-
-        bdu.setThresholdValue(type, (int)value);
     }
 
     /**
@@ -1105,7 +1102,7 @@ public class BeeTracker extends PApplet {
      * @param value
      */
     public void radioButtons(int value) {
-        uic.setThresholdValue(bdu.getThresholdValue(value));
+        uic.setThresholdValue(threshold[value]);
     }
 
     /**
@@ -1899,7 +1896,6 @@ public class BeeTracker extends PApplet {
         float settingsStamp = settingsTimeStamps.get(i);
 
         threshold = thresholds.get(settingsStamp);
-        bdu.setThresholdValues(threshold);
 
         uic.setThresholdValue(threshold[uic.getThresholdType()]);
 

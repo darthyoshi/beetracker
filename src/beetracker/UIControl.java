@@ -18,14 +18,12 @@ import controlP5.Toggle;
 import controlP5.Tooltip;
 
 import processing.core.PImage;
-import processing.data.FloatList;
 
 /**
  *
  * @author Kay Choi
  */
 public class UIControl {
-    private final ControlP5 cp5;
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;
     private final Toggle selectToggle;
@@ -34,11 +32,10 @@ public class UIControl {
     private final Slider thresholdSlider, seekBar;
     private final RadioButton radioButtons;
     private final Tooltip toolTip;
-    private final FloatList tickTimes;
 
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
-    private static final String[] recordTips = {"Begin tracking", "Pause tracking"};
+    private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
     private static final String[] playTips = {
         "Begin playback without tracking",
         "Begin playback with tracking",
@@ -46,16 +43,16 @@ public class UIControl {
     };
 
     private boolean isPlaying = false, isRecord = false;
-
+    
     /**
      * Class constructor.
      * @param parent the instantiating object
      * @param cp5 the ControlP5 object\
      */
     public UIControl(BeeTracker parent, ControlP5 cp5) {
-        this.cp5 = cp5;
-
         cp5.setFont(cp5.getFont().getFont(), 15);
+        cp5.disableShortcuts();
+        cp5.setAutoDraw(false);
 
         toolTip = cp5.getTooltip().setPositionOffset(0f, -15f).setAlpha(0);
         toolTip.setDelay(100)
@@ -155,6 +152,7 @@ public class UIControl {
             .showTickMarks(true)
             .setSliderMode(Slider.FLEXIBLE)
             .setBroadcast(true);
+        seekBar.setCaptionLabel("");
 
         Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
         pipToggle.setCaptionLabel("Inset Zoom")
@@ -166,8 +164,11 @@ public class UIControl {
 
         selectToggle = cp5.addToggle("selectToggle").setSize(32, 15);
         selectToggle.setMode(ControlP5Constants.SWITCH)
+            .setBroadcast(false)
+            .setState(true)
+            .setBroadcast(true)
             .setPosition(parent.width - 82, parent.height - 40)
-            .setCaptionLabel(selectMode[1])
+            .setCaptionLabel(selectMode[0])
             .setGroup(setupGroup)
             .getCaptionLabel()
             .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER)
@@ -218,37 +219,42 @@ public class UIControl {
             .setGroup(thresholdGroup)
             .setBroadcast(true)
             .getCaptionLabel()
-            .align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE)
+            .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
             .setPadding(0, 6);
 
         toolTip.register(thresholdSlider, "Adjust the selected threshold");
 
-        Button addSetting = cp5.addButton("addSetting")
-            .setCaptionLabel("+ setting")
-            .setSize(110, 18)
+        Button removeSetting = cp5.addButton("removeSetting")
+            .setCaptionLabel("Del")
+            .setSize(50, 18)
             .setPosition(
-                (parent.width - 220)*.5f,
+                seekBar.getPosition().x + seekBar.getWidth() - 50,
                 seekBar.getPosition().y + 17
-            )
-            .setGroup(setupGroup);
-        addSetting.getCaptionLabel()
-            .align(ControlP5.CENTER, ControlP5.CENTER);
+            ).setGroup(setupGroup);
+        removeSetting.getCaptionLabel()
+            .align(ControlP5Constants.CENTER, ControlP5Constants.CENTER);
 
-        toolTip.register(addSetting, "Add new threshold and selection settings to this point");
+        toolTip.register(removeSetting, "Remove the current threshold and selection settings");
 
-        cp5.addButton("removeSetting")
-            .setCaptionLabel("- setting")
-            .setSize(110, 18)
+        cp5.addButton("addSetting")
+            .setCaptionLabel("Add")
+            .setSize(50, 18)
             .setPosition(
-                addSetting.getPosition().x + 115,
-                addSetting.getPosition().y
-            ).setGroup(setupGroup)
+                removeSetting.getPosition().x - 55,
+                removeSetting.getPosition().y
+            )
+            .setGroup(setupGroup)
             .getCaptionLabel()
-            .align(ControlP5.CENTER, ControlP5.CENTER);
+            .align(ControlP5Constants.CENTER, ControlP5Constants.CENTER);
 
-        toolTip.register("removeSetting", "Remove the current threshold and selection settings");
+        toolTip.register("addSetting", "Add new threshold and selection settings to this point");
 
-        tickTimes = new FloatList();
+        cp5.addTextlabel("settingsLabel")
+            .setPosition(
+                removeSetting.getPosition().x - 130,
+                removeSetting.getPosition().y + 2
+            ).setGroup(setupGroup)
+            .setText("SETTINGS:");
     }
 
     /**
@@ -392,13 +398,14 @@ public class UIControl {
      */
     private void formatSeekLabel() {
         int tmp = (int)(seekBar.getValue()*100);
-        seekBar.setValueLabel(String.format("%02d:%02d.%02d", tmp/6000, (tmp/100)%60, tmp%100))
-            .getValueLabel()
+        seekBar.setValueLabel(String.format(
+                "%02d:%02d:%02d.%02d",
+                (tmp/6000)/60,
+                tmp/6000,
+                (tmp/100)%60,
+                tmp%100
+            )).getValueLabel()
             .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
-            .setPaddingX(0)
-            .setPaddingY(5);
-        seekBar.getCaptionLabel()
-            .align(ControlP5Constants.RIGHT, ControlP5Constants.BOTTOM_OUTSIDE)
             .setPaddingX(0)
             .setPaddingY(5);
     }
@@ -460,58 +467,16 @@ public class UIControl {
     }
 
     /**
-     * Adds a new tick mark to the specified seek bar position.
-     * @param time the seek bar position
+     * @return a the position of the seekbar in pixels
      */
-    public void addSeekTick(float time) {
-        controlP5.ControlFont font = new controlP5.ControlFont(cp5.getFont().getFont(), 10);
-
-        controlP5.Textlabel lbl = cp5.addTextlabel(String.format("%.6f", time));
-        lbl.setText("l")
-            .setPosition(
-                time/seekBar.getMax()*(seekBar.getWidth()-5) +
-                    seekBar.getPosition().x + 2,
-                seekBar.getPosition().y + 7
-            ).setGroup(playGroup)
-            .get()
-            .setFont(font)
-            .setPaddingX(0);
-
-        tickTimes.append(time);
+    public processing.core.PVector getSeekBarPosition() {
+    	return seekBar.getPosition();
     }
 
     /**
-     * Removes the next smallest tick mark from the specified seek bar position.
-     * @param time the seek bar position
+     * @return the width of the seekbar in pixels 
      */
-    public void removeSeekTick(float time) {
-        tickTimes.sort();
-
-        //binary search
-        int index = 0, start = 0, stop = tickTimes.size() - 1;
-        float tmp;
-        while(stop >= start) {
-            index = (stop+start)/2;
-            tmp = tickTimes.get(index);
-
-            if(tmp - time < -0.000001f) {
-                start = index + 1;
-            }
-
-            else if(tmp - time > 0.000001f) {
-                stop = index - 1;
-            }
-
-            else {
-                break;
-            }
-        }
-
-        //if no match found, next smallest tick time
-        if(start > stop && tickTimes.get(index) - time > 0.000001f) {
-            index--;
-        }
-
-        cp5.remove(String.format("%.6f", tickTimes.remove(index)));
+    public int getSeekBarWidth() {
+    	return seekBar.getWidth();
     }
 }

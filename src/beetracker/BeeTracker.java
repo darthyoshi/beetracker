@@ -65,11 +65,10 @@ public class BeeTracker extends PApplet {
 
     private Movie movie = null;
 
-    private BlobDetectionUtils bdu;
-
-    private TrackingUtils tu;
-
+    private controlP5.ControlP5 cp5;
     private UIControl uic;
+    private BlobDetectionUtils bdu;
+    private TrackingUtils tu;
 
     private PrintStream log = null;
 
@@ -86,7 +85,7 @@ public class BeeTracker extends PApplet {
 
     private Calendar videoDate = null;
 
-    private FloatList settingsTimeStamps;
+    private FloatList settingsTimeStamps = null;
     private HashMap<Float, float[]> insets, radials;
     private HashMap<Float, int[]> thresholds;
     private int settingIndex = 0;
@@ -105,9 +104,9 @@ public class BeeTracker extends PApplet {
             File.separatorChar + "output");
         outputDir.mkdir();
 
-        controlP5.ControlP5 cp5 = new controlP5.ControlP5(this);
+        cp5 = new controlP5.ControlP5(this);
 
-        textFont(cp5.getFont().getFont(), 24);
+        textFont(cp5.getFont().getFont());
 
         if(frame != null) {
             frame.setIconImage((java.awt.Image)loadImage("data/img/icon.png").getNative());
@@ -281,9 +280,9 @@ public class BeeTracker extends PApplet {
                             e4.printStackTrace(log);
                         } finally {
                             thresholds.put(timeStamp, threshold);
-                        }
 
-                        uic.addSeekTick(timeStamp);
+                            uic.setThresholdValue(threshold[uic.getThresholdType()]);
+                        }
                     }
                 } catch(RuntimeException e5) {
                     settingsErrors[2] = true;
@@ -325,8 +324,6 @@ public class BeeTracker extends PApplet {
             insetBox[0] = insetBox[1] = 0f;
             insetBox[2] = insetBox[3] = 1f;
             insets.put(0f, insetBox);
-
-            uic.addSeekTick(0f);
         }
 
         log.append("done\n").flush();
@@ -340,6 +337,7 @@ public class BeeTracker extends PApplet {
         background(0x222222);
 
         textAlign(CENTER, CENTER);
+        textSize(24);
 
         fill(0xff444444);
         rectMode(CORNERS);
@@ -732,10 +730,27 @@ public class BeeTracker extends PApplet {
                         )
                     );
                 }
+
+                cp5.draw();
+
+                //mark settings time stamps
+                textAlign(LEFT, TOP);
+                textSize(10);
+                fill(0xffffffff);
+                for(float stamp: settingsTimeStamps) {
+                    text(
+                        "l",
+                        stamp/movie.duration()*(uic.getSeekBarWidth()-5) +
+                            (uic.getSeekBarPosition().x+2),
+                        uic.getSeekBarPosition().y + 5
+                    );
+                }
             }
 
             else {
                 text("Loading...", width*.5f, height*.5f);
+
+                cp5.draw();
 
                 if(movie.height > 0) {
                     uic.setSeekRange(movie.duration());
@@ -761,9 +776,12 @@ public class BeeTracker extends PApplet {
 
         else {
             imageMode(CENTER);
+
             if(titleImg.width > 0) {
                 image(titleImg, .5f*width, .5f*height-50);
             }
+
+            cp5.draw();
         }
 
         //end critical section
@@ -1183,6 +1201,7 @@ public class BeeTracker extends PApplet {
         timeStampIndex = -1;
 
         settingIndex = 0;
+        settingsTimeStamps = null;
 
         //end critical section
         sem.release();
@@ -1810,12 +1829,6 @@ public class BeeTracker extends PApplet {
         if(debug) {
             println("done");
         }
-
-        println(allFrameTimes.size()+" "+allFramePoints.size());
-        for(float stamp : allFrameTimes) {
-        	println(stamp+" "+(allFramePoints.get(stamp)==null));
-        }
-
     }
 
     /**
@@ -1847,8 +1860,6 @@ public class BeeTracker extends PApplet {
         settingsTimeStamps.sort();
 
         updateSettings(time);
-
-        uic.addSeekTick(time);
     }
 
     /**
@@ -1912,8 +1923,6 @@ public class BeeTracker extends PApplet {
                 timeStamp = settingsTimeStamps.get(index);
                 float tmp = settingsTimeStamps.remove(index + 1);
 
-                uic.removeSeekTick(tmp);
-
                 radials.replace(timeStamp, radials.remove(tmp));
                 insets.replace(timeStamp, insets.remove(tmp));
                 thresholds.replace(timeStamp, thresholds.remove(tmp));
@@ -1922,8 +1931,6 @@ public class BeeTracker extends PApplet {
             //remove current settings
             else {
                 timeStamp = settingsTimeStamps.remove(index);
-
-                uic.removeSeekTick(timeStamp);
 
                 radials.remove(timeStamp);
                 insets.remove(timeStamp);

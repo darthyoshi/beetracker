@@ -22,6 +22,7 @@ import controlP5.ControlEvent;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.data.FloatList;
+import processing.data.IntDict;
 import processing.data.JSONObject;
 import processing.video.Movie;
 
@@ -56,7 +57,7 @@ public class BeeTracker extends PApplet {
     private boolean pip = false, selectExit = true;
     private int listVal = -1;
 
-    private int[] crossingCounts;
+    private IntDict crossingCounts;
 
     private File currentFile = null;
 
@@ -459,15 +460,16 @@ public class BeeTracker extends PApplet {
                                 );
                             }
 
-                            int[] counts = tu.trackCentroids(
+                            IntDict counts = tu.trackCentroids(
                                 centroids,
                                 frameDims, frameOffset,
                                 exitRadial,
                                 movieDims, movieOffset,
                                 time
                             );
-                            crossingCounts[0] += counts[0];
-                            crossingCounts[1] += counts[1];
+
+                            crossingCounts.add("departures", counts.get("departures"));
+                            crossingCounts.add("arrivals", counts.get("arrivals"));
                         }
                     }
 
@@ -1768,8 +1770,7 @@ public class BeeTracker extends PApplet {
             movie.play();
             isPlaying = false;
 
-            crossingCounts = new int[2];
-            crossingCounts[0] = crossingCounts[1] = 0;
+            crossingCounts = new IntDict(2);
 
             log.append("reading frame annotations... ").flush();
 

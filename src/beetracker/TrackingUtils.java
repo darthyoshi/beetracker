@@ -1,8 +1,8 @@
 /**
- * @file DataMinerUtils.java
+ * @file TrackingUtils.java
  * @author Kay Choi, 909926828
  * @date 14 Feb 15
- * @description Handles all BeeTracker clustering-related operations.
+ * @description Handles all BeeTracker tracking-related operations.
  */
 
 package beetracker;
@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import processing.core.PApplet;
+import processing.data.IntDict;
 import processing.data.IntList;
 
 /**
@@ -55,7 +56,7 @@ public class TrackingUtils {
      * @return an array containing the total number of departures and arrivals
      *   for all tracked colors
      */
-    public int[] trackCentroids(
+    public IntDict trackCentroids(
         HashMap<Integer, List<float[]>> newPointMap,
         int[] frameDims,
         int[] frameOffset,
@@ -82,8 +83,7 @@ public class TrackingUtils {
         exitAxes[0] = exitRadial[2]*movieDims[0];
         exitAxes[1] = exitRadial[3]*movieDims[1];
 
-        int[] counts = new int[2];
-        counts[0] = counts[1] = 0;
+        IntDict counts = new IntDict(2);
 
         for(int color : colors) {
             oldPoints = allPoints.get(color);
@@ -214,14 +214,14 @@ public class TrackingUtils {
                 if(isOldPointInExit) {
                     if(!isNewPointInExit) {
                         departures.add(time);
-                        counts[0]++;
+                        counts.increment("departures");
                     }
                 }
 
                 else {
                     if(isNewPointInExit) {
                         arrivals.add(time);
-                        counts[1]++;
+                        counts.increment("arrivals");
                     }
                 }
             }

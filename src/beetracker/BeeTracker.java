@@ -81,6 +81,7 @@ public class BeeTracker extends PApplet {
     private HashMap<Integer, List<float[]>> centroids;
     private FloatList allFrameTimes = null;
     private int timeStampIndex = -1;
+    private boolean replayCheckForTimeOut;
 
     private String videoName = null;
 
@@ -429,9 +430,26 @@ public class BeeTracker extends PApplet {
                                         "s, actual time " + time + 's');
                                 }
 
+                                replayCheckForTimeOut = true;
+
                                 centroids = allFramePoints.get(timeStamp);
 
                                 timeStampIndex++;
+                            }
+
+                            //clear point data after 1s
+                            else if(
+                                replayCheckForTimeOut &&
+                                timeStampIndex > 0 &&
+                                time - allFrameTimes.get(timeStampIndex-1) > 1f
+                            ) {
+                                replayCheckForTimeOut = false;
+
+                                centroids = new HashMap<>(colors.size());
+
+                                for(int color : colors) {
+                                    centroids.put(color, new ArrayList<float[]>(1));
+                                }
                             }
                         }
                     }

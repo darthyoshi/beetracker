@@ -30,7 +30,7 @@ public class VideoBrowser {
         final java.io.File currentFile,
         final java.io.PrintStream log
     ) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 java.io.File selectedFile = null;
@@ -112,6 +112,8 @@ public class VideoBrowser {
                 parent.loadVideo(selectedFile);
             }
         });
+
+        thread.start();
     }
 
     /**

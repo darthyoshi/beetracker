@@ -188,21 +188,21 @@ public class UIControl {
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(hue, "Select hue threshold");
+        toolTip.register(hue, "Set hue threshold");
 
         Toggle sat = cp5.addToggle("Sat").setBroadcast(false);
         sat.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(sat, "Select saturation threshold");
+        toolTip.register(sat, "Set saturation threshold");
 
         Toggle val = cp5.addToggle("Val").setBroadcast(false);
         val.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(val, "Select value threshold");
+        toolTip.register(val, "Set value threshold");
 
         radioButtons = cp5.addRadioButton("radioButtons")
             .setPosition(355, 27)
@@ -366,7 +366,6 @@ public class UIControl {
      */
     public void setOpenButtonVisibility(boolean visible) {
         openButton.setVisible(visible);
-        openButton.setBroadcast(visible);
     }
 
     /**

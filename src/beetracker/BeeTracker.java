@@ -38,12 +38,6 @@ public class BeeTracker extends PApplet {
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
     private static final String[] thresholdKeys = {"hue", "sat", "val"};
-    private static final String[] modes = {
-        "Config Mode",
-        "Replay Mode",
-        "Annotation Mode",
-        "Playback Mode"
-    };
 
     private processing.data.IntList colors;
     private int[] movieDims = null, movieOffset, frameDims, frameOffset;
@@ -54,7 +48,7 @@ public class BeeTracker extends PApplet {
 
     private boolean isPlaying = false;
     private boolean record = false, replay = false;
-    private boolean pip = false, selectExit = true;
+    private boolean pip = false, selectExit = false;
     private int listVal = -1;
 
     private IntDict crossingCounts;
@@ -355,14 +349,6 @@ public class BeeTracker extends PApplet {
         }
 
         if(movie != null) {
-            rectMode(CENTER);
-            noStroke();
-            fill(0xff02344d);
-            rect(145, 25, 190, 40);
-            fill(0xffffffff);
-
-            text(modes[(isPlaying ? (replay ? 1 : (record ? 2 : 3)) : 0)], 145, 25);
-
             float time = movie.time();
 
             if(movie.available()) {
@@ -1037,6 +1023,7 @@ public class BeeTracker extends PApplet {
                     println("done");
                 }
 
+                uic.setStatusLabel((isPlaying ? (replay ? 1 : (record ? 2 : 3)) : 0));
                 uic.setSetupGroupVisibility(!isPlaying);
                 uic.setPlayState(isPlaying);
                 uic.setThresholdVisibility(!isPlaying);
@@ -1190,6 +1177,7 @@ public class BeeTracker extends PApplet {
      */
     public void recordButton() {
         record = !record;
+        uic.setStatusLabel((isPlaying ? (record ? 2 : 3) : 0));
         uic.setRecordState(record);
     }
 

@@ -32,6 +32,7 @@ public class UIControl {
     private final Slider thresholdSlider, seekBar;
     private final RadioButton radioButtons;
     private final Tooltip toolTip;
+    private final Button statusLabel;
 
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
@@ -40,6 +41,12 @@ public class UIControl {
         "Begin playback without tracking",
         "Begin playback with tracking",
         "Pause playback"
+    };
+    private static final String[] modes = {
+        "Config Mode",
+        "Replay Mode",
+        "Annotation Mode",
+        "Playback Mode"
     };
 
     private boolean isPlaying = false, isRecord = false;
@@ -255,6 +262,17 @@ public class UIControl {
                 removeSetting.getPosition().y + 2
             ).setGroup(setupGroup)
             .setText("SETTINGS:");
+
+        statusLabel = cp5.addButton("status")
+           .lock()
+           .setSize(190, 40)
+           .setPosition(50, 5)
+           .setGroup(playGroup);
+        statusLabel.getCaptionLabel()
+           .setFont(new controlP5.ControlFont(cp5.getFont().getFont(), 24))
+           .toUpperCase(false)
+           .alignX(ControlP5Constants.CENTER)
+           .set(modes[0]);
     }
 
     /**
@@ -470,13 +488,25 @@ public class UIControl {
      * @return a the position of the seekbar in pixels
      */
     public processing.core.PVector getSeekBarPosition() {
-    	return seekBar.getPosition();
+       return seekBar.getPosition();
     }
 
     /**
      * @return the width of the seekbar in pixels 
      */
     public int getSeekBarWidth() {
-    	return seekBar.getWidth();
+       return seekBar.getWidth();
+    }
+
+    /**
+     * Changes the status box text.
+     * @param type the mode flag
+     *   0 - config
+     *   1 - replay
+     *   2 - record
+     *   3 - playback
+     */
+    public void setStatusLabel(int type) {
+       statusLabel.setCaptionLabel(modes[type]);
     }
 }

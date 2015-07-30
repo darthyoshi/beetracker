@@ -67,7 +67,7 @@ public class BeeTracker extends PApplet {
 
     private PrintStream log = null;
 
-    private final PImage titleImg = requestImage("data/img/title.png");
+    private final PImage titleImg = loadImage("data/img/title.png");
 
     private static final boolean debug = true;
 
@@ -180,7 +180,7 @@ public class BeeTracker extends PApplet {
                 JSONObject jsonSetting, timeSetting, setting;
                 Iterator<?> jsonIter, settingIter;
 
-                log.append("reading from file\n").flush();
+                log.append("reading from file - ").flush();
 
                 //initialize color list
                 try {
@@ -291,7 +291,7 @@ public class BeeTracker extends PApplet {
         }
 
         else {
-            log.append("file not found\n").flush();
+            log.append("file not found - ").flush();
         }
 
         if(settingsErrors[0] || settingsErrors[1]) {
@@ -794,10 +794,7 @@ public class BeeTracker extends PApplet {
 
         else {
             imageMode(CENTER);
-
-            if(titleImg.width > 0) {
-                image(titleImg, .5f*width, .5f*height-50);
-            }
+            image(titleImg, .5f*width, .5f*height-50);
 
             cp5.draw();
         }
@@ -1297,7 +1294,7 @@ public class BeeTracker extends PApplet {
 
         String lbl;
         for(i = 0; i < colors.size(); i++) {
-        	lbl = String.format("%06x", colors.get(i));
+            lbl = String.format("%06x", colors.get(i));
             setting.setString(Integer.toString(i), lbl);
 
             uic.removeListItem(lbl);
@@ -1334,6 +1331,11 @@ public class BeeTracker extends PApplet {
         settings.setJSONObject("time", sets);
 
         saveJSONObject(settings, filePath);
+
+        log.append("settings saved to ")
+	    	.append(filePath)
+	    	.append('\n')
+	    	.flush();
     }
 
     /**

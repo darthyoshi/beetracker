@@ -7,7 +7,6 @@
 
 package beetracker;
 
-import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.util.Calendar;
 import java.util.Date;
@@ -31,7 +30,7 @@ public class VideoBrowser {
         final java.io.File currentFile,
         final java.io.PrintStream log
     ) {
-        EventQueue.invokeLater(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 java.io.File selectedFile = null;
@@ -113,6 +112,8 @@ public class VideoBrowser {
                 parent.loadVideo(selectedFile);
             }
         });
+
+        thread.start();
     }
 
     /**
@@ -120,7 +121,7 @@ public class VideoBrowser {
      * @param parent the invoking BeeTracker
      */
     private static void setDateTime(final BeeTracker parent) {
-        EventQueue.invokeLater(new Runnable() {
+        java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 Calendar calendar = Calendar.getInstance();

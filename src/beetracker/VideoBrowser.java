@@ -7,6 +7,7 @@
 
 package beetracker;
 
+import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.util.Calendar;
 import java.util.Date;
@@ -30,7 +31,7 @@ public class VideoBrowser {
         final java.io.File currentFile,
         final java.io.PrintStream log
     ) {
-        Thread thread = new Thread(new Runnable() {
+        EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 java.io.File selectedFile = null;
@@ -106,50 +107,52 @@ public class VideoBrowser {
                 if(selectedFile != null) {
                     log.append("setting time stamp\n").flush();
 
-                    parent.setTime(getDateTime(parent));
+                    setDateTime(parent);
                 }
 
                 parent.loadVideo(selectedFile);
             }
         });
-
-        thread.start();
     }
 
     /**
      * Prompts the user to set a time stamp.
      * @param parent the invoking BeeTracker
-     * @return a Calendar object representing the selected time stamp
      */
-    private static Calendar getDateTime(BeeTracker parent) {
-        Calendar calendar = Calendar.getInstance();
-        Date now = calendar.getTime();
-        calendar.add(Calendar.YEAR, -100);
-        Date start = calendar.getTime();
-        calendar.add(Calendar.YEAR, 200);
-        Date stop = calendar.getTime();
-
-        javax.swing.JSpinner dateTimeSpinner = new javax.swing.JSpinner(
-            new javax.swing.SpinnerDateModel(
-                now,
-                start,
-                stop,
-                Calendar.DATE
-            )
-        );
-
-        javax.swing.JPanel panel = new javax.swing.JPanel();
-        panel.add(dateTimeSpinner);
-
-        javax.swing.JOptionPane.showMessageDialog(
-            parent,
-            panel,
-            "Set the initial video time stamp",
-            javax.swing.JOptionPane.PLAIN_MESSAGE
-        );
-
-        calendar.setTime((Date)dateTimeSpinner.getValue());
-
-        return calendar;
+    private static void setDateTime(final BeeTracker parent) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                Calendar calendar = Calendar.getInstance();
+                Date now = calendar.getTime();
+                calendar.add(Calendar.YEAR, -100);
+                Date start = calendar.getTime();
+                calendar.add(Calendar.YEAR, 200);
+                Date stop = calendar.getTime();
+        
+                javax.swing.JSpinner dateTimeSpinner = new javax.swing.JSpinner(
+                    new javax.swing.SpinnerDateModel(
+                        now,
+                        start,
+                        stop,
+                        Calendar.DATE
+                    )
+                );
+        
+                javax.swing.JPanel panel = new javax.swing.JPanel();
+                panel.add(dateTimeSpinner);
+        
+                javax.swing.JOptionPane.showMessageDialog(
+                    parent,
+                    panel,
+                    "Set the video time stamp",
+                    javax.swing.JOptionPane.PLAIN_MESSAGE
+                );
+        
+                calendar.setTime((Date)dateTimeSpinner.getValue());
+        
+                parent.setTime(calendar);
+            }
+        });
     }
 }

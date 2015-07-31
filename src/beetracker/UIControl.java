@@ -160,6 +160,7 @@ public class UIControl {
             .setSliderMode(Slider.FLEXIBLE)
             .setBroadcast(true);
         seekBar.setCaptionLabel("");
+        formatSeekLabel();
 
         Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
         pipToggle.setCaptionLabel("Inset Zoom")
@@ -366,6 +367,7 @@ public class UIControl {
      */
     public void setOpenButtonVisibility(boolean visible) {
         openButton.setVisible(visible);
+        openButton.setBroadcast(visible);
     }
 
     /**

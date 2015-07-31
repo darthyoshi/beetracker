@@ -1222,10 +1222,17 @@ public class BeeTracker extends PApplet {
         sem.release();
 
         record = false;
+        uic.setStatusLabel(0);
         uic.setRecordState(false);
 
         isPlaying = false;
         uic.setPlayState(false);
+
+        if(pip) {
+            pipToggle();
+        }
+
+        crossingCounts.clear();
 
         uic.setSetupGroupVisibility(false);
         uic.setOpenButtonVisibility(true);
@@ -1798,6 +1805,7 @@ public class BeeTracker extends PApplet {
             log.append("reading frame annotations... ").flush();
 
             replay = readFramePointsFromJSON();
+            replayCheckForTimeOut = false;
             uic.setRecordVisibility(!replay);
 
             log.append(replay ? "success" : "failure").append('\n').flush();
@@ -1835,6 +1843,8 @@ public class BeeTracker extends PApplet {
         }
 
         seek(0f);
+
+        replayCheckForTimeOut = false;
 
         uic.setSetupGroupVisibility(!isPlaying);
         uic.setPlayState(isPlaying);

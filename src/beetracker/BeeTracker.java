@@ -17,8 +17,6 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import controlP5.ControlEvent;
-
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.data.FloatList;
@@ -136,6 +134,8 @@ public class BeeTracker extends PApplet {
         //create log file
         try {
             log = new PrintStream(new File("Console.log"), "UTF-8");
+
+            System.setErr(log);
         } catch (java.io.FileNotFoundException |
             java.io.UnsupportedEncodingException ex)
         {
@@ -405,37 +405,37 @@ public class BeeTracker extends PApplet {
                     }
 
                     if(replay) {
-                        if(timeStampIndex >= 0 &&
+                    	if(timeStampIndex >= 0 &&
                             timeStampIndex < allFrameTimes.size())
                         {
                             timeStamp = allFrameTimes.get(timeStampIndex);
 
-                            if(time - timeStamp > 0.000001f) {
-                                if(debug) {
-                                    println("frame info for " + timeStamp +
-                                        "s, actual time " + time + 's');
-                                }
+                            if(debug) {
+                                println("frame time: " + timeStamp +
+                                    "s, actual time " + time + 's');
+                            }
 
+                            if(time - timeStamp > 0.000001f) {
                                 replayCheckForTimeOut = true;
 
                                 centroids = allFramePoints.get(timeStamp);
 
                                 timeStampIndex++;
                             }
+                        }
 
-                            //clear point data after 1s
-                            else if(
-                                replayCheckForTimeOut &&
-                                timeStampIndex > 0 &&
-                                time - allFrameTimes.get(timeStampIndex-1) > 1f
-                            ) {
-                                replayCheckForTimeOut = false;
+                        //clear point data after 1s
+                        if(
+                            replayCheckForTimeOut &&
+                            timeStampIndex > 0 &&
+                            time - allFrameTimes.get(timeStampIndex-1) > 1f
+                        ) {
+                            replayCheckForTimeOut = false;
 
-                                centroids = new HashMap<>(colors.size());
+                            centroids = new HashMap<>(colors.size());
 
-                                for(int color : colors) {
-                                    centroids.put(color, new ArrayList<float[]>(1));
-                                }
+                            for(int color : colors) {
+                                centroids.put(color, new ArrayList<float[]>(1));
                             }
                         }
                     }
@@ -1039,7 +1039,7 @@ public class BeeTracker extends PApplet {
      * ControlP5 callback method. Used for control group events.
      * @param event the originating event
      */
-    public void controlEvent(ControlEvent event) {
+    public void controlEvent(controlP5.ControlEvent event) {
         if(debug) {
             println("ControlEvent: " + event.getName());
         }
@@ -1818,6 +1818,10 @@ public class BeeTracker extends PApplet {
      */
     void setTime(Calendar date) {
         videoDate = date;
+
+        if(debug) {
+        	println("video time stamp: " + date.getTime());
+        }
     }
 
     /**

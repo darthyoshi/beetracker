@@ -194,8 +194,6 @@ public class BlobDetectionUtils {
 
         if(debug) {
             blobColors = new IntList();
-
-            PApplet.println("blobs: " + bd.getBlobNb());
         }
 
         for(int tmpColor : colors) {

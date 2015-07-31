@@ -37,3 +37,8 @@ point you can either rewind the video or close it. If any frame annotations
 were saved, then rewinding the video will automatically switch the program to 
 replay mode, while closing the video will give you the choice of whether or 
 not to save the annotations to file.
+
+3. Troubleshooting
+If at any point BeeTracker unexpectedly closes or otherwise fails to behave as
+expected, please send a copy of Console.log (located in the main program 
+directory) to kchoi@mail.sfsu.edu.

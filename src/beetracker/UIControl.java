@@ -30,6 +30,7 @@ public class UIControl {
     private final Button playButton, openButton, recordButton;
     private final PImage[] playIcons, recordIcons;
     private final Slider thresholdSlider, seekBar;
+    private final Button eventLineButton;
     private final RadioButton radioButtons;
     private final Tooltip toolTip;
     private final Button statusLabel;
@@ -162,6 +163,14 @@ public class UIControl {
         seekBar.setCaptionLabel("");
         formatSeekLabel();
 
+        eventLineButton = cp5.addButton("eventsButton")
+            .setSize(150, 30)
+            .setPosition(parent.width - 200, 10)
+            .setVisible(false)
+            .lock()
+            .setCaptionLabel("Show Event Timeline");
+        eventLineButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
+
         Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
         pipToggle.setCaptionLabel("Inset Zoom")
             .setGroup(playGroup)
@@ -189,21 +198,21 @@ public class UIControl {
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(hue, "Set hue threshold");
+        toolTip.register(hue, "Set hue tolerance threshold");
 
         Toggle sat = cp5.addToggle("Sat").setBroadcast(false);
         sat.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(sat, "Set saturation threshold");
+        toolTip.register(sat, "Set minimum saturation threshold");
 
         Toggle val = cp5.addToggle("Val").setBroadcast(false);
         val.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
 
-        toolTip.register(val, "Set value threshold");
+        toolTip.register(val, "Set minimum value threshold");
 
         radioButtons = cp5.addRadioButton("radioButtons")
             .setPosition(355, 27)
@@ -337,8 +346,21 @@ public class UIControl {
      */
     public void setPlayState(boolean state) {
         isPlaying = state;
-        playButton.setImage(playIcons[(state ? 1 : 0)]);
-        toolTip.register(playButton, playTips[(state ? 2 : (isRecord ? 1 : 0))]);
+        
+        int i, j;
+        if(state) {
+            i = 1;
+            j = 2;
+        }
+        else {
+            i = 0;
+            j = isRecord || !recordButton.isVisible() ? 1 : 0;
+        }
+        
+        playButton.setImage(playIcons[i]);
+        toolTip.register(playButton, playTips[j]);
+
+        eventLineButton.setVisible(state).setLock(!state);
     }
 
     /**
@@ -408,7 +430,6 @@ public class UIControl {
      */
     public void setSeekTime(float time) {
         seekBar.changeValue(time);
-
         formatSeekLabel();
     }
 
@@ -486,7 +507,7 @@ public class UIControl {
     }
 
     /**
-     * @return a the position of the seekbar in pixels
+     * @return the position of the seekbar in pixels
      */
     public processing.core.PVector getSeekBarPosition() {
        return seekBar.getPosition();

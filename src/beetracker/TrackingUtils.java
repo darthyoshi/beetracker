@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import processing.core.PApplet;
+import processing.data.FloatList;
 import processing.data.IntDict;
 import processing.data.IntList;
 
@@ -23,7 +24,7 @@ import processing.data.IntList;
 public class TrackingUtils {
     private final boolean debug;
     private HashMap<Integer, List<float[]>> allPoints;
-    private HashMap<Integer, List<Float>> departureTimes, arrivalTimes;
+    private HashMap<Integer, FloatList> departureTimes, arrivalTimes;
     private HashMap<Integer, IntList> allTimeOuts;
     private IntList colors;
     private final static float distThreshold = 0.25f;
@@ -53,10 +54,8 @@ public class TrackingUtils {
      * @param movieDims the dimensions of the video
      * @param movieOffset the offset of the video
      * @param time timestamp of the current frame
-     * @return an array containing the total number of departures and arrivals
-     *   for all tracked colors
      */
-    public IntDict trackCentroids(
+    public void trackCentroids(
         HashMap<Integer, List<float[]>> newPointMap,
         int[] frameDims,
         int[] frameOffset,
@@ -66,7 +65,7 @@ public class TrackingUtils {
         float time
     ) {
         List<float[]> newPoints, oldPoints;
-        List<Float> departures, arrivals;
+        FloatList departures, arrivals;
         IntList checkedIndicesOld, checkedIndicesNew, timeOuts;
         float oldX, oldY, newX, newY, minDist;
         float[] point;
@@ -83,8 +82,6 @@ public class TrackingUtils {
         exitAxes[0] = exitRadial[2]*movieDims[0];
         exitAxes[1] = exitRadial[3]*movieDims[1];
 
-        IntDict counts = new IntDict(2);
-
         for(int color : colors) {
             oldPoints = allPoints.get(color);
             newPoints = new ArrayList<>(newPointMap.get(color));
@@ -96,7 +93,7 @@ public class TrackingUtils {
             k = 0;
 
             if(debug) {
-                PApplet.println(String.format(
+                BeeTracker.println(String.format(
                     "---checking blobs colored %06x---%s %d%s %d",
                     color,
                     "\npoints in last frame:",
@@ -168,7 +165,7 @@ public class TrackingUtils {
                         k++;
 
                         if(debug) {
-                            PApplet.println("points (" + minI + ", " + minJ + ") paired");
+                            BeeTracker.println("points (" + minI + ", " + minJ + ") paired");
                         }
                     }
 
@@ -181,7 +178,7 @@ public class TrackingUtils {
             }
 
             if(debug) {
-                PApplet.println(k + " point(s) paired");
+                BeeTracker.println(k + " point(s) paired");
             }
 
             departures = departureTimes.get(color);
@@ -203,7 +200,7 @@ public class TrackingUtils {
                 isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
 
                 if(debug) {
-                    PApplet.println(
+                    BeeTracker.println(
                         "pair " + i + ":\nold point " + validPairs[i][0] +
                         " is inside exit: " + (isOldPointInExit ? "true" : "false") +
                         "\nnew point " + validPairs[i][1] +" is inside exit: " +
@@ -213,16 +210,12 @@ public class TrackingUtils {
 
                 if(isOldPointInExit) {
                     if(!isNewPointInExit) {
-                        departures.add(time);
-                        counts.increment("departures");
+                        departures.append(time);
                     }
                 }
 
-                else {
-                    if(isNewPointInExit) {
-                        arrivals.add(time);
-                        counts.increment("arrivals");
-                    }
+                else if(isNewPointInExit) {
+                    arrivals.append(time);
                 }
             }
 
@@ -245,21 +238,21 @@ public class TrackingUtils {
             }
 
             if(debug) {
-                PApplet.println(j + "\n" + timeOuts +"\nold points:");
+                BeeTracker.println(j + "\n" + timeOuts +"\nold points:");
                 for(float[] oldPoint : oldPoints) {
-                    PApplet.print("("+oldPoint[0]+" "+oldPoint[1]+")");
+                    BeeTracker.print("("+oldPoint[0]+" "+oldPoint[1]+")");
                 }
-                PApplet.println("\ntotal: "+oldPoints.size()+"\nnew points:");
+                BeeTracker.println("\ntotal: "+oldPoints.size()+"\nnew points:");
                 for(float[] newPoint : newPoints) {
                     if(newPoint != null) {
-                        PApplet.print("("+newPoint[0]+" "+newPoint[1]+")");
+                        BeeTracker.print("("+newPoint[0]+" "+newPoint[1]+")");
                     }
 
                     else {
-                        PApplet.print("(point was matched to an old point)");
+                        BeeTracker.print("(point was matched to an old point)");
                     }
                 }
-                PApplet.println("\ntotal: "+newPoints.size());
+                BeeTracker.println("\ntotal: "+newPoints.size());
             }
 
             //update timeout values for old missing points
@@ -273,8 +266,6 @@ public class TrackingUtils {
                 }
             }
         }
-
-        return counts;
     }
 
     /**
@@ -288,8 +279,8 @@ public class TrackingUtils {
 
                 allPoints.put(color, new ArrayList<float[]>());
 
-                departureTimes.put(color, new LinkedList<Float>());
-                arrivalTimes.put(color, new LinkedList<Float>());
+                departureTimes.put(color, new FloatList());
+                arrivalTimes.put(color, new FloatList());
 
                 allTimeOuts.put(color, new IntList());
             }
@@ -343,5 +334,21 @@ public class TrackingUtils {
         arrivalTimes = new HashMap<>();
         colors = new IntList();
         allTimeOuts = new HashMap<>();
+    }
+
+    /**
+     * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
+     *   timestamps
+     */
+    public HashMap<Integer, FloatList> getDepartureTimes() {
+        return departureTimes;
+    }
+
+    /**
+     * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
+     *   timestamps
+     */
+    public HashMap<Integer, FloatList> getArrivalTimes() {
+        return arrivalTimes;
     }
 }

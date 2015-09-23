@@ -30,22 +30,16 @@ public class BlobDetectionUtils {
     private final BlobDetection bd;
     private IntList blobColors;
 
-    private final boolean debug;
-
     /**
      * Class constructor.
      * @param parent the instantiating object
      * @param width the width of the images to process
      * @param height the height of the images to process
-     * @param debug whether debug mode is enabled
      */
-    public BlobDetectionUtils(BeeTracker parent, int width, int height, boolean debug) {
+    public BlobDetectionUtils(BeeTracker parent, int width, int height) {
         this.parent = parent;
-        this.debug = debug;
 
-        if(debug) {
-            blobColors = new IntList();
-        }
+        blobColors = new IntList();
 
         bd = new BlobDetection(width, height);
         bd.setPosDiscrimination(true);
@@ -54,8 +48,9 @@ public class BlobDetectionUtils {
 
     /**
      * Preprocesses a PImage for blob detection. Any pixels meeting the defined
-     *   hue and saturation thresholds have the saturation and brightness values
-     *   maxed out, while all other pixels are set to 0x000000.
+     *   thresholds will have the hue values set to the nominal hue value and
+     *   the saturation and brightness values maxed out, while all other pixels
+     *   are set to 0.
      * @param img the PImage to preprocess
      * @param colors a list of the integer RGB values to scan for
      * @param threshold an array containing the HSV thresholds
@@ -97,13 +92,13 @@ public class BlobDetectionUtils {
             img.pixels[i] = 0;
         }
 
-        //remove noise
-        erodeImage(img.pixels, colors);
-        dilateImage(img.pixels);
-
         //fill blob holes
         dilateImage(img.pixels);
         erodeImage(img.pixels, colors);
+
+        //remove noise
+        erodeImage(img.pixels, colors);
+        dilateImage(img.pixels);
 
         img.updatePixels();
     }
@@ -159,16 +154,6 @@ public class BlobDetectionUtils {
                     b.w*frameDims[0],
                     b.h*frameDims[1]
                 );
-
-                //line to exit center
-                buf.strokeWeight(2);
-                buf.stroke(255, 0, 255);
-                buf.line(
-                    b.x*frameDims[0] + frameOffset[0] - bufOffset[0],
-                    b.y*frameDims[1] + frameOffset[1] - bufOffset[1],
-                    exitXY[0] - bufOffset[0],
-                    exitXY[1] - bufOffset[1]
-                );
             }
         }
     }
@@ -192,9 +177,7 @@ public class BlobDetectionUtils {
         frame.loadPixels();
         bd.computeBlobs(frame.pixels);
 
-        if(debug) {
-            blobColors = new IntList();
-        }
+        blobColors = new IntList();
 
         for(int tmpColor : colors) {
             result.put(tmpColor, new ArrayList<float[]>());
@@ -222,9 +205,7 @@ public class BlobDetectionUtils {
                 if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
                     result.get(color).add(point);
 
-                    if(debug) {
-                        blobColors.append(parent.color(hue, 255, 255));
-                    }
+                    blobColors.append(parent.color(hue, 255, 255));
 
                     added = true;
                     break;
@@ -250,9 +231,7 @@ public class BlobDetectionUtils {
                             {
                                 result.get(color).add(point);
 
-                                if(debug) {
-                                    blobColors.append(parent.color(hue, 255, 255));
-                                }
+                                blobColors.append(parent.color(hue, 255, 255));
 
                                 added = true;
                                 break loop;
@@ -260,10 +239,6 @@ public class BlobDetectionUtils {
                         }
                     }
                 }
-            }
-
-            if(debug && added) {
-                PApplet.println(point[0] + ", " + point[1]);
             }
         }
 

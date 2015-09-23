@@ -146,7 +146,7 @@ public class BeeTracker extends PApplet {
 
         uic = new UIControl(this, cp5);
 
-        bdu = new BlobDetectionUtils(this, width/2, height/2, debug);
+        bdu = new BlobDetectionUtils(this, width, height);
 
         tu = new TrackingUtils(debug);
 

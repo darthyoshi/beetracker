@@ -1217,10 +1217,6 @@ public class BeeTracker extends PApplet {
         isPlaying = false;
         uic.setPlayState(false);
 
-        if(pip) {
-            pipToggle();
-        }
-
         uic.setSetupGroupVisibility(false);
         uic.setOpenButtonVisibility(true);
         uic.setPlayVisibility(false);
@@ -1760,6 +1756,10 @@ public class BeeTracker extends PApplet {
 
             log.append("toggling UI elements\n").flush();
 
+            if(pip) {
+                pipToggle();
+            }
+            
             uic.setSetupGroupVisibility(true);
             uic.setOpenButtonVisibility(false);
             uic.setPlayVisibility(true);

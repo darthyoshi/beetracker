@@ -52,8 +52,6 @@ public class BeeTracker extends PApplet {
     private boolean pip = false, selectExit = false;
     private int listVal = -1;
 
-    private IntDict crossingCounts;
-
     private File currentFile = null;
 
     private float[] insetBox, exitRadial;
@@ -340,6 +338,8 @@ public class BeeTracker extends PApplet {
         textAlign(CENTER, CENTER);
         textSize(24);
 
+        //main window
+        stroke(0xffffffff);
         fill(0xff444444);
         rectMode(CORNERS);
         rect(viewBounds[0]-1, viewBounds[1]-1, viewBounds[2]+1, viewBounds[3]+1);
@@ -360,8 +360,8 @@ public class BeeTracker extends PApplet {
                 movie.read();
 
                 if(!isPlaying) {
-                    movie.pause();
                     movie.jump(uic.getSeekTime());
+                    movie.pause();
                 }
 
                 else {
@@ -479,16 +479,13 @@ public class BeeTracker extends PApplet {
                                 );
                             }
 
-                            IntDict counts = tu.trackCentroids(
+                            tu.trackCentroids(
                                 centroids,
                                 frameDims, frameOffset,
                                 exitRadial,
                                 movieDims, movieOffset,
                                 time
                             );
-
-                            crossingCounts.add("departures", counts.get("departures"));
-                            crossingCounts.add("arrivals", counts.get("arrivals"));
                         }
                     }
 
@@ -536,10 +533,8 @@ public class BeeTracker extends PApplet {
                             frameDims[1],
                             ADD
                         );
-                    }
 
-                    //draw detected blobs
-                    if(!replay) {
+                        //draw detected blobs
                         bdu.drawBlobs(viewFrame, viewBounds,
                             frameDims, frameOffset, exitCenter);
                     }
@@ -801,12 +796,6 @@ public class BeeTracker extends PApplet {
 
         //end critical section
         sem.release();
-
-        //main window border
-        stroke(0xffffffff);
-        noFill();
-        rectMode(CORNERS);
-        rect(viewBounds[0]-1, viewBounds[1]-1, viewBounds[2]+1, viewBounds[3]+1);
     }
 
     /**
@@ -1803,6 +1792,7 @@ public class BeeTracker extends PApplet {
             replay = readFramePointsFromJSON();
             replayCheckForTimeOut = false;
             uic.setRecordVisibility(!replay);
+            uic.setPlayState(false);
 
             log.append(replay ? "success" : "failure").append('\n').flush();
         }
@@ -1835,16 +1825,24 @@ public class BeeTracker extends PApplet {
         log.append("rewinding video\n").flush();
 
         if(debug) {
-            print("rewinding video... ");
+            println("rewinding video... ");
         }
 
         seek(0f);
+
+        if(debug) {
+            print("rewind complete\ntoggling item visibility... ");
+        }
 
         replayCheckForTimeOut = false;
 
         uic.setSetupGroupVisibility(!isPlaying);
         uic.setPlayState(isPlaying);
         uic.setThresholdVisibility(!isPlaying);
+
+        if(debug) {
+            println("done");
+        }
 
         if(!allFramePoints.isEmpty()) {
             replay = true;
@@ -1858,10 +1856,10 @@ public class BeeTracker extends PApplet {
             for(int tmp : colors) {
                 centroids.put(tmp, tmpList);
             }
-        }
 
-        if(debug) {
-            println("done");
+            if(debug) {
+                println("replay mode active");
+            }
         }
     }
 

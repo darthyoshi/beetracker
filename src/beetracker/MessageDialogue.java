@@ -7,9 +7,12 @@
 
 package beetracker;
 
+import java.awt.Dimension;
 import java.awt.EventQueue;
 
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 
 /**
  *
@@ -25,6 +28,7 @@ public class MessageDialogue {
         "\nand will now close. Please check Console.log for details."
     };
     private static final String endOptions[] = {"Replay video", "Close video"};
+    private static final String eventOptions[] = {"Close"};
 
     /**
      * Displays an error message if setup parameters have not been set.
@@ -97,6 +101,7 @@ public class MessageDialogue {
     public static void endVideoMessage(
         final BeeTracker parent,
         final String msg,
+        final processing.core.PGraphics graphic,
         final String fileName
     ) {
         EventQueue.invokeLater(new Runnable() {
@@ -106,13 +111,30 @@ public class MessageDialogue {
                 textArea.setLineWrap(true);
                 textArea.setWrapStyleWord(true);
 
-                javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
-                scrollPane.setPreferredSize(new java.awt.Dimension(400, 250));
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new Dimension(400, 300));
+
+                javax.swing.JTabbedPane tabPane;
+
+                if(graphic != null) {
+                    JScrollPane scrollPane2 = new JScrollPane(
+                        new javax.swing.JLabel(new javax.swing.ImageIcon(
+                            (java.awt.Image)graphic.getNative()))
+                    );
+
+                    tabPane = new javax.swing.JTabbedPane();
+                    tabPane.add("Text summary", scrollPane);
+                    tabPane.add("Visual summary", scrollPane2);
+                }
+                
+                else {
+                    tabPane = null;
+                }
 
                 if(
                     JOptionPane.showOptionDialog(
                         parent,
-                        scrollPane,
+                        (graphic == null ? scrollPane : tabPane),
                         "Session Summary",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.PLAIN_MESSAGE,
@@ -170,15 +192,68 @@ public class MessageDialogue {
         int result = JOptionPane.NO_OPTION;
 
         if(filePath != null) {
-            result = JOptionPane.showConfirmDialog(
-                parent,
-                "Video statistics have been saved to \"" + filePath +
-                    "\"\nSave frame annotations?",
-                "Results Saved",
-                JOptionPane.YES_NO_OPTION
-            );
+            String msg = "Video statistics have been saved to \"" + filePath +
+                    '\"';
+
+            if(parent.isReplay()) {
+                JOptionPane.showMessageDialog(parent, msg);
+            }
+
+            else {
+                result = JOptionPane.showConfirmDialog(
+                    parent,
+                    msg + "\nSave frame annotations?",
+                    "Results Saved",
+                    JOptionPane.YES_NO_OPTION
+                );
+            }
         }
 
         return result;
+    }
+
+    /**
+     * Displays a window containing the current event timeline.
+     * @param parent the invoking BeeTracker
+     * @param graphic an PGraphics object depicting the event timeline
+     */
+    public static void showEventTimeline(
+        final BeeTracker parent,
+        final processing.core.PGraphics graphic
+    ) {
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                int width, height; 
+                if(graphic.height > 300) {
+                    height = 300;
+                    width = graphic.width + 18;
+                }
+
+                else {
+                    height = graphic.height + 3;
+                    width = graphic.width + 3;
+                }
+
+                JScrollPane scrollPane = new JScrollPane(
+                    new javax.swing.JLabel(new javax.swing.ImageIcon(
+                        (java.awt.Image)graphic.getNative()))
+                );
+                scrollPane.setSize(width, height);
+                
+                JDialog dialog = (new JOptionPane(
+                        scrollPane,
+                        JOptionPane.PLAIN_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION,
+                        null,
+                        eventOptions
+                    )).createDialog(parent, "Event Timeline");
+                dialog.setModalityType(java.awt.Dialog.ModalityType.MODELESS);
+                dialog.pack();
+                dialog.setVisible(true);
+
+                parent.setEventDialog(dialog);
+            }
+        });
     }
 }

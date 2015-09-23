@@ -17,7 +17,10 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JDialog;
+
 import processing.core.PApplet;
+import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.data.FloatList;
 import processing.data.IntDict;
@@ -84,6 +87,8 @@ public class BeeTracker extends PApplet {
     private HashMap<Float, int[]> thresholds;
     private int settingIndex = 0;
     private int[] threshold;
+
+    private JDialog eventDialog = null;
 
     /**
      * Overrides from PApplet.
@@ -365,7 +370,7 @@ public class BeeTracker extends PApplet {
             }
 
             if(movieDims != null) {
-                processing.core.PGraphics viewFrame = createGraphics(
+                PGraphics viewFrame = createGraphics(
                     viewBounds[2] - viewBounds[1] + 1,
                     viewBounds[3] - viewBounds[1] + 1
                 );
@@ -572,23 +577,8 @@ public class BeeTracker extends PApplet {
                 image(viewFrame, viewBounds[0], viewBounds[1]);
 
                 //bee count
-                if(isPlaying && (record || replay)) {
-                    rectMode(CENTER);
-                    noStroke();
-                    fill(0xff02344d);
-                    rect(535, 25, 430, 40);
-
-                    fill(0xffffffff);
-                    text(
-                        "total #arrivals: " + crossingCounts.get("arrivals") +
-                        ", total #departures: " + crossingCounts.get("departures"),
-                        534,
-                        25
-                    );
-
-                    if(record && debug) {
-                        println("---------END FRAME---------");
-                    }
+                if(isPlaying && record && debug) {
+                    println("---------END FRAME---------");
                 }
 
                 stroke(0xffffa600);
@@ -737,16 +727,26 @@ public class BeeTracker extends PApplet {
                         println('\n' + msg.toString());
                     }
 
-                    MessageDialogue.endVideoMessage(
-                        this,
-                        msg.toString(),
-                        saveSummaryResults(
-                            date,
-                            timeStamps,
-                            formattedTime,
-                            summary
-                        )
-                    );
+                    String path = saveSummaryResults(date, timeStamps,
+                        formattedTime, summary); 
+
+                    PGraphics events;
+                    if(record || isReplay()) {
+                        events = getEventTimeline();
+
+                        char[] tmp = path.toCharArray();
+                        tmp[tmp.length - 1] = 'g';
+                        tmp[tmp.length - 2] = 'n';
+                        tmp[tmp.length - 3] = 'p';
+
+                        events.save(String.valueOf(tmp));
+                    }
+                    else {
+                        events = null;
+                    }
+
+                    MessageDialogue.endVideoMessage(this, msg.toString(),
+                        events, path);
                 }
 
                 cp5.draw();
@@ -755,7 +755,7 @@ public class BeeTracker extends PApplet {
                 textAlign(LEFT, TOP);
                 textSize(10);
                 fill(0xffffffff);
-                for(float stamp: settingsTimeStamps) {
+                for(float stamp : settingsTimeStamps) {
                     text(
                         "l",
                         stamp/movie.duration()*(uic.getSeekBarWidth()-5) +
@@ -834,8 +834,8 @@ public class BeeTracker extends PApplet {
      *   time stamp strings
      * @param summary a HashMap mapping float time stamps to string event
      *   descriptions
-     * @return the name of the new file in the format
-     *   "<video filename>-dd.mmm.yyyy-hhmm.json"
+     * @return the relative path to the new file in the format
+     *   "<video name>/dd.mmm.yyyy-hhmm.csv"
      *   OR
      *   null if no points were recorded
      */
@@ -1231,8 +1231,6 @@ public class BeeTracker extends PApplet {
         if(pip) {
             pipToggle();
         }
-
-        crossingCounts.clear();
 
         uic.setSetupGroupVisibility(false);
         uic.setOpenButtonVisibility(true);
@@ -1800,8 +1798,6 @@ public class BeeTracker extends PApplet {
             movie.play();
             isPlaying = false;
 
-            crossingCounts = new IntDict(2);
-
             log.append("reading frame annotations... ").flush();
 
             replay = readFramePointsFromJSON();
@@ -1979,10 +1975,118 @@ public class BeeTracker extends PApplet {
     }
 
     /**
+     * Generates a visual summary of the currently recorded events.
+     * @return a PGraphics object 
+     */
+    private PGraphics getEventTimeline() {
+        PGraphics graphic = createGraphics(400, colors.size() * 50);
+
+        HashMap<Integer, FloatList> departures = tu.getDepartureTimes();
+        HashMap<Integer, FloatList> arrivals = tu.getArrivalTimes();
+        int color;
+        float time = movie.time(), duration = movie.duration();
+
+        graphic.beginDraw();
+
+        graphic.background(0xffeeeeee);
+
+        graphic.fill(0xff000000);
+        graphic.textAlign(LEFT);
+        
+        for(int i = 1; i <= colors.size(); i++) {
+            color = colors.get(i-1);
+
+            graphic.strokeWeight(1);
+            graphic.stroke(0xff000000);
+            graphic.fill(0xffcccccc);
+            graphic.rectMode(CORNER);
+            graphic.rect(25, (50*i)-25, 370, 20);
+            
+            graphic.fill(0xff000000);
+            graphic.text("A", 7, (50*i)-15);
+            graphic.text("D", 7, (50*i)-5);
+            graphic.text("color:", 25, (50*i)-32);
+            
+            graphic.stroke(0xff555555);
+            graphic.line(
+              time/duration*369 + 26,
+              (50*i)-24,
+              time/duration*369 + 26,
+              (50*i)-6
+            );
+            graphic.line(0, 50*i, 400, 50*i);
+            
+            graphic.fill(0xff000000 + color);
+            graphic.text(String.format("%06x", color), 65, (50*i)-32);
+            
+            graphic.rectMode(CENTER);
+            graphic.stroke(0xff000000);
+            for(float stamp : departures.get(color)) {
+              graphic.rect(
+                stamp/duration*369 + 26,
+                (50*i)-20,
+                5,
+                5
+              );
+            }
+    
+            graphic.ellipseMode(CENTER);
+            for(float stamp : arrivals.get(color)) {
+              graphic.ellipse(
+                stamp/duration*369 + 26,
+                (50*i)-10,
+                5,
+                5
+              );
+            }
+        }
+
+        graphic.endDraw();
+
+        return graphic;
+    }
+
+    /**
+     * ControlP5 callback method.
+     */
+    public void eventsButton() {
+        if(eventDialog != null) {
+            eventDialog.setVisible(false);
+            eventDialog.dispose();
+            eventDialog = null;
+        }
+        
+        PGraphics graphic = getEventTimeline();
+        int time = (int)movie.time();
+
+        graphic.fill(0xff000000);
+        graphic.textAlign(RIGHT);
+        graphic.text(String.format(
+                "current time: %02d:%02d:%02d",
+                time/3600,
+                time/60,
+                time%60
+            ), 395, 18);
+
+        MessageDialogue.showEventTimeline(this, graphic);
+    }
+    
+    public void setEventDialog(JDialog dialog) {
+        eventDialog = dialog;
+    }
+    
+    /**
      * Main method for executing BeeTracker as a Java application.
      * @param args command line arguments
      */
     public static void main(String[] args) {
         PApplet.main(new String[] { beetracker.BeeTracker.class.getName() });
+    }
+
+    /**
+     * @return the replay state
+     */
+    public boolean isReplay() {
+        return replay;
     }
 }

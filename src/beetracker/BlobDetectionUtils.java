@@ -267,7 +267,7 @@ public class BlobDetectionUtils {
      */
     private void erodeImage(int[] pixels, IntList colors) {
         int[] tmp = new int[pixels.length];
-        int i, j, k, l, m, offset;
+        int i, j, k, l, offset;
 
         for(i = 0; i < tmp.length; i++) {
             tmp[i] = 0;
@@ -279,17 +279,17 @@ public class BlobDetectionUtils {
             for(j = filterRadius; j < bd.imgHeight - filterRadius; j++) {
                 erodeProbe:
                 //iterate colors
-                for(m = 0; m < colors.size(); m++) {
+                for(Integer color : colors) {
                     //iterate filter x-axis
                     for(k = -filterRadius; k <= filterRadius; k++) {
                         //iterate filter y-axis
                         for(l = -filterRadius; l <= filterRadius; l++) {
-                            if(Math.abs(k) + Math.abs(l) <= filterRadius) {
+                            if(Math.abs(k) + Math.abs(l) <= (double)filterRadius) {
                                 offset = (i+k) + (j+l)*bd.imgWidth;
 
                                 if(!(
                                     (int)parent.hue(pixels[offset]) ==
-                                    (int)parent.hue(colors.get(m)) &&
+                                    (int)parent.hue(color) &&
                                     parent.brightness(pixels[offset]) > 0f
                                 )) {
                                     //current pixel is miss, go to next color
@@ -334,7 +334,7 @@ public class BlobDetectionUtils {
                         if(
                             m >= 0 && m < bd.imgWidth &&
                             n >= 0 && n < bd.imgHeight &&
-                            Math.abs(k) + Math.abs(l) <= filterRadius
+                            Math.abs(k) + Math.abs(l) <= (double)filterRadius
                         ) {
                             offset = m + n*bd.imgWidth;
 

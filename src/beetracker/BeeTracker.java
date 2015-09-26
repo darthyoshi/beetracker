@@ -703,7 +703,7 @@ public class BeeTracker extends PApplet {
                                 .append(Integer.toString(date.get(Calendar.YEAR)))
                                 .append(',')
                                 .append(String.format(
-                                    "%02d:%02d:%.5f",
+                                    "%02d:%02d:%08.5f",
                                     date.get(Calendar.HOUR_OF_DAY),
                                     date.get(Calendar.MINUTE),
                                     (date.get(Calendar.SECOND)-sec)+timeStamp

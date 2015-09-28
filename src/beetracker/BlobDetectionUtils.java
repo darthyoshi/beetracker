@@ -123,11 +123,11 @@ public class BlobDetectionUtils {
         Blob b;
 
         buf.noFill();
+        buf.strokeWeight(1);
 
         for (int n = 0; n < bd.getBlobNb(); n++) {
             b = bd.getBlob(n);
             if (b != null) {
-                buf.strokeWeight(1);
 
                 //mark edges all blobs
                 buf.stroke(0xFFFF00AA);

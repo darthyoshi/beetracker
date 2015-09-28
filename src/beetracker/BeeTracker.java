@@ -521,6 +521,7 @@ public class BeeTracker extends PApplet {
                     }
 
                     if(!replay) {
+                        //highlight filtered pixels
                         viewFrame.blend(
                             insetFrame,
                             0,
@@ -564,6 +565,9 @@ public class BeeTracker extends PApplet {
                             }
                         }
                     }
+
+                    //draw recorded paths
+                    tu.drawPaths(viewFrame, viewBounds, frameDims, frameOffset);
                 }
 
                 viewFrame.endDraw();

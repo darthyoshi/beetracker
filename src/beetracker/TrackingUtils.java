@@ -23,7 +23,7 @@ import processing.data.IntList;
  */
 public class TrackingUtils {
     private final boolean debug;
-    private HashMap<Integer, List<float[]>> allPoints;
+    private HashMap<Integer, List<List<float[]>>> allPaths;
     private HashMap<Integer, FloatList> departureTimes, arrivalTimes;
     private HashMap<Integer, IntList> allTimeOuts;
     private IntList colors;
@@ -64,7 +64,8 @@ public class TrackingUtils {
         int[] movieOffset,
         float time
     ) {
-        List<float[]> newPoints, oldPoints;
+        List<float[]> newPoints, path;
+        List<List<float[]>> oldPaths;
         FloatList departures, arrivals;
         IntList checkedIndicesOld, checkedIndicesNew, timeOuts;
         float oldX, oldY, newX, newY, minDist;
@@ -83,7 +84,7 @@ public class TrackingUtils {
         exitAxes[1] = exitRadial[3]*movieDims[1];
 
         for(int color : colors) {
-            oldPoints = allPoints.get(color);
+            oldPaths = allPaths.get(color);
             newPoints = new ArrayList<>(newPointMap.get(color));
             timeOuts = allTimeOuts.get(color);
 
@@ -97,38 +98,38 @@ public class TrackingUtils {
                     "---checking blobs colored %06x---%s %d%s %d",
                     color,
                     "\npoints in last frame:",
-                    oldPoints.size(),
+                    oldPaths.size(),
                     "\npoints in current frame:",
                     newPoints.size()
                 ));
             }
 
-            if(oldPoints.size() > 0 && newPoints.size() > 0) {
-                distances = new float[oldPoints.size()][newPoints.size()];
+            if(oldPaths.size() > 0 && newPoints.size() > 0) {
+                distances = new float[oldPaths.size()][newPoints.size()];
 
                 //calc distances between all old and all new points
-                i = 0;
-                for(float[] oldPoint : oldPoints) {
+                for(i = 0; i < oldPaths.size(); i++) {
+                    path = oldPaths.get(i);
+
                     j = 0;
                     for(float[] newPoint : newPoints) {
-                        oldX = oldPoint[0] - newPoint[0];
-                        oldY = oldPoint[1] - newPoint[1];
+                        point = path.get(path.size() - 1);
+                        oldX = point[0] - newPoint[0];
+                        oldY = point[1] - newPoint[1];
 
                         distances[i][j] = (float)Math.pow(oldX*oldX + oldY*oldY,
                             0.5);
 
                         j++;
                     }
-
-                    i++;
                 }
 
                 minI = minJ = -1;
 
                 numPairs = (
-                    oldPoints.size() > newPoints.size() ?
+                    oldPaths.size() > newPoints.size() ?
                     newPoints.size() :
-                    oldPoints.size()
+                    oldPaths.size()
                 );
                 validPairs = new int[numPairs][2];
 
@@ -137,7 +138,7 @@ public class TrackingUtils {
                     minDist = Float.MAX_VALUE;
 
                     //pair points with minimum distance
-                    for(i = 0; i < oldPoints.size(); i++) {
+                    for(i = 0; i < oldPaths.size(); i++) {
                         //oldPoints.get(i) not already paired
                         if(!checkedIndicesOld.hasValue(i)) {
                             for(j = 0; j < newPoints.size(); j++) {
@@ -186,7 +187,8 @@ public class TrackingUtils {
 
             //check all paired points
             for(i = 0; i < k; i++) {
-                point = oldPoints.get(validPairs[i][0]);
+                path = oldPaths.get(validPairs[i][0]);
+                point = path.get(path.size() - 1);
 
                 oldX = point[0]*frameDims[0]+frameOffset[0];
                 oldY = point[1]*frameDims[1]+frameOffset[1];
@@ -221,7 +223,11 @@ public class TrackingUtils {
 
             //update old points for next frame
             for(i = 0; i < k; i++) {
-                oldPoints.set(validPairs[i][0], newPoints.get(validPairs[i][1]));
+                path = oldPaths.get(validPairs[i][0]);
+                point = newPoints.get(validPairs[i][1]);
+                if(!path.contains(point)) {
+                    path.add(point);
+                }
                 newPoints.set(validPairs[i][1], null);
                 timeOuts.set(validPairs[i][0], -1);
             }
@@ -230,7 +236,9 @@ public class TrackingUtils {
             j = 1;
             for(float[] newPoint : newPoints) {
                 if(newPoint != null) {
-                    oldPoints.add(newPoint);
+                    path = new ArrayList<float[]>();
+                    path.add(newPoint);
+                    oldPaths.add(path);
                     timeOuts.append(0);
 
                     j++;    //index offset for updating timeout values later
@@ -238,21 +246,15 @@ public class TrackingUtils {
             }
 
             if(debug) {
-                BeeTracker.println(j + "\n" + timeOuts +"\nold points:");
-                for(float[] oldPoint : oldPoints) {
-                    BeeTracker.print("("+oldPoint[0]+" "+oldPoint[1]+")");
-                }
-                BeeTracker.println("\ntotal: "+oldPoints.size()+"\nnew points:");
-                for(float[] newPoint : newPoints) {
-                    if(newPoint != null) {
-                        BeeTracker.print("("+newPoint[0]+" "+newPoint[1]+")");
-                    }
+                BeeTracker.println("all paths:");
+                for(i = 0; i < oldPaths.size(); i++) {
+                    BeeTracker.println(i + ":");
+                    path = oldPaths.get(i);
 
-                    else {
-                        BeeTracker.print("(point was matched to an old point)");
+                    for(float[] tmpPoint : path) {
+                        BeeTracker.println(tmpPoint[0] + "," + tmpPoint[1]);
                     }
                 }
-                BeeTracker.println("\ntotal: "+newPoints.size());
             }
 
             //update timeout values for old missing points
@@ -262,7 +264,7 @@ public class TrackingUtils {
                 //remove points that have been missing for too long
                 if(timeOuts.get(i) > 5) {
                     timeOuts.remove(i);
-                    oldPoints.remove(i);
+                    oldPaths.remove(i);
                 }
             }
         }
@@ -277,7 +279,7 @@ public class TrackingUtils {
             if(!colors.hasValue(color)) {
                 colors.append(color);
 
-                allPoints.put(color, new ArrayList<float[]>());
+                allPaths.put(color, new ArrayList<List<float[]>>());
 
                 departureTimes.put(color, new FloatList());
                 arrivalTimes.put(color, new FloatList());
@@ -329,7 +331,7 @@ public class TrackingUtils {
      * Initializes all tracking data structures.
      */
     public final void init() {
-        allPoints = new HashMap<>();
+        allPaths = new HashMap<>();
         departureTimes = new HashMap<>();
         arrivalTimes = new HashMap<>();
         colors = new IntList();
@@ -350,5 +352,42 @@ public class TrackingUtils {
      */
     public HashMap<Integer, FloatList> getArrivalTimes() {
         return arrivalTimes;
+    }
+
+    /**
+     * Draws the recorded paths. 
+     * @param buf the buffer image to draw to
+     * @param bufOffset the xy coordinates of the buffer image
+     * @param frameDims the dimensions of the image frame for which blob
+     *   detection is being performed, in pixels
+     * @param frameOffset the xy coordinates of the inset frame origin, in pixels
+     */
+    public void drawPaths(
+        processing.core.PGraphics buf,
+        int[] bufOffset,
+        int[] frameDims,
+        int[] frameOffset
+    ) {
+        int i;
+        float[] point, point2;
+
+        buf.strokeWeight(2);
+        for(int color : colors) {
+            buf.stroke(0xff000000 + color);
+
+            for(List<float[]> path : allPaths.get(color)) {
+                for(i = 0; i < path.size()-1; i++) {
+                    point = path.get(i);
+                    point2 = path.get(i+1);
+                    
+                    buf.line(
+                        point[0]*frameDims[0]+frameOffset[0]-bufOffset[0],
+                        point[1]*frameDims[1]+frameOffset[1]-bufOffset[0],
+                        point2[0]*frameDims[0]+frameOffset[0]-bufOffset[0],
+                        point2[1]*frameDims[1]+frameOffset[1]-bufOffset[1]
+                    );
+                }
+            }
+        }
     }
 }

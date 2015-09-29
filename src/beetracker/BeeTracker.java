@@ -1198,6 +1198,10 @@ public class BeeTracker extends PApplet {
             Thread.currentThread().interrupt();
         }
 
+        if(pip) {
+            uic.setZoomState(!pip);
+        }
+
         movie.stop();
         movie = null;
 
@@ -1759,10 +1763,6 @@ public class BeeTracker extends PApplet {
             currentFile = file;
 
             log.append("toggling UI elements\n").flush();
-
-            if(pip) {
-                pipToggle();
-            }
             
             uic.setSetupGroupVisibility(true);
             uic.setOpenButtonVisibility(false);

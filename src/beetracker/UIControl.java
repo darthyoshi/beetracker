@@ -26,7 +26,7 @@ import processing.core.PImage;
 public class UIControl {
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;
-    private final Toggle selectToggle;
+    private final Toggle selectToggle, pipToggle;
     private final Button playButton, openButton, recordButton;
     private final PImage[] playIcons, recordIcons;
     private final Slider thresholdSlider, seekBar;
@@ -171,7 +171,7 @@ public class UIControl {
             .setCaptionLabel("Show Event Timeline");
         eventLineButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
 
-        Toggle pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
+        pipToggle = cp5.addToggle("pipToggle").setSize(15, 15);
         pipToggle.setCaptionLabel("Inset Zoom")
             .setGroup(playGroup)
             .setPosition(parent.width - 82, parent.height - 20)
@@ -530,5 +530,13 @@ public class UIControl {
      */
     public void setStatusLabel(int type) {
        statusLabel.setCaptionLabel(modes[type]);
+    }
+
+    /**
+     * 
+     * @param state
+     */
+    public void setZoomState(boolean state) {
+        pipToggle.setState(state);
     }
 }

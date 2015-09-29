@@ -96,12 +96,13 @@ public class MessageDialogue {
      * Displays a message at the end of video playback.
      * @param parent the invoking BeeTracker
      * @param msg the message to display
+     * @param events the event timeline image
      * @param fileName the name of the summary file
      */
     public static void endVideoMessage(
         final BeeTracker parent,
         final String msg,
-        final processing.core.PGraphics graphic,
+        final processing.core.PGraphics events,
         final String fileName
     ) {
         EventQueue.invokeLater(new Runnable() {
@@ -116,10 +117,10 @@ public class MessageDialogue {
 
                 javax.swing.JTabbedPane tabPane;
 
-                if(graphic != null) {
+                if(events != null) {
                     JScrollPane scrollPane2 = new JScrollPane(
                         new javax.swing.JLabel(new javax.swing.ImageIcon(
-                            (java.awt.Image)graphic.getNative()))
+                            (java.awt.Image)events.getNative()))
                     );
 
                     tabPane = new javax.swing.JTabbedPane();
@@ -134,7 +135,7 @@ public class MessageDialogue {
                 if(
                     JOptionPane.showOptionDialog(
                         parent,
-                        (graphic == null ? scrollPane : tabPane),
+                        (events == null ? scrollPane : tabPane),
                         "Session Summary",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.PLAIN_MESSAGE,

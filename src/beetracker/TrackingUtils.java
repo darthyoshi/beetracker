@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import processing.core.PApplet;
+import processing.core.PConstants;
+import processing.core.PGraphics;
 import processing.data.FloatList;
 import processing.data.IntList;
 
@@ -26,6 +27,7 @@ public class TrackingUtils {
     private HashMap<Integer, IntList> allTimeOuts;
     private IntList colors;
     private final static float distThreshold = 0.25f;
+    private PGraphics eventTimeline;
 
     /**
      * Class constructor.
@@ -234,7 +236,7 @@ public class TrackingUtils {
             j = 1;
             for(float[] newPoint : newPoints) {
                 if(newPoint != null) {
-                    path = new ArrayList<float[]>();
+                    path = new ArrayList<>();
                     path.add(newPoint);
                     oldPaths.add(path);
                     timeOuts.append(0);
@@ -334,6 +336,7 @@ public class TrackingUtils {
         arrivalTimes = new HashMap<>();
         colors = new IntList();
         allTimeOuts = new HashMap<>();
+        eventTimeline = null;
     }
 
     /**
@@ -361,7 +364,7 @@ public class TrackingUtils {
      * @param frameOffset the xy coordinates of the inset frame origin, in pixels
      */
     public void drawPaths(
-        processing.core.PGraphics buf,
+        PGraphics buf,
         int[] bufOffset,
         int[] frameDims,
         int[] frameOffset
@@ -387,5 +390,143 @@ public class TrackingUtils {
                 }
             }
         }
+    }
+    
+    /**
+     * Generates a visual summary of the currently recorded events.
+     * @param parent the invoking BeeTracker
+     * @param time the current playback time in seconds
+     * @param duration the video duration in seconds
+     */
+    public void updateEventTimeline(
+        BeeTracker parent,
+        float time,
+        float duration
+    ) {
+        BeeTracker.print("updating event timeline... ");
+
+        int color, yOffset;
+        float xOffset = time/duration*369 + 26;
+
+        if(eventTimeline == null) {
+            eventTimeline = parent.createGraphics(400, colors.size() * 50);
+
+            eventTimeline.beginDraw();
+
+            eventTimeline.background(0xffeeeeee);
+
+            eventTimeline.textAlign(PConstants.LEFT);
+
+            for(int i = 1; i <= colors.size(); i++) {
+                color = colors.get(i-1);
+                yOffset = 50*i;
+
+                eventTimeline.strokeWeight(1);
+                eventTimeline.stroke(0xff000000);
+                eventTimeline.fill(0xffcccccc);
+                eventTimeline.rectMode(PConstants.CORNER);
+                eventTimeline.rect(25, yOffset-25, 370, 20);
+                
+                eventTimeline.fill(0xff000000);
+                eventTimeline.text("A", 7, yOffset-15);
+                eventTimeline.text("D", 7, yOffset-5);
+                eventTimeline.text("color:", 25, yOffset-32);
+
+                eventTimeline.fill(0xff000000 + color);
+                eventTimeline.text(String.format("%06x", color), 65, yOffset-32);
+            }
+        }
+
+        else {
+            eventTimeline.beginDraw();
+        }
+
+        eventTimeline.ellipseMode(PConstants.CENTER);
+        eventTimeline.rectMode(PConstants.CENTER);
+        eventTimeline.stroke(0xff000000);
+
+        for(int i = 1; i <= colors.size(); i++) {
+            color = colors.get(i-1);
+            yOffset = 50*i;
+
+            if(!allPaths.get(color).isEmpty()) {
+                eventTimeline.stroke(0xff000000 + color);
+                eventTimeline.line(
+                    xOffset,
+                    yOffset-20,
+                    xOffset,
+                    yOffset-10
+                );
+                eventTimeline.stroke(0xff000000);
+            }
+
+            eventTimeline.fill(0xff000000 + color);
+
+            for(float stamp : departureTimes.get(color)) {
+              eventTimeline.rect(
+                stamp/duration*369 + 26,
+                yOffset-20,
+                5,
+                5
+              );
+            }
+
+            for(float stamp : arrivalTimes.get(color)) {
+              eventTimeline.ellipse(
+                stamp/duration*369 + 26,
+                yOffset-10,
+                5,
+                5
+              );
+            }
+        }
+
+        eventTimeline.endDraw();
+
+        BeeTracker.println("done");
+    }
+    
+    /**
+     * Retrieves the visual summary of the currently recorded events.
+     * @param parent the invoking BeeTracker
+     * @param time the current playback time in seconds
+     * @param duration the video duration in seconds
+     * @return a PGraphics image of the event timeline
+     */
+    public PGraphics getEventTimeline(
+        BeeTracker parent,
+        float time,
+        float duration
+    ) {
+        BeeTracker.print("retrieving event timeline... ");
+
+        PGraphics result = parent.createGraphics(eventTimeline.width, eventTimeline.height);
+
+        float xOffset = time/duration*369 + 26;
+        int yOffset;
+        
+        result.beginDraw();
+
+        result.copy(eventTimeline, 0, 0, eventTimeline.width, eventTimeline.height, 0, 0, result.width, result.height);
+
+        result.stroke(0xff555555);
+
+        for(int i = 1; i <= colors.size(); i++) {
+            yOffset = 50*i;
+            
+            result.line(
+              xOffset,
+              yOffset-24,
+              xOffset,
+              yOffset-6
+            );
+            result.line(0, yOffset, 400, yOffset);
+        }
+
+        result.endDraw();
+
+        BeeTracker.println("done");
+
+        return result;
     }
 }

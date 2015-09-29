@@ -485,6 +485,7 @@ public class BeeTracker extends PApplet {
                                 movieDims, movieOffset,
                                 time
                             );
+                            tu.updateEventTimeline(this, time, movie.duration());
                         }
                     }
 
@@ -730,7 +731,7 @@ public class BeeTracker extends PApplet {
 
                     PGraphics events;
                     if(record || isReplay()) {
-                        events = getEventTimeline();
+                        events = tu.getEventTimeline(this, time, movie.duration());
 
                         char[] tmp = path.toCharArray();
                         tmp[tmp.length - 1] = 'g';
@@ -1976,78 +1977,6 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * Generates a visual summary of the currently recorded events.
-     * @return a PGraphics object 
-     */
-    private PGraphics getEventTimeline() {
-        PGraphics graphic = createGraphics(400, colors.size() * 50);
-
-        HashMap<Integer, FloatList> departures = tu.getDepartureTimes();
-        HashMap<Integer, FloatList> arrivals = tu.getArrivalTimes();
-        int color;
-        float time = movie.time(), duration = movie.duration();
-
-        graphic.beginDraw();
-
-        graphic.background(0xffeeeeee);
-
-        graphic.fill(0xff000000);
-        graphic.textAlign(LEFT);
-        
-        for(int i = 1; i <= colors.size(); i++) {
-            color = colors.get(i-1);
-
-            graphic.strokeWeight(1);
-            graphic.stroke(0xff000000);
-            graphic.fill(0xffcccccc);
-            graphic.rectMode(CORNER);
-            graphic.rect(25, (50*i)-25, 370, 20);
-            
-            graphic.fill(0xff000000);
-            graphic.text("A", 7, (50*i)-15);
-            graphic.text("D", 7, (50*i)-5);
-            graphic.text("color:", 25, (50*i)-32);
-            
-            graphic.stroke(0xff555555);
-            graphic.line(
-              time/duration*369 + 26,
-              (50*i)-24,
-              time/duration*369 + 26,
-              (50*i)-6
-            );
-            graphic.line(0, 50*i, 400, 50*i);
-            
-            graphic.fill(0xff000000 + color);
-            graphic.text(String.format("%06x", color), 65, (50*i)-32);
-            
-            graphic.rectMode(CENTER);
-            graphic.stroke(0xff000000);
-            for(float stamp : departures.get(color)) {
-              graphic.rect(
-                stamp/duration*369 + 26,
-                (50*i)-20,
-                5,
-                5
-              );
-            }
-    
-            graphic.ellipseMode(CENTER);
-            for(float stamp : arrivals.get(color)) {
-              graphic.ellipse(
-                stamp/duration*369 + 26,
-                (50*i)-10,
-                5,
-                5
-              );
-            }
-        }
-
-        graphic.endDraw();
-
-        return graphic;
-    }
-
-    /**
      * ControlP5 callback method.
      */
     public void eventsButton() {
@@ -2056,9 +1985,9 @@ public class BeeTracker extends PApplet {
             eventDialog.dispose();
             eventDialog = null;
         }
-        
-        PGraphics graphic = getEventTimeline();
+
         int time = (int)movie.time();
+        PGraphics graphic = tu.getEventTimeline(this, time, movie.duration());
 
         graphic.fill(0xff000000);
         graphic.textAlign(RIGHT);
@@ -2071,7 +2000,11 @@ public class BeeTracker extends PApplet {
 
         MessageDialogue.showEventTimeline(this, graphic);
     }
-    
+
+    /**
+     * Sets the event timeline dialog.
+     * @param dialog the new event timeline dialog
+     */
     public void setEventDialog(JDialog dialog) {
         eventDialog = dialog;
     }

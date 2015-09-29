@@ -9,12 +9,10 @@ package beetracker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 import processing.core.PApplet;
 import processing.data.FloatList;
-import processing.data.IntDict;
 import processing.data.IntList;
 
 /**

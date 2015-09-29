@@ -23,7 +23,6 @@ import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.data.FloatList;
-import processing.data.IntDict;
 import processing.data.JSONObject;
 import processing.video.Movie;
 

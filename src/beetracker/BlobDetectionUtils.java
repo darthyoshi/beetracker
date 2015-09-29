@@ -15,7 +15,6 @@ import blobDetection.Blob;
 import blobDetection.BlobDetection;
 import blobDetection.EdgeVertex;
 
-import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PImage;
 import processing.data.IntList;

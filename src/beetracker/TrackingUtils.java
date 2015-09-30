@@ -457,6 +457,7 @@ public class TrackingUtils {
             color = colors.get(i-1);
             yOffset = 50*i;
 
+            //mark intervals with detected bees
             if(!allPaths.get(color).isEmpty()) {
                 eventTimeline.stroke(0xff000000 + color);
                 eventTimeline.line(
@@ -470,7 +471,8 @@ public class TrackingUtils {
 
             eventTimeline.fill(0xff000000 + color);
 
-            for(float stamp : departureTimes.get(color)) {
+            //mark arrivals
+            for(float stamp : arrivalTimes.get(color)) {
               eventTimeline.rect(
                 stamp/duration*369 + 26,
                 yOffset-20,
@@ -479,7 +481,8 @@ public class TrackingUtils {
               );
             }
 
-            for(float stamp : arrivalTimes.get(color)) {
+            //mark departures
+            for(float stamp : departureTimes.get(color)) {
               eventTimeline.ellipse(
                 stamp/duration*369 + 26,
                 yOffset-10,
@@ -487,6 +490,9 @@ public class TrackingUtils {
                 5
               );
             }
+
+            eventTimeline.stroke(0xff000000);
+            eventTimeline.line(25, yOffset-15, 395, yOffset-15);
         }
 
         eventTimeline.endDraw();

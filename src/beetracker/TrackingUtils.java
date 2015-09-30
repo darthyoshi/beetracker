@@ -409,7 +409,9 @@ public class TrackingUtils {
         float time,
         float duration
     ) {
-        BeeTracker.print("updating event timeline... ");
+        if(debug) {
+            BeeTracker.print("updating event timeline... ");
+        }
 
         int color, yOffset;
         float xOffset = time/duration*369f + 26f;
@@ -489,7 +491,9 @@ public class TrackingUtils {
 
         eventTimeline.endDraw();
 
-        BeeTracker.println("done");
+        if(debug) {
+            BeeTracker.println("done");
+        }
     }
     
     /**
@@ -504,7 +508,9 @@ public class TrackingUtils {
         float time,
         float duration
     ) {
-        BeeTracker.print("retrieving event timeline... ");
+        if(debug) {
+            BeeTracker.print("retrieving event timeline... ");
+        }
 
         PGraphics result = parent.createGraphics(eventTimeline.width,
             eventTimeline.height);
@@ -538,7 +544,9 @@ public class TrackingUtils {
 
         result.endDraw();
 
-        BeeTracker.println("done");
+        if(debug) {
+            BeeTracker.println("done");
+        }
 
         return result;
     }

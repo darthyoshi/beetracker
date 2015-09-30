@@ -41,6 +41,7 @@ public class TrackingUtils {
 
     /**
      * Updates the centroid positions for the current frame.
+     * @param parent the invoking BeeTracker
      * @param newPointMap a HashMap mapping six-digit hexadecimal RGB values
      *   to Lists of normalized xy coordinates
      * @param frameDims the dimensions of the inset frame
@@ -53,16 +54,19 @@ public class TrackingUtils {
      *   vertical semi-major axis of the exit
      * @param movieDims the dimensions of the video
      * @param movieOffset the offset of the video
-     * @param time timestamp of the current frame
+     * @param time timestamp of the current frame in seconds
+     * @param duration the video duration in seconds
      */
     public void trackCentroids(
+        BeeTracker parent,
         HashMap<Integer, List<float[]>> newPointMap,
         int[] frameDims,
         int[] frameOffset,
         float[] exitRadial,
         int[] movieDims,
         int[] movieOffset,
-        float time
+        float time,
+        float duration
     ) {
         List<float[]> newPoints, path;
         List<List<float[]>> oldPaths;
@@ -268,6 +272,8 @@ public class TrackingUtils {
                 }
             }
         }
+        
+        updateEventTimeline(parent, time, duration);
     }
 
     /**
@@ -398,7 +404,7 @@ public class TrackingUtils {
      * @param time the current playback time in seconds
      * @param duration the video duration in seconds
      */
-    public void updateEventTimeline(
+    private void updateEventTimeline(
         BeeTracker parent,
         float time,
         float duration
@@ -406,7 +412,7 @@ public class TrackingUtils {
         BeeTracker.print("updating event timeline... ");
 
         int color, yOffset;
-        float xOffset = time/duration*369 + 26;
+        float xOffset = time/duration*369f + 26f;
 
         if(eventTimeline == null) {
             eventTimeline = parent.createGraphics(400, colors.size() * 50);
@@ -500,14 +506,21 @@ public class TrackingUtils {
     ) {
         BeeTracker.print("retrieving event timeline... ");
 
-        PGraphics result = parent.createGraphics(eventTimeline.width, eventTimeline.height);
+        PGraphics result = parent.createGraphics(eventTimeline.width,
+            eventTimeline.height);
 
         float xOffset = time/duration*369 + 26;
         int yOffset;
         
         result.beginDraw();
 
-        result.copy(eventTimeline, 0, 0, eventTimeline.width, eventTimeline.height, 0, 0, result.width, result.height);
+        result.copy(
+            eventTimeline,
+            0, 0,
+            eventTimeline.width, eventTimeline.height,
+            0, 0,
+            result.width, result.height
+        );
 
         result.stroke(0xff555555);
 

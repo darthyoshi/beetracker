@@ -479,13 +479,14 @@ public class BeeTracker extends PApplet {
                             }
 
                             tu.trackCentroids(
+                                this,
                                 centroids,
                                 frameDims, frameOffset,
                                 exitRadial,
                                 movieDims, movieOffset,
-                                time
+                                time,
+                                movie.duration()
                             );
-                            tu.updateEventTimeline(this, time, movie.duration());
                         }
                     }
 

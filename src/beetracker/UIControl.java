@@ -58,7 +58,6 @@ public class UIControl {
      * @param cp5 the ControlP5 object\
      */
     public UIControl(BeeTracker parent, ControlP5 cp5) {
-        cp5.setFont(cp5.getFont().getFont(), 15);
         cp5.disableShortcuts();
         cp5.setAutoDraw(false);
 

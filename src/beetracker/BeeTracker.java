@@ -67,7 +67,7 @@ public class BeeTracker extends PApplet {
 
     private final PImage titleImg = loadImage("data/img/title.png");
 
-    private static final boolean debug = true;
+    private static final boolean debug = false;
 
     private HashMap<Float, HashMap<Integer, List<float[]>>> allFramePoints = null;
     private HashMap<Integer, List<float[]>> centroids;
@@ -100,9 +100,11 @@ public class BeeTracker extends PApplet {
             File.separatorChar + "output");
         outputDir.mkdir();
 
-        cp5 = new controlP5.ControlP5(this);
+        processing.core.PFont font = loadFont("data/LiberationSansNarrow-15.vlw");
+        textFont(font);
 
-        textFont(cp5.getFont().getFont());
+        cp5 = new controlP5.ControlP5(this);
+        cp5.setFont(font);
 
         if(frame != null) {
             frame.setIconImage((java.awt.Image)loadImage("data/img/icon.png").getNative());
@@ -330,6 +332,7 @@ public class BeeTracker extends PApplet {
     /**
      * Overrides from PApplet.
      */
+    @SuppressWarnings("unused")
     @Override
     public void draw() {
         background(0x222222);

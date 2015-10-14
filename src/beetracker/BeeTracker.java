@@ -139,7 +139,9 @@ public class BeeTracker extends PApplet {
         try {
             log = new PrintStream(new File("Console.log"), "UTF-8");
 
-            System.setErr(log);
+            if(!debug) {
+                System.setErr(log);
+            }
         } catch (java.io.FileNotFoundException |
             java.io.UnsupportedEncodingException ex)
         {

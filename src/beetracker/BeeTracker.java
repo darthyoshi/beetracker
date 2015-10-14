@@ -1800,6 +1800,7 @@ public class BeeTracker extends PApplet {
             replay = readFramePointsFromJSON();
             replayCheckForTimeOut = false;
             uic.setRecordVisibility(!replay);
+            uic.setRecordState(replay);
             uic.setPlayState(false);
 
             log.append(replay ? "success" : "failure").append('\n').flush();
@@ -1854,8 +1855,9 @@ public class BeeTracker extends PApplet {
 
         if(!allFramePoints.isEmpty()) {
             replay = true;
-            recordButton();
-            uic.setRecordVisibility(false);
+            uic.setRecordVisibility(!replay);
+            uic.setRecordState(replay);
+            uic.setStatusLabel(0);
 
             timeStampIndex = 0;
 

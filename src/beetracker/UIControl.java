@@ -51,7 +51,7 @@ public class UIControl {
     };
 
     private boolean isPlaying = false, isRecord = false;
-    
+
     /**
      * Class constructor.
      * @param parent the instantiating object
@@ -345,7 +345,7 @@ public class UIControl {
      */
     public void setPlayState(boolean state) {
         isPlaying = state;
-        
+
         int i, j;
         if(state) {
             i = 1;
@@ -355,11 +355,11 @@ public class UIControl {
             i = 0;
             j = isRecord || !recordButton.isVisible() ? 1 : 0;
         }
-        
+
         playButton.setImage(playIcons[i]);
         toolTip.register(playButton, playTips[j]);
 
-        eventLineButton.setVisible(state).setLock(!state);
+        updateEventButtonVisibility();
     }
 
     /**
@@ -477,6 +477,8 @@ public class UIControl {
         recordButton.setImage(recordIcons[index]);
         toolTip.register(recordButton, recordTips[index]);
 
+        updateEventButtonVisibility();
+
         if(!isPlaying) {
             toolTip.register(playButton, playTips[index]);
         }
@@ -513,7 +515,7 @@ public class UIControl {
     }
 
     /**
-     * @return the width of the seekbar in pixels 
+     * @return the width of the seekbar in pixels
      */
     public int getSeekBarWidth() {
        return seekBar.getWidth();
@@ -532,8 +534,17 @@ public class UIControl {
     }
 
     /**
-     * 
-     * @param state
+     * Updates the visibility of the event timeline button.
+     */
+    private void updateEventButtonVisibility() {
+        boolean tmp = isPlaying && isRecord;
+        eventLineButton.setVisible(tmp).setLock(!tmp);
+
+    }
+    
+    /**
+     * Sets the state of the zoom toggle.
+     * @param state the new zoom state
      */
     public void setZoomState(boolean state) {
         pipToggle.setState(state);

@@ -46,7 +46,7 @@ public class BeeTracker extends PApplet {
     private final java.util.concurrent.Semaphore sem =
         new java.util.concurrent.Semaphore(1, true);
 
-    private boolean isPlaying = false;
+    private boolean isPlaying = false, imgSequenceMode = false;
     private boolean record = false, replay = false;
     private boolean pip = false, selectExit = false;
     private int listVal = -1;
@@ -57,6 +57,10 @@ public class BeeTracker extends PApplet {
     private boolean isDrag = false;
 
     private Movie movie = null;
+    private String[] imgSequence = null;
+    private PImage stillFrame = null;
+    private int imgIndex = -1;
+    private float duration;
 
     private controlP5.ControlP5 cp5;
     private UIControl uic;
@@ -357,21 +361,10 @@ public class BeeTracker extends PApplet {
             Thread.currentThread().interrupt();
         }
 
-        if(movie != null) {
-            float time = movie.time();
+        PImage frame = updateFrame();
 
-            if(movie.available()) {
-                movie.read();
-
-                if(!isPlaying) {
-                    movie.jump(uic.getSeekTime());
-                    movie.pause();
-                }
-
-                else {
-                    uic.setSeekTime(time);
-                }
-            }
+        if(frame != null) {
+            float time = imgSequenceMode ? imgIndex : movie.time();
 
             if(movieDims != null) {
                 PGraphics viewFrame = createGraphics(
@@ -380,18 +373,18 @@ public class BeeTracker extends PApplet {
                 );
                 viewFrame.beginDraw();
                 viewFrame.copy(
-                    movie,
+                    frame,
                     0,
                     0,
-                    movie.width,
-                    movie.height,
+                    frame.width,
+                    frame.height,
                     (viewFrame.width-movieDims[0])/2,
                     (viewFrame.height-movieDims[1])/2,
                     movieDims[0],
                     movieDims[1]
                 );
 
-                PImage insetFrame = copyInsetFrame();
+                PImage insetFrame = copyInsetFrame(frame);
 
                 if(insetFrame != null) {
                     viewFrame.noSmooth();
@@ -490,7 +483,7 @@ public class BeeTracker extends PApplet {
                                 exitRadial,
                                 movieDims, movieOffset,
                                 time,
-                                movie.duration()
+                                duration
                             );
                         }
                     }
@@ -499,7 +492,7 @@ public class BeeTracker extends PApplet {
 
                     //zoomed
                     if(pip) {
-                        PImage zoomedInset = copyInsetFrame();
+                        PImage zoomedInset = copyInsetFrame(frame);
 
                         insetOffset[0] = (viewFrame.width-frameDims[0])/2;
                         insetOffset[1] = (viewFrame.height-frameDims[1])/2;
@@ -674,7 +667,11 @@ public class BeeTracker extends PApplet {
                 }
 
                 //end of movie reached
-                if(isPlaying && movie.duration() - time < 1f/movie.frameRate) {
+                if(
+                    isPlaying &&
+                    (imgSequenceMode && (int)time >= (int)duration ||
+                        !imgSequenceMode && duration - time < 1f/movie.frameRate)
+                ) {
                     isPlaying = false;
 
                     StringBuilder msg = new StringBuilder("End of video reached.\n\n");
@@ -737,7 +734,7 @@ public class BeeTracker extends PApplet {
 
                     PGraphics events;
                     if(record || isReplay()) {
-                        events = tu.getEventTimeline(this, time, movie.duration());
+                        events = tu.getEventTimeline(this, time, duration);
 
                         char[] tmp = path.toCharArray();
                         tmp[tmp.length - 1] = 'g';
@@ -763,7 +760,7 @@ public class BeeTracker extends PApplet {
                 for(float stamp : settingsTimeStamps) {
                     text(
                         "l",
-                        stamp/movie.duration()*(uic.getSeekBarWidth()-5) +
+                        stamp/duration*(uic.getSeekBarWidth()-5) +
                             (uic.getSeekBarPosition().x+2),
                         uic.getSeekBarPosition().y + 5
                     );
@@ -775,12 +772,14 @@ public class BeeTracker extends PApplet {
 
                 cp5.draw();
 
-                if(movie.height > 0) {
-                    uic.setSeekRange(movie.duration());
+                if(frame.height > 0) {
+                    duration = imgSequenceMode ? imgSequence.length-1 : movie.duration();
+                    
+                    uic.setSeekRange(duration, imgSequenceMode);
 
                     movieDims = scaledDims(
-                        movie.width,
-                        movie.height
+                        frame.width,
+                        frame.height
                     );
 
                     movieOffset[0] = (int)((width-movieDims[0])*.5f);
@@ -806,6 +805,122 @@ public class BeeTracker extends PApplet {
 
         //end critical section
         sem.release();
+    }
+
+    /**
+     * Retrieves the next frame for analysis. 
+     * @return the new frame as a PImage
+     */
+    private PImage updateFrame() {
+        PImage result = null;
+        
+        if(imgSequenceMode) {
+            if(imgSequence != null) {
+                if(isPlaying) {
+                    stillFrame = null;
+
+                    if(imgIndex < imgSequence.length-1) {
+                        imgIndex++;
+                    }
+
+                    uic.setSeekTime(imgIndex, imgSequenceMode);
+                }
+
+                while(stillFrame == null) {
+                    stillFrame = loadImage(imgSequence[imgIndex]);
+
+                    if(stillFrame.width == -1) {
+                        stillFrame = null;
+
+                        if(imgIndex < imgSequence.length-1) {
+                            imgIndex++;
+                        }
+                    }
+                }
+                
+                result = stillFrame;
+            }
+        }
+
+        else if(movie != null) {
+            if(movie.available()) {
+                movie.read();
+
+                if(!isPlaying) {
+                    movie.jump(uic.getSeekTime());
+                    movie.pause();
+                }
+
+                else {
+                    uic.setSeekTime(movie.time(), imgSequenceMode);
+                }
+            }
+        
+            result = movie.get();
+        }
+        
+        return result;
+    }
+   
+    /**
+     * Loads a sequence of images.
+     * @param dir a File object representing the parent directory of the images
+     */
+    public void loadImgSequence(File dir) {
+        if(dir != null) {
+            imgSequenceMode = true;
+
+            preLoad(dir);
+
+            java.util.LinkedList<String> list = new java.util.LinkedList<>();
+            videoName = dir.getName();
+    
+            loadSettings(
+                System.getProperty("user.dir") + File.separatorChar +
+                "output" + File.separatorChar +
+                videoName + File.separatorChar +
+                "settings.json"
+            );
+
+            for(File file : dir.listFiles()) {
+                if(file.isFile()) {
+                    list.add(file.getAbsolutePath());
+                }
+            }
+
+            //begin critical section
+            try {
+                sem.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace(log);
+    
+                Thread.currentThread().interrupt();
+            }
+    
+            imgSequence = new String[list.size()];
+            list.toArray(imgSequence);
+            java.util.Arrays.sort(imgSequence);
+            imgIndex = 0;
+
+            if(debug) {
+                println(imgSequence);
+            }
+
+            //end critical section
+            sem.release();
+
+            log.append("images loaded\n").flush();
+
+            postLoad();
+        }
+
+        else {
+            log.append("file selection canceled\n").flush();
+        }
+
+        if(frame != null) {
+            requestFocusInWindow();
+        }
     }
 
     /**
@@ -897,7 +1012,7 @@ public class BeeTracker extends PApplet {
     /**
      * Copies the inset frame for image processing and blob detection.
      */
-    private PImage copyInsetFrame() {
+    private PImage copyInsetFrame(PImage frame) {
         PImage result;
 
         //don't do anything until inset dimensions have stabilized
@@ -908,16 +1023,16 @@ public class BeeTracker extends PApplet {
         else {
             //for best results, copy source and destination should be same size
             result = createImage(
-                (int)(movie.width*(insetBox[2] - insetBox[0])),
-                (int)(movie.height*(insetBox[3] - insetBox[1])),
+                (int)(frame.width*(insetBox[2] - insetBox[0])),
+                (int)(frame.height*(insetBox[3] - insetBox[1])),
                 ARGB
             );
             result.copy(
-                movie,
-                (int)(movie.width*insetBox[0]),
-                (int)(movie.height*insetBox[1]),
-                (int)(movie.width*(insetBox[2] - insetBox[0])),
-                (int)(movie.height*(insetBox[3] - insetBox[1])),
+                frame,
+                (int)(frame.width*insetBox[0]),
+                (int)(frame.height*insetBox[1]),
+                (int)(frame.width*(insetBox[2] - insetBox[0])),
+                (int)(frame.height*(insetBox[3] - insetBox[1])),
                 0,
                 0,
                 result.width,
@@ -974,7 +1089,7 @@ public class BeeTracker extends PApplet {
      * ControlP5 callback method.
      */
     public void playButton() {
-        if(movie != null) {
+        if(movie != null || imgSequence != null) {
             boolean status;
 
             if(!isPlaying) {
@@ -987,7 +1102,10 @@ public class BeeTracker extends PApplet {
 
                     tu.setColors(colors);
 
-                    movie.play();
+                    if(!imgSequenceMode) {
+                        movie.play();
+                        movie.volume(0f);
+                    }
 
                     if(debug) {
                         print("starting playback...");
@@ -1011,7 +1129,9 @@ public class BeeTracker extends PApplet {
                     print("pausing playback...");
                 }
 
-                movie.pause();
+                if(!imgSequenceMode) {
+                    movie.pause();
+                }
             }
 
             if(status) {
@@ -1124,8 +1244,20 @@ public class BeeTracker extends PApplet {
      * @param value
      */
     public void seek(float value) {
-        if(!isPlaying) {
-            movie.play();
+        if(!imgSequenceMode) {
+            if(!isPlaying) {
+                movie.play();
+                movie.volume(0f);
+            }
+
+            movie.jump(value);
+            uic.setSeekTime(value, imgSequenceMode);
+        }
+        
+        else {
+            imgIndex = (int)value;
+            uic.setSeekTime(imgIndex, imgSequenceMode);
+            stillFrame = null;
         }
 
         if(debug) {
@@ -1163,9 +1295,6 @@ public class BeeTracker extends PApplet {
 
             timeStampIndex = i;
         }
-
-        movie.jump(value);
-        uic.setSeekTime(value);
     }
 
     /**
@@ -1182,6 +1311,13 @@ public class BeeTracker extends PApplet {
      */
     public void openButton() {
         VideoBrowser.getVideoFile(this, currentFile, log);
+    }
+
+    /**
+     * ControlP5 callback method.
+     */
+    public void openButton2() {
+        VideoBrowser.getImageSequence(this, currentFile, log);
     }
 
     /**
@@ -1208,8 +1344,16 @@ public class BeeTracker extends PApplet {
             uic.setZoomState(!pip);
         }
 
-        movie.stop();
-        movie = null;
+        if(imgSequenceMode) {
+            imgSequence = null;
+            stillFrame = null;
+            imgIndex = -1;
+        }
+
+        else {
+            movie.stop();
+            movie = null;
+        }
 
         movieDims = null;
         videoName = null;
@@ -1236,7 +1380,7 @@ public class BeeTracker extends PApplet {
         uic.setPlayVisibility(false);
         uic.setThresholdVisibility(false);
         uic.selectRadioButton(0);
-        uic.setSeekTime(0f);
+        uic.setSeekTime(0f, imgSequenceMode);
         radioButtons(0);
 
         log.append("video closed\n------\n").flush();
@@ -1761,20 +1905,34 @@ public class BeeTracker extends PApplet {
     }
 
     /**
+     * Performs pre-load operations
+     * @param file the selected File object
+     */
+    private void preLoad(File file) {
+        if(debug) {
+            println("selected File object: " + file.getName());
+        }
+        
+        currentFile = file;
+
+        log.append("toggling UI elements\n").flush();
+        
+        uic.setSetupGroupVisibility(true);
+        uic.setOpenButtonVisibility(false);
+        uic.setPlayVisibility(true);
+        uic.setThresholdVisibility(true);
+    }
+    
+    /**
      * Loads the selected video file.
      * @param file a File object representing the video to load
      */
     public void loadVideo(File file) {
         if(file != null) {
-            currentFile = file;
+            imgSequenceMode = false;
 
-            log.append("toggling UI elements\n").flush();
+            preLoad(file);
             
-            uic.setSetupGroupVisibility(true);
-            uic.setOpenButtonVisibility(false);
-            uic.setPlayVisibility(true);
-            uic.setThresholdVisibility(true);
-
             String[] nameParts = file.getName().split("\\.");
             StringBuilder builder = new StringBuilder(nameParts[0]);
             for(int i = 1; i < nameParts.length - 1; i++) {
@@ -1793,19 +1951,10 @@ public class BeeTracker extends PApplet {
 
             log.append("video loaded\n").flush();
 
-            movie.volume(0f);
             movie.play();
-            isPlaying = false;
+            movie.volume(0f);
 
-            log.append("reading frame annotations... ").flush();
-
-            replay = readFramePointsFromJSON();
-            replayCheckForTimeOut = false;
-            uic.setRecordVisibility(!replay);
-            uic.setRecordState(replay);
-            uic.setPlayState(false);
-
-            log.append(replay ? "success" : "failure").append('\n').flush();
+            postLoad();
         }
 
         else {
@@ -1815,6 +1964,23 @@ public class BeeTracker extends PApplet {
         if(frame != null) {
             requestFocusInWindow();
         }
+    }
+
+    /**
+     * Performs post-load operations.
+     */
+    private void postLoad() {
+        isPlaying = false;
+
+        log.append("reading frame annotations... ").flush();
+
+        replay = readFramePointsFromJSON();
+        replayCheckForTimeOut = false;
+        uic.setRecordVisibility(!replay);
+            uic.setRecordState(replay);
+        uic.setPlayState(false);
+
+        log.append(replay ? "success" : "failure").append('\n').flush();
     }
 
     /**
@@ -1879,7 +2045,7 @@ public class BeeTracker extends PApplet {
      * ControlP5 callback method.
      */
     public void addSetting() {
-        float time = movie.time();
+        float time = imgSequenceMode ? imgIndex : movie.time();
 
         //duplicate current settings
         float[] newExit = new float[4], newBox = new float[4];
@@ -1980,7 +2146,7 @@ public class BeeTracker extends PApplet {
                 thresholds.remove(timeStamp);
             }
 
-            updateSettings(movie.time());
+            updateSettings(imgSequenceMode ? imgIndex : movie.time());
         }
     }
 
@@ -1994,8 +2160,8 @@ public class BeeTracker extends PApplet {
             eventDialog = null;
         }
 
-        int time = (int)movie.time();
-        PGraphics graphic = tu.getEventTimeline(this, time, movie.duration());
+        int time = imgSequenceMode ? (int)imgIndex : (int)movie.time();
+        PGraphics graphic = tu.getEventTimeline(this, time, duration);
 
         graphic.fill(0xff000000);
         graphic.textAlign(RIGHT);

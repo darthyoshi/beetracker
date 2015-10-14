@@ -8,8 +8,11 @@
 package beetracker;
 
 import java.awt.FileDialog;
+import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
+
+import javax.swing.JFileChooser;
 
 /**
  *
@@ -27,13 +30,13 @@ public class VideoBrowser {
      */
     public static void getVideoFile(
         final BeeTracker parent,
-        final java.io.File currentFile,
+        final File currentFile,
         final java.io.PrintStream log
     ) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                java.io.File selectedFile = null;
+                File selectedFile = null;
 
                 FileDialog fd = new FileDialog(parent.frame, "Select video", FileDialog.LOAD);
 
@@ -76,7 +79,7 @@ public class VideoBrowser {
                 else {
                     fd.setFilenameFilter(new java.io.FilenameFilter() {
                         @Override
-                        public boolean accept(java.io.File dir, String name) {
+                        public boolean accept(File dir, String name) {
                             boolean result = false;
                             String[] parts = name.split("\\.");
 
@@ -153,6 +156,43 @@ public class VideoBrowser {
                 calendar.setTime((Date)dateTimeSpinner.getValue());
         
                 parent.setTime(calendar);
+            }
+        });
+    }
+
+    /**
+     * TODO javadoc
+     * @param parent
+     * @param currentDir
+     * @param log
+     */
+    public static void getImageSequence(
+        final BeeTracker parent,
+        final File currentDir,
+        final java.io.PrintStream log
+    ) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                File selectedDir = null;
+
+                JFileChooser chooser = new JFileChooser();
+                chooser.setCurrentDirectory(currentDir);
+
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                int returnVal = chooser.showOpenDialog(parent);
+                if(returnVal == JFileChooser.APPROVE_OPTION) {
+                    selectedDir = chooser.getSelectedFile();
+                }
+
+                if(selectedDir != null) {
+                    log.append("setting time stamp\n").flush();
+
+                    setDateTime(parent);
+                }
+
+                parent.loadImgSequence(selectedDir);
             }
         });
     }

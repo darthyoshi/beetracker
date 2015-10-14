@@ -27,13 +27,14 @@ public class UIControl {
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;
     private final Toggle selectToggle, pipToggle;
-    private final Button playButton, openButton, recordButton;
+    private final Button playButton, recordButton;
     private final PImage[] playIcons, recordIcons;
     private final Slider thresholdSlider, seekBar;
     private final Button eventLineButton;
     private final RadioButton radioButtons;
     private final Tooltip toolTip;
     private final Button statusLabel;
+    private final Button[] openButtons;
 
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
@@ -103,11 +104,20 @@ public class UIControl {
             .alignY(ControlP5Constants.CENTER)
             .setPaddingX(10);
 
-        openButton = cp5.addButton("openButton").setSize(120, 50);
-        openButton.setPosition(
-                (parent.width - openButton.getWidth())*.5f,
-                parent.height - 150
-            ).setCaptionLabel("Open video file")
+        openButtons = new Button[2];
+        openButtons[0] = cp5.addButton("openButton").setSize(120, 50);
+        openButtons[0].setPosition(
+                (parent.width - openButtons[0].getWidth())*.5f,
+                parent.height/2 + 100
+            ).setCaptionLabel("Load video")
+            .getCaptionLabel()
+            .alignX(ControlP5Constants.CENTER);
+
+        openButtons[1] = cp5.addButton("openButton2").setSize(120, 50);
+        openButtons[1].setPosition(
+                openButtons[0].getPosition().x,
+                openButtons[0].getPosition().y + 60
+            ).setCaptionLabel("Load images")
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
@@ -160,7 +170,6 @@ public class UIControl {
             .setSliderMode(Slider.FLEXIBLE)
             .setBroadcast(true);
         seekBar.setCaptionLabel("");
-        formatSeekLabel();
 
         eventLineButton = cp5.addButton("eventsButton")
             .setSize(150, 30)
@@ -383,12 +392,13 @@ public class UIControl {
     }
 
     /**
-     * Toggles the visibility of the "open video" button.
+     * Toggles the visibility of the title screen buttons.
      * @param visible the visibility state
      */
     public void setOpenButtonVisibility(boolean visible) {
-        openButton.setVisible(visible);
-        openButton.setBroadcast(visible);
+        for(Button button : openButtons) {        
+            button.setVisible(visible).setBroadcast(visible).setLock(!visible);
+        }
     }
 
     /**
@@ -426,27 +436,44 @@ public class UIControl {
     /**
      * Changes the value of the seek bar.
      * @param time the new time in seconds
+     * @param imgSequenceMode whether the footage is a sequence of images or a
+     *   video
      */
-    public void setSeekTime(float time) {
+    public void setSeekTime(float time, boolean imgSequenceMode) {
         seekBar.changeValue(time);
-        formatSeekLabel();
+        formatSeekLabel(imgSequenceMode);
     }
 
     /**
-     * Changes the seek bar label to mm:ss.mm format.
+     * Changes the seek bar label format.
+     * @param imgSequenceMode whether the footage is a sequence of images or a
+     *   video
      */
-    private void formatSeekLabel() {
-        int tmp = (int)(seekBar.getValue()*100);
-        seekBar.setValueLabel(String.format(
-                "%02d:%02d:%02d.%02d",
-                (tmp/6000)/60,
-                tmp/6000,
-                (tmp/100)%60,
-                tmp%100
-            )).getValueLabel()
-            .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
-            .setPaddingX(0)
-            .setPaddingY(5);
+    private void formatSeekLabel(boolean imgSequenceMode) {
+        int tmp = (int)seekBar.getValue();
+
+        if(imgSequenceMode) {
+            seekBar.setValueLabel(tmp + " of " + (int)seekBar.getMax())
+                .getValueLabel()
+                .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
+                .setPaddingX(0)
+                .setPaddingY(5);
+        }
+
+        else {
+            tmp *= 100;
+
+            seekBar.setValueLabel(String.format(
+                    "%02d:%02d:%02d.%02d",
+                    (tmp/6000)/60,
+                    tmp/6000,
+                    (tmp/100)%60,
+                    tmp%100
+                )).getValueLabel()
+                .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
+                .setPaddingX(0)
+                .setPaddingY(5);
+        }
     }
 
     /**
@@ -459,12 +486,14 @@ public class UIControl {
     /**
      * Sets the seek bar range.
      * @param duration the video duration
+     * @param imgSequenceMode whether the footage is a sequence of images or a
+     *   video
      */
-    public void setSeekRange(float duration) {
+    public void setSeekRange(float duration, boolean imgSequenceMode) {
         seekBar.setBroadcast(false)
             .setRange(0f, duration)
             .setBroadcast(true);
-        formatSeekLabel();
+        formatSeekLabel(imgSequenceMode);
     }
 
     /**

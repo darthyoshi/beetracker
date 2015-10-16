@@ -1405,9 +1405,11 @@ public class BeeTracker extends PApplet {
             log.close();
         }
 
-        if(movie != null) {
-            movie.stop();
-            movie = null;
+        if(movie != null || imgSequence != null) {
+            if(movie != null) {
+                movie.stop();
+                movie = null;
+            }
 
             if(debug) {
                 print("saving settings");

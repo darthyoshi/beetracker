@@ -1203,6 +1203,8 @@ public class BeeTracker extends PApplet {
     public void pipToggle() {
         pip = !pip;
 
+        uic.setZoomState(pip);
+
         if(pip) {
             frameDims = scaledDims(
                 movieDims[0]*(insetBox[2] - insetBox[0]),
@@ -1375,6 +1377,7 @@ public class BeeTracker extends PApplet {
         isPlaying = false;
         uic.setPlayState(false);
 
+        uic.toggleMenuStates();
         uic.setSetupGroupVisibility(false);
         uic.setOpenButtonVisibility(true);
         uic.setPlayVisibility(false);
@@ -1981,6 +1984,7 @@ public class BeeTracker extends PApplet {
         uic.setRecordVisibility(!replay);
             uic.setRecordState(replay);
         uic.setPlayState(false);
+        uic.toggleMenuStates();
 
         log.append(replay ? "success" : "failure").append('\n').flush();
     }

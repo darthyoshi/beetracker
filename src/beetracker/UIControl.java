@@ -2,10 +2,17 @@
  * @file UIControl.java
  * @author Kay Choi, 909926828
  * @date 14 Feb 15
- * @description Manages the ControlP5 elements for BeeTracker.
+ * @description Manages the UI elements for BeeTracker.
  */
 
 package beetracker;
+
+import java.awt.CheckboxMenuItem;
+import java.awt.Menu;
+import java.awt.MenuItem;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 
 import controlP5.Button;
 import controlP5.ControlP5;
@@ -36,6 +43,52 @@ public class UIControl {
     private final Button statusLabel;
     private final Button[] openButtons;
 
+    private static final java.awt.MenuBar mbar;
+    private static final Menu loadMenu;
+    private static final Menu optionMenu;
+    private static final MenuItem loadVideo;
+    private static final MenuItem loadImages;
+    private static final MenuItem closeItem;
+    private static final MenuItem exitItem;
+    private static final CheckboxMenuItem recordItem;
+    private static final CheckboxMenuItem zoomItem;
+    static {
+        mbar = new java.awt.MenuBar();
+
+        final Menu programMenu = new Menu("Program");
+
+        exitItem = new MenuItem("Exit");
+
+        programMenu.add(exitItem);
+        
+        final Menu footageMenu = new Menu("Footage");
+
+        loadMenu = new Menu("Load...");
+        loadVideo = new MenuItem("Video");
+        loadImages = new MenuItem("Image Sequence");
+
+        loadMenu.add(loadVideo);
+        loadMenu.add(loadImages);
+
+        footageMenu.add(loadMenu);
+
+        closeItem = new MenuItem("Close");
+        closeItem.setEnabled(false);
+
+        footageMenu.add(closeItem);
+
+        optionMenu = new Menu("Options");
+        optionMenu.setEnabled(false);
+        recordItem = new CheckboxMenuItem("Record");
+        zoomItem = new CheckboxMenuItem("Zoom");
+        optionMenu.add(recordItem);
+        optionMenu.add(zoomItem);
+
+        mbar.add(programMenu);
+        mbar.add(footageMenu);
+        mbar.add(optionMenu);
+    }
+
     private static final String listLbl = "New color";
     private static final String[] selectMode = {"Inset Frame", "Hive Exit"};
     private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
@@ -56,9 +109,9 @@ public class UIControl {
     /**
      * Class constructor.
      * @param parent the instantiating object
-     * @param cp5 the ControlP5 object\
+     * @param cp5 the ControlP5 object
      */
-    public UIControl(BeeTracker parent, ControlP5 cp5) {
+    public UIControl(final BeeTracker parent, ControlP5 cp5) {
         cp5.disableShortcuts();
         cp5.setAutoDraw(false);
 
@@ -291,6 +344,47 @@ public class UIControl {
            .toUpperCase(false)
            .alignX(ControlP5Constants.CENTER)
            .set(modes[0]);
+
+        if(parent.frame != null) {
+            parent.frame.setMenuBar(mbar);
+
+            loadVideo.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    parent.openButton();
+                }
+            });
+            loadImages.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    parent.openButton2();
+                }
+            });
+            closeItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    parent.ejectButton();
+                }
+            });
+            exitItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    parent.exit();
+                }
+            });
+            recordItem.addItemListener(new java.awt.event.ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent arg0) {
+                    parent.recordButton();
+                }
+            });
+            zoomItem.addItemListener(new java.awt.event.ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent arg0) {
+                    parent.pipToggle();
+                }
+            });
+        }
     }
 
     /**
@@ -504,6 +598,7 @@ public class UIControl {
         isRecord = state;
         int index = (state ? 1 : 0);
         recordButton.setImage(recordIcons[index]);
+        recordItem.setState(state);
         toolTip.register(recordButton, recordTips[index]);
 
         updateEventButtonVisibility();
@@ -568,7 +663,6 @@ public class UIControl {
     private void updateEventButtonVisibility() {
         boolean tmp = isPlaying && isRecord;
         eventLineButton.setVisible(tmp).setLock(!tmp);
-
     }
     
     /**
@@ -576,6 +670,17 @@ public class UIControl {
      * @param state the new zoom state
      */
     public void setZoomState(boolean state) {
-        pipToggle.setState(state);
+        pipToggle.setBroadcast(false).setState(state).setBroadcast(true);
+        zoomItem.setState(state);
+    }
+
+    /**
+     * Toggles the activation states of the "Footage" menu items.
+     */
+    public void toggleMenuStates() {
+        boolean state = loadMenu.isEnabled();
+        loadMenu.setEnabled(!state);
+        closeItem.setEnabled(state);
+        optionMenu.setEnabled(state);
     }
 }

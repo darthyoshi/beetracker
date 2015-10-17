@@ -13,6 +13,7 @@ import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import controlP5.Button;
 import controlP5.ControlP5;
@@ -44,14 +45,13 @@ public class UIControl {
     private final Button[] openButtons;
 
     private static final java.awt.MenuBar mbar;
-    private static final Menu loadMenu;
-    private static final Menu optionMenu;
-    private static final MenuItem loadVideo;
-    private static final MenuItem loadImages;
+    private static final Menu loadMenu, optionMenu;
+    private static final MenuItem loadVideo, loadImages;
     private static final MenuItem closeItem;
     private static final MenuItem exitItem;
-    private static final CheckboxMenuItem recordItem;
-    private static final CheckboxMenuItem zoomItem;
+    private static final MenuItem addSettingItem, removeSettingItem;
+    private static final MenuItem playItem;
+    private static final CheckboxMenuItem recordItem, zoomItem;
     static {
         mbar = new java.awt.MenuBar();
 
@@ -60,7 +60,7 @@ public class UIControl {
         exitItem = new MenuItem("Exit");
 
         programMenu.add(exitItem);
-        
+
         final Menu footageMenu = new Menu("Footage");
 
         loadMenu = new Menu("Load...");
@@ -71,18 +71,36 @@ public class UIControl {
         loadMenu.add(loadImages);
 
         footageMenu.add(loadMenu);
+        footageMenu.addSeparator();
+
+        playItem = new MenuItem("Play");
+        playItem.setEnabled(false);
+
+        footageMenu.add(playItem);
 
         closeItem = new MenuItem("Close");
         closeItem.setEnabled(false);
 
+        footageMenu.addSeparator();
         footageMenu.add(closeItem);
 
         optionMenu = new Menu("Options");
         optionMenu.setEnabled(false);
         recordItem = new CheckboxMenuItem("Record");
         zoomItem = new CheckboxMenuItem("Zoom");
+
         optionMenu.add(recordItem);
         optionMenu.add(zoomItem);
+        optionMenu.addSeparator();
+
+        final Menu settingsMenu = new Menu("Settings");
+        addSettingItem = new MenuItem("Add to current timestamp");
+        removeSettingItem = new MenuItem("Remove current settings");
+
+        settingsMenu.add(addSettingItem);
+        settingsMenu.add(removeSettingItem);
+
+        optionMenu.add(settingsMenu);
 
         mbar.add(programMenu);
         mbar.add(footageMenu);
@@ -372,16 +390,34 @@ public class UIControl {
                     parent.exit();
                 }
             });
-            recordItem.addItemListener(new java.awt.event.ItemListener() {
+            recordItem.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent arg0) {
                     parent.recordButton();
                 }
             });
-            zoomItem.addItemListener(new java.awt.event.ItemListener() {
+            zoomItem.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent arg0) {
                     parent.pipToggle();
+                }
+            });
+            playItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    parent.playButton();
+                }
+            });
+            addSettingItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    parent.addSetting();
+                }
+            });
+            removeSettingItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    parent.removeSetting();
                 }
             });
         }
@@ -461,6 +497,8 @@ public class UIControl {
 
         playButton.setImage(playIcons[i]);
         toolTip.register(playButton, playTips[j]);
+
+        playItem.setLabel((state ? "Pause" : "Play"));
 
         updateEventButtonVisibility();
     }
@@ -544,9 +582,10 @@ public class UIControl {
      *   video
      */
     private void formatSeekLabel(boolean imgSequenceMode) {
-        int tmp = (int)seekBar.getValue();
+        int tmp;
 
         if(imgSequenceMode) {
+            tmp = (int)seekBar.getValue();
             seekBar.setValueLabel(tmp + " of " + (int)seekBar.getMax())
                 .getValueLabel()
                 .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
@@ -555,7 +594,7 @@ public class UIControl {
         }
 
         else {
-            tmp *= 100;
+            tmp = (int)(seekBar.getValue()*100);
 
             seekBar.setValueLabel(String.format(
                     "%02d:%02d:%02d.%02d",
@@ -675,12 +714,13 @@ public class UIControl {
     }
 
     /**
-     * Toggles the activation states of the "Footage" menu items.
+     * Toggles the activation states of the "Footage" and "Options" menu items.
      */
     public void toggleMenuStates() {
         boolean state = loadMenu.isEnabled();
         loadMenu.setEnabled(!state);
         closeItem.setEnabled(state);
+        playItem.setEnabled(state);
         optionMenu.setEnabled(state);
     }
 }

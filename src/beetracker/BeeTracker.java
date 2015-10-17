@@ -733,13 +733,13 @@ public class BeeTracker extends PApplet {
                         formattedTime, summary); 
 
                     PGraphics events;
-                    if(record || isReplay()) {
+                    if((record || replay) && path != null) {
                         events = tu.getEventTimeline(this, time, duration);
 
                         char[] tmp = path.toCharArray();
-                        tmp[tmp.length - 1] = 'g';
-                        tmp[tmp.length - 2] = 'n';
                         tmp[tmp.length - 3] = 'p';
+                        tmp[tmp.length - 2] = 'n';
+                        tmp[tmp.length - 1] = 'g';
 
                         events.save(String.valueOf(tmp));
                     }

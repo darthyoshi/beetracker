@@ -1054,21 +1054,23 @@ public class BeeTracker extends PApplet {
      * Edits the selected color in the color list.
      * @param newColor the new 6-digit hexadecimal RGB value
      */
-    void setColor(int newColor) {
-        if(listVal < 0) {
-            if(!colors.hasValue(newColor)) {
-                String code = String.format("%06x", newColor);
+    void setColor(Integer newColor) {
+        if(newColor != null) {
+            if(listVal < 0) {
+                if(!colors.hasValue(newColor)) {
+                    String code = String.format("%06x", newColor);
 
-                uic.addListItem(code);
+                    uic.addListItem(code);
 
-                colors.append(newColor);
+                    colors.append(newColor);
+                }
             }
-        }
 
-        else {
-            colors.set(listVal, newColor);
+            else {
+                colors.set(listVal, newColor);
 
-            uic.setListItem(String.format("%06x", newColor), listVal);
+                uic.setListItem(String.format("%06x", newColor), listVal);
+            }
         }
     }
 

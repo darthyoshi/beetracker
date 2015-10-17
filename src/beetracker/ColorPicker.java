@@ -23,11 +23,15 @@ public class ColorPicker {
             public void run() {
                 java.awt.Color newColor = javax.swing.JColorChooser
                     .showDialog(parent, "Select Color", java.awt.Color.BLACK);
-                int result = 0;
+                Integer result;
 
                 if(newColor != null) {
                     result = (newColor.getRed() << 16) +
                         (newColor.getGreen() << 8) + newColor.getBlue();
+                }
+
+                else {
+                    result = null;
                 }
 
                 parent.setColor(result);

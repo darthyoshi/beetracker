@@ -66,6 +66,7 @@ public class BeeTracker extends PApplet {
     private UIControl uic;
     private BlobDetectionUtils bdu;
     private TrackingUtils tu;
+    private ShapeRecognizer rec;
 
     private PrintStream log = null;
 
@@ -159,6 +160,8 @@ public class BeeTracker extends PApplet {
         bdu = new BlobDetectionUtils(this, width, height);
 
         tu = new TrackingUtils(debug);
+
+        rec = new ShapeRecognizer(this, debug);
 
         movieOffset = new int[2];
         frameDims = new int[2];

@@ -193,8 +193,8 @@ public class UIControl {
             .alignX(ControlP5Constants.CENTER);
 
         playIcons = new PImage[2];
-        playIcons[0] = parent.loadImage("data/img/playbutton.png");
-        playIcons[1] = parent.loadImage("data/img/pausebutton.png");
+        playIcons[0] = parent.loadImage("img/playbutton.png");
+        playIcons[1] = parent.loadImage("img/pausebutton.png");
         playButton = cp5.addButton("playButton")
             .setCaptionLabel("")
             .setPosition(90, parent.height - 40)
@@ -211,13 +211,13 @@ public class UIControl {
                 playButton.getPosition().y
             ).setSize(30, 30)
             .setGroup(playGroup)
-            .setImage(parent.loadImage("data/img/ejectbutton.png"));
+            .setImage(parent.loadImage("img/ejectbutton.png"));
 
         toolTip.register("ejectButton", "Close the current video");
 
         recordIcons = new PImage[2];
-        recordIcons[0] = parent.loadImage("data/img/recordbutton1.png");
-        recordIcons[1] = parent.loadImage("data/img/recordbutton2.png");
+        recordIcons[0] = parent.loadImage("img/recordbutton1.png");
+        recordIcons[1] = parent.loadImage("img/recordbutton2.png");
         recordButton = cp5.addButton("recordButton")
             .setCaptionLabel("")
             .setPosition(

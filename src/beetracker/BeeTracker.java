@@ -70,7 +70,7 @@ public class BeeTracker extends PApplet {
 
     private PrintStream log = null;
 
-    private final PImage titleImg = loadImage("data/img/title.png");
+    private final PImage titleImg = loadImage("img/title.png");
 
     private static final boolean debug = false;
 
@@ -105,14 +105,14 @@ public class BeeTracker extends PApplet {
             File.separatorChar + "output");
         outputDir.mkdir();
 
-        processing.core.PFont font = loadFont("data/LiberationSansNarrow-15.vlw");
+        processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
         textFont(font);
 
         cp5 = new controlP5.ControlP5(this);
         cp5.setFont(font);
 
         if(frame != null) {
-            frame.setIconImage((java.awt.Image)loadImage("data/img/icon.png").getNative());
+            frame.setIconImage((java.awt.Image)loadImage("img/icon.png").getNative());
             frame.setTitle("BeeTracker");
             frame.addWindowListener(new java.awt.event.WindowListener() {
                 @Override

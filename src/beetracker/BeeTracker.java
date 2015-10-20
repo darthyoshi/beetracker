@@ -906,7 +906,9 @@ public class BeeTracker extends PApplet {
             imgIndex = 0;
 
             if(debug) {
-                println(imgSequence);
+                for(String fileName : imgSequence) {
+                    println(fileName);
+                }
             }
 
             //end critical section
@@ -1409,6 +1411,14 @@ public class BeeTracker extends PApplet {
      */
     @Override
     public void exit() {
+        try {
+            sem.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+
+            e.printStackTrace(log);
+        }
+
         if(log != null) {
             log.close();
         }
@@ -1435,6 +1445,8 @@ public class BeeTracker extends PApplet {
                 println(" - done");
             }
         }
+
+        sem.release();
 
         super.exit();
     }

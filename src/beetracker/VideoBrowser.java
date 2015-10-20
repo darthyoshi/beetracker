@@ -161,10 +161,10 @@ public class VideoBrowser {
     }
 
     /**
-     * TODO javadoc
-     * @param parent
-     * @param currentDir
-     * @param log
+     * Displays a file browser for image directories.
+     * @param parent the invoking BeeTracker
+     * @param currentDir the previously selected directory
+     * @param log a PrintStream object used for logging
      */
     public static void getImageSequence(
         final BeeTracker parent,

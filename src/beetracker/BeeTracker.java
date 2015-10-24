@@ -62,7 +62,6 @@ public class BeeTracker extends PApplet {
     private int imgIndex = -1;
     private float duration;
 
-    private controlP5.ControlP5 cp5;
     private UIControl uic;
     private BlobDetectionUtils bdu;
     private TrackingUtils tu;
@@ -108,9 +107,6 @@ public class BeeTracker extends PApplet {
         processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
         textFont(font);
 
-        cp5 = new controlP5.ControlP5(this);
-        cp5.setFont(font);
-
         if(frame != null) {
             frame.setIconImage((java.awt.Image)loadImage("img/icon.png").getNative());
             frame.setTitle("BeeTracker");
@@ -155,7 +151,7 @@ public class BeeTracker extends PApplet {
             crash(ex.toString());
         }
 
-        uic = new UIControl(this, cp5);
+        uic = new UIControl(this, font);
 
         bdu = new BlobDetectionUtils(this, width, height);
 
@@ -733,7 +729,7 @@ public class BeeTracker extends PApplet {
                     }
 
                     String path = saveSummaryResults(date, timeStamps,
-                        formattedTime, summary); 
+                        formattedTime, summary);
 
                     PGraphics events;
                     if((record || replay) && path != null) {
@@ -754,7 +750,7 @@ public class BeeTracker extends PApplet {
                         events, path);
                 }
 
-                cp5.draw();
+                uic.draw();
 
                 //mark settings time stamps
                 textAlign(LEFT, TOP);
@@ -773,11 +769,11 @@ public class BeeTracker extends PApplet {
             else {
                 text("Loading...", width*.5f, height*.5f);
 
-                cp5.draw();
+                uic.draw();
 
                 if(frame.height > 0) {
                     duration = imgSequenceMode ? imgSequence.length-1 : movie.duration();
-                    
+
                     uic.setSeekRange(duration, imgSequenceMode);
 
                     movieDims = scaledDims(
@@ -803,7 +799,7 @@ public class BeeTracker extends PApplet {
             imageMode(CENTER);
             image(titleImg, .5f*width, .5f*height-50);
 
-            cp5.draw();
+            uic.draw();
         }
 
         //end critical section
@@ -816,7 +812,7 @@ public class BeeTracker extends PApplet {
      */
     private PImage updateFrame() {
         PImage result = null;
-        
+
         if(imgSequenceMode) {
             if(imgSequence != null) {
                 if(isPlaying) {
@@ -840,7 +836,7 @@ public class BeeTracker extends PApplet {
                         }
                     }
                 }
-                
+
                 result = stillFrame;
             }
         }
@@ -858,13 +854,13 @@ public class BeeTracker extends PApplet {
                     uic.setSeekTime(movie.time(), imgSequenceMode);
                 }
             }
-        
+
             result = movie.get();
         }
-        
+
         return result;
     }
-   
+
     /**
      * Loads a sequence of images.
      * @param dir a File object representing the parent directory of the images
@@ -877,7 +873,7 @@ public class BeeTracker extends PApplet {
 
             java.util.LinkedList<String> list = new java.util.LinkedList<>();
             videoName = dir.getName();
-    
+
             loadSettings(
                 System.getProperty("user.dir") + File.separatorChar +
                 "output" + File.separatorChar +
@@ -896,10 +892,10 @@ public class BeeTracker extends PApplet {
                 sem.acquire();
             } catch (InterruptedException e) {
                 e.printStackTrace(log);
-    
+
                 Thread.currentThread().interrupt();
             }
-    
+
             imgSequence = new String[list.size()];
             list.toArray(imgSequence);
             java.util.Arrays.sort(imgSequence);
@@ -1262,7 +1258,7 @@ public class BeeTracker extends PApplet {
             movie.jump(value);
             uic.setSeekTime(value, imgSequenceMode);
         }
-        
+
         else {
             imgIndex = (int)value;
             uic.setSeekTime(imgIndex, imgSequenceMode);
@@ -1934,17 +1930,17 @@ public class BeeTracker extends PApplet {
         if(debug) {
             println("selected File object: " + file.getName());
         }
-        
+
         currentFile = file;
 
         log.append("toggling UI elements\n").flush();
-        
+
         uic.setSetupGroupVisibility(true);
         uic.setOpenButtonVisibility(false);
         uic.setPlayVisibility(true);
         uic.setThresholdVisibility(true);
     }
-    
+
     /**
      * Loads the selected video file.
      * @param file a File object representing the video to load
@@ -1954,7 +1950,7 @@ public class BeeTracker extends PApplet {
             imgSequenceMode = false;
 
             preLoad(file);
-            
+
             String[] nameParts = file.getName().split("\\.");
             StringBuilder builder = new StringBuilder(nameParts[0]);
             for(int i = 1; i < nameParts.length - 1; i++) {
@@ -2205,7 +2201,7 @@ public class BeeTracker extends PApplet {
     public void setEventDialog(JDialog dialog) {
         eventDialog = dialog;
     }
-    
+
     /**
      * Main method for executing BeeTracker as a Java application.
      * @param args command line arguments

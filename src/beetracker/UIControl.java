@@ -32,6 +32,8 @@ import processing.core.PImage;
  * @author Kay Choi
  */
 class UIControl {
+    private final ControlP5 cp5;
+
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;
     private final Toggle selectToggle, pipToggle;
@@ -127,9 +129,12 @@ class UIControl {
     /**
      * Class constructor.
      * @param parent the instantiating object
-     * @param cp5 the ControlP5 object
+     * @param font the program font
      */
     UIControl(final BeeTracker parent, processing.core.PFont font) {
+        cp5 = new ControlP5(parent);
+        cp5.setFont(font);
+
         cp5.disableShortcuts();
         cp5.setAutoDraw(false);
 
@@ -722,5 +727,12 @@ class UIControl {
         closeItem.setEnabled(state);
         playItem.setEnabled(state);
         optionMenu.setEnabled(state);
+    }
+
+    /**
+     * Draws the ControlP5 elements.
+     */
+    void draw() {
+        cp5.draw();
     }
 }

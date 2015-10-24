@@ -20,7 +20,7 @@ import processing.data.IntList;
  *
  * @author Kay Choi
  */
-public class TrackingUtils {
+class TrackingUtils {
     private final boolean debug;
     private HashMap<Integer, List<List<float[]>>> allPaths;
     private HashMap<Integer, FloatList> departureTimes, arrivalTimes;
@@ -33,7 +33,7 @@ public class TrackingUtils {
      * Class constructor.
      * @param debug whether or not debug mode is enabled
      */
-    public TrackingUtils(boolean debug) {
+    TrackingUtils(BeeTracker parent, boolean debug) {
         this.debug = debug;
 
         init();
@@ -57,7 +57,7 @@ public class TrackingUtils {
      * @param time timestamp of the current frame in seconds
      * @param duration the video duration in seconds
      */
-    public void trackCentroids(
+    void trackCentroids(
         BeeTracker parent,
         HashMap<Integer, List<float[]>> newPointMap,
         int[] frameDims,
@@ -272,7 +272,7 @@ public class TrackingUtils {
                 }
             }
         }
-        
+
         updateEventTimeline(parent, time, duration);
     }
 
@@ -280,7 +280,7 @@ public class TrackingUtils {
      * Sets the colors to track.
      * @param newColors an IntList containing six-digit hexadecimal RGB values
      */
-    public void setColors(IntList newColors) {
+    void setColors(IntList newColors) {
         for(int color : newColors) {
             if(!colors.hasValue(color)) {
                 colors.append(color);
@@ -300,7 +300,7 @@ public class TrackingUtils {
      * @return a HashMap mapping Strings to HashMaps mapping six-digit
      *   hexadecimal RGB values to Lists of floating point timestamps
      */
-    public HashMap<Float, String> getSummary() {
+    HashMap<Float, String> getSummary() {
         HashMap<Float, String> result = new HashMap<>();
 
         for(int color : colors) {
@@ -336,7 +336,7 @@ public class TrackingUtils {
     /**
      * Initializes all tracking data structures.
      */
-    public final void init() {
+    final void init() {
         allPaths = new HashMap<>();
         departureTimes = new HashMap<>();
         arrivalTimes = new HashMap<>();
@@ -349,7 +349,7 @@ public class TrackingUtils {
      * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
      *   timestamps
      */
-    public HashMap<Integer, FloatList> getDepartureTimes() {
+    HashMap<Integer, FloatList> getDepartureTimes() {
         return departureTimes;
     }
 
@@ -357,19 +357,19 @@ public class TrackingUtils {
      * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
      *   timestamps
      */
-    public HashMap<Integer, FloatList> getArrivalTimes() {
+    HashMap<Integer, FloatList> getArrivalTimes() {
         return arrivalTimes;
     }
 
     /**
-     * Draws the recorded paths. 
+     * Draws the recorded paths.
      * @param buf the buffer image to draw to
      * @param bufOffset the xy coordinates of the buffer image
      * @param frameDims the dimensions of the image frame for which blob
      *   detection is being performed, in pixels
      * @param frameOffset the xy coordinates of the inset frame origin, in pixels
      */
-    public void drawPaths(
+    void drawPaths(
         PGraphics buf,
         int[] bufOffset,
         int[] frameDims,
@@ -386,7 +386,7 @@ public class TrackingUtils {
                 for(i = 0; i < path.size()-1; i++) {
                     point = path.get(i);
                     point2 = path.get(i+1);
-                    
+
                     buf.line(
                         point[0]*frameDims[0]+frameOffset[0]-bufOffset[0],
                         point[1]*frameDims[1]+frameOffset[1]-bufOffset[0],
@@ -397,7 +397,7 @@ public class TrackingUtils {
             }
         }
     }
-    
+
     /**
      * Generates a visual summary of the currently recorded events.
      * @param parent the invoking BeeTracker
@@ -434,7 +434,7 @@ public class TrackingUtils {
                 eventTimeline.fill(0xffcccccc);
                 eventTimeline.rectMode(PConstants.CORNER);
                 eventTimeline.rect(25, yOffset-25, 370, 20);
-                
+
                 eventTimeline.fill(0xff000000);
                 eventTimeline.text("A", 7, yOffset-15);
                 eventTimeline.text("D", 7, yOffset-5);
@@ -501,7 +501,7 @@ public class TrackingUtils {
             BeeTracker.println("done");
         }
     }
-    
+
     /**
      * Retrieves the visual summary of the currently recorded events.
      * @param parent the invoking BeeTracker
@@ -509,7 +509,7 @@ public class TrackingUtils {
      * @param duration the video duration in seconds
      * @return a PGraphics image of the event timeline
      */
-    public PGraphics getEventTimeline(
+    PGraphics getEventTimeline(
         BeeTracker parent,
         float time,
         float duration
@@ -538,7 +538,7 @@ public class TrackingUtils {
 
         for(int i = 1; i <= colors.size(); i++) {
             yOffset = 50*i;
-            
+
             result.line(
               xOffset,
               yOffset-24,

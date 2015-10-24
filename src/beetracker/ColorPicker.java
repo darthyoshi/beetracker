@@ -12,12 +12,12 @@ package beetracker;
  *
  * @author Kay Choi
  */
-public class ColorPicker {
+class ColorPicker {
     /**
      * Displays a color picker.
      * @param parent the instantiating BeeTracker
      */
-    public static void getColor(final BeeTracker parent) {
+    static void getColor(final BeeTracker parent) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {

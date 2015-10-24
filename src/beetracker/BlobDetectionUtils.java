@@ -23,7 +23,7 @@ import processing.data.IntList;
  *
  * @author Kay Choi
  */
-public class BlobDetectionUtils {
+class BlobDetectionUtils {
     private final BeeTracker parent;
     private static final int filterRadius = 5;
     private final BlobDetection bd;
@@ -35,7 +35,7 @@ public class BlobDetectionUtils {
      * @param width the width of the images to process
      * @param height the height of the images to process
      */
-    public BlobDetectionUtils(BeeTracker parent, int width, int height) {
+    BlobDetectionUtils(BeeTracker parent, int width, int height) {
         this.parent = parent;
 
         blobColors = new IntList();
@@ -54,7 +54,7 @@ public class BlobDetectionUtils {
      * @param colors a list of the integer RGB values to scan for
      * @param threshold an array containing the HSV thresholds
      */
-    public void filterImg(PImage img, IntList colors, int[] threshold) {
+    void filterImg(PImage img, IntList colors, int[] threshold) {
         int pixelHue, pixelSat, pixelVal;
         int i, j;
 
@@ -111,7 +111,7 @@ public class BlobDetectionUtils {
      * @param frameOffset the xy coordinates of the inset frame origin, in pixels
      * @param exitXY the xy coordinates of the exit center, in pixels
      */
-    public void drawBlobs(
+    void drawBlobs(
         processing.core.PGraphics buf,
         int[] bufOffset,
         int[] frameDims,
@@ -164,7 +164,7 @@ public class BlobDetectionUtils {
      * @return a HashMap mapping RGB integer values to Lists of normalized xy
      *   coordinates of the detected blob centroids
      */
-    public HashMap<Integer, List<float[]>> getCentroids(PImage frame,
+    HashMap<Integer, List<float[]>> getCentroids(PImage frame,
         IntList colors)
     {
         HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
@@ -247,14 +247,14 @@ public class BlobDetectionUtils {
     /**
      * @return the width of the images to process
      */
-    public int getImageWidth() {
+    int getImageWidth() {
         return bd.imgWidth;
     }
 
     /**
      * @return the height of the images to process
      */
-    public int getImageHeight() {
+    int getImageHeight() {
         return bd.imgHeight;
     }
 

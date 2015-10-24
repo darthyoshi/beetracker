@@ -18,7 +18,7 @@ import javax.swing.JFileChooser;
  *
  * @author Kay Choi
  */
-public class VideoBrowser {
+class VideoBrowser {
     private static final String[] videoExts = {"mov", "mpg", "mpeg", "avi", "mp4"};
     private static final String OS = System.getProperty("os.name");
 
@@ -28,7 +28,7 @@ public class VideoBrowser {
      * @param currentFile the most recently selected file
      * @param log a PrintStream object used for logging
      */
-    public static void getVideoFile(
+    static void getVideoFile(
         final BeeTracker parent,
         final File currentFile,
         final java.io.PrintStream log
@@ -133,7 +133,7 @@ public class VideoBrowser {
                 Date start = calendar.getTime();
                 calendar.add(Calendar.YEAR, 200);
                 Date stop = calendar.getTime();
-        
+
                 javax.swing.JSpinner dateTimeSpinner = new javax.swing.JSpinner(
                     new javax.swing.SpinnerDateModel(
                         now,
@@ -142,19 +142,19 @@ public class VideoBrowser {
                         Calendar.DATE
                     )
                 );
-        
+
                 javax.swing.JPanel panel = new javax.swing.JPanel();
                 panel.add(dateTimeSpinner);
-        
+
                 javax.swing.JOptionPane.showMessageDialog(
                     parent,
                     panel,
                     "Set the video time stamp",
                     javax.swing.JOptionPane.PLAIN_MESSAGE
                 );
-        
+
                 calendar.setTime((Date)dateTimeSpinner.getValue());
-        
+
                 parent.setTime(calendar);
             }
         });
@@ -166,7 +166,7 @@ public class VideoBrowser {
      * @param currentDir the previously selected directory
      * @param log a PrintStream object used for logging
      */
-    public static void getImageSequence(
+    static void getImageSequence(
         final BeeTracker parent,
         final File currentDir,
         final java.io.PrintStream log

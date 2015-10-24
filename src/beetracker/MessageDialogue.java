@@ -18,7 +18,7 @@ import javax.swing.JScrollPane;
  *
  * @author Kay Choi
  */
-public class MessageDialogue {
+class MessageDialogue {
     private static final String errorMsg[] = {
         "No colors have been selected.\n",
         "No hive exit has been defined.\n"
@@ -35,7 +35,7 @@ public class MessageDialogue {
      * @param parent the invoking BeeTracker
      * @param errors the setup error flags
      */
-    public static void playButtonErrorMessage(final BeeTracker parent,
+    static void playButtonErrorMessage(final BeeTracker parent,
         final boolean[] errors)
     {
         EventQueue.invokeLater(new Runnable() {
@@ -61,7 +61,7 @@ public class MessageDialogue {
      * Displays an error message if the selected file is not a video file.
      * @param parent the invoking BeeTracker
      */
-    public static void wrongFileTypeMessage(BeeTracker parent) {
+    static void wrongFileTypeMessage(BeeTracker parent) {
         JOptionPane.showMessageDialog(
             parent,
             "Please select a video file!",
@@ -74,7 +74,7 @@ public class MessageDialogue {
      * Displays a dialogue to confirm whether or not to prematurely end playback.
      * @param parent the invoking BeeTracker
      */
-    public static void stopButtonWarning(final BeeTracker parent) {
+    static void stopButtonWarning(final BeeTracker parent) {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -99,7 +99,7 @@ public class MessageDialogue {
      * @param events the event timeline image
      * @param fileName the name of the summary file
      */
-    public static void endVideoMessage(
+    static void endVideoMessage(
         final BeeTracker parent,
         final String msg,
         final processing.core.PGraphics events,
@@ -127,7 +127,7 @@ public class MessageDialogue {
                     tabPane.add("Text summary", scrollPane);
                     tabPane.add("Visual summary", scrollPane2);
                 }
-                
+
                 else {
                     tabPane = null;
                 }
@@ -165,7 +165,7 @@ public class MessageDialogue {
      * @param parent the invoking BeeTracker
      * @param msg the cause of the crash
      */
-    public static void crashMessage(final BeeTracker parent, final String msg) {
+    static void crashMessage(final BeeTracker parent, final String msg) {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -218,14 +218,14 @@ public class MessageDialogue {
      * @param parent the invoking BeeTracker
      * @param graphic an PGraphics object depicting the event timeline
      */
-    public static void showEventTimeline(
+    static void showEventTimeline(
         final BeeTracker parent,
         final processing.core.PGraphics graphic
     ) {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                int width, height; 
+                int width, height;
                 if(graphic.height > 300) {
                     height = 300;
                     width = graphic.width + 18;
@@ -241,7 +241,7 @@ public class MessageDialogue {
                         (java.awt.Image)graphic.getNative()))
                 );
                 scrollPane.setSize(width, height);
-                
+
                 JDialog dialog = (new JOptionPane(
                         scrollPane,
                         JOptionPane.PLAIN_MESSAGE,

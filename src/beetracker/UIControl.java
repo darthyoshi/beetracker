@@ -31,7 +31,7 @@ import processing.core.PImage;
  *
  * @author Kay Choi
  */
-public class UIControl {
+class UIControl {
     private final Group setupGroup, playGroup, thresholdGroup;
     private final DropdownList colorList;
     private final Toggle selectToggle, pipToggle;
@@ -129,7 +129,7 @@ public class UIControl {
      * @param parent the instantiating object
      * @param cp5 the ControlP5 object
      */
-    public UIControl(final BeeTracker parent, ControlP5 cp5) {
+    UIControl(final BeeTracker parent, processing.core.PFont font) {
         cp5.disableShortcuts();
         cp5.setAutoDraw(false);
 
@@ -427,7 +427,7 @@ public class UIControl {
      * Toggles the visibility of the playback controls.
      * @param visible the visibility state
      */
-    public void setPlayVisibility(boolean visible) {
+    void setPlayVisibility(boolean visible) {
         if(visible) {
             playGroup.open();
         }
@@ -440,7 +440,7 @@ public class UIControl {
      * Adds a new item to the color selection list.
      * @param label the item label
      */
-    public void addListItem(String label) {
+    void addListItem(String label) {
         colorList.addItem(label, colorList.getListBoxItems().length-1);
     }
 
@@ -448,7 +448,7 @@ public class UIControl {
      * Removes an item from the color selection list.
      * @param lbl the label of the item to remove
      */
-    public void removeListItem(String lbl) {
+    void removeListItem(String lbl) {
         String[][] oldLbls = colorList.getListBoxItems();
         String[] newLbls = new String[oldLbls.length-1];
 
@@ -473,7 +473,7 @@ public class UIControl {
      * @param newLbl the new label of the item
      * @param index the index of the item
      */
-    public void setListItem(String newLbl, int index) {
+    void setListItem(String newLbl, int index) {
         colorList.getItem(index+1).setText(newLbl);
         colorList.setCaptionLabel(newLbl);
     }
@@ -482,7 +482,7 @@ public class UIControl {
      * Sets the state of the play/pause button.
      * @param state the new play state
      */
-    public void setPlayState(boolean state) {
+    void setPlayState(boolean state) {
         isPlaying = state;
 
         int i, j;
@@ -506,7 +506,7 @@ public class UIControl {
     /**
      * Updates the label of the selection mode switch.
      */
-    public void toggleSelectLbl() {
+    void toggleSelectLbl() {
         selectToggle.setCaptionLabel(selectMode[(selectToggle.getState() ? 0 : 1)]);
     }
 
@@ -514,7 +514,7 @@ public class UIControl {
      * Toggles the visibility of the setup mode components.
      * @param visible the visibility state
      */
-    public void setSetupGroupVisibility(boolean visible) {
+    void setSetupGroupVisibility(boolean visible) {
         if(visible) {
             setupGroup.open();
         }
@@ -527,8 +527,8 @@ public class UIControl {
      * Toggles the visibility of the title screen buttons.
      * @param visible the visibility state
      */
-    public void setOpenButtonVisibility(boolean visible) {
-        for(Button button : openButtons) {        
+    void setOpenButtonVisibility(boolean visible) {
+        for(Button button : openButtons) {
             button.setVisible(visible).setBroadcast(visible).setLock(!visible);
         }
     }
@@ -537,7 +537,7 @@ public class UIControl {
      * Toggles the visibility of the "threshold" slider.
      * @param visible the visibility state
      */
-    public void setThresholdVisibility(boolean visible) {
+    void setThresholdVisibility(boolean visible) {
         if(visible) {
             thresholdGroup.open();
         }
@@ -550,7 +550,7 @@ public class UIControl {
      * Updates the slider values.
      * @param val the new slider value
      */
-    public void setThresholdValue(int val) {
+    void setThresholdValue(int val) {
         thresholdSlider.setBroadcast(false).setValue(val).setBroadcast(true);
     }
 
@@ -561,7 +561,7 @@ public class UIControl {
      *   1 = saturation
      *   2 = luminosity
      */
-    public int getThresholdType() {
+    int getThresholdType() {
         return (int)radioButtons.getValue();
     }
 
@@ -571,7 +571,7 @@ public class UIControl {
      * @param imgSequenceMode whether the footage is a sequence of images or a
      *   video
      */
-    public void setSeekTime(float time, boolean imgSequenceMode) {
+    void setSeekTime(float time, boolean imgSequenceMode) {
         seekBar.changeValue(time);
         formatSeekLabel(imgSequenceMode);
     }
@@ -612,7 +612,7 @@ public class UIControl {
     /**
      * @return the current value of the seek bar
      */
-    public float getSeekTime() {
+    float getSeekTime() {
         return seekBar.getValue();
     }
 
@@ -622,7 +622,7 @@ public class UIControl {
      * @param imgSequenceMode whether the footage is a sequence of images or a
      *   video
      */
-    public void setSeekRange(float duration, boolean imgSequenceMode) {
+    void setSeekRange(float duration, boolean imgSequenceMode) {
         seekBar.setBroadcast(false)
             .setRange(0f, duration)
             .setBroadcast(true);
@@ -633,7 +633,7 @@ public class UIControl {
      * Sets the state of the record button.
      * @param state the new recording state
      */
-    public void setRecordState(boolean state) {
+    void setRecordState(boolean state) {
         isRecord = state;
         int index = (state ? 1 : 0);
         recordButton.setImage(recordIcons[index]);
@@ -650,7 +650,7 @@ public class UIControl {
     /**
      * @return the current values of the threshold slider
      */
-    public float[] getRangeValues() {
+    float[] getRangeValues() {
         return thresholdSlider.getArrayValue();
     }
 
@@ -658,7 +658,7 @@ public class UIControl {
      * Forces activation of a radio button.
      * @param val the value of the radio button to activate
      */
-    public void selectRadioButton(int val) {
+    void selectRadioButton(int val) {
         radioButtons.activate(0);
     }
 
@@ -666,21 +666,21 @@ public class UIControl {
      * Toggles the visibility of the record button.
      * @param state the new visibility state
      */
-    public void setRecordVisibility(boolean state) {
+    void setRecordVisibility(boolean state) {
         recordButton.setVisible(state);
     }
 
     /**
      * @return the position of the seekbar in pixels
      */
-    public processing.core.PVector getSeekBarPosition() {
+    processing.core.PVector getSeekBarPosition() {
        return seekBar.getPosition();
     }
 
     /**
      * @return the width of the seekbar in pixels
      */
-    public int getSeekBarWidth() {
+    int getSeekBarWidth() {
        return seekBar.getWidth();
     }
 
@@ -692,7 +692,7 @@ public class UIControl {
      *   2 - record
      *   3 - playback
      */
-    public void setStatusLabel(int type) {
+    void setStatusLabel(int type) {
        statusLabel.setCaptionLabel(modes[type]);
     }
 
@@ -703,12 +703,12 @@ public class UIControl {
         boolean tmp = isPlaying && isRecord;
         eventLineButton.setVisible(tmp).setLock(!tmp);
     }
-    
+
     /**
      * Sets the state of the zoom toggle.
      * @param state the new zoom state
      */
-    public void setZoomState(boolean state) {
+    void setZoomState(boolean state) {
         pipToggle.setBroadcast(false).setState(state).setBroadcast(true);
         zoomItem.setState(state);
     }
@@ -716,7 +716,7 @@ public class UIControl {
     /**
      * Toggles the activation states of the "Footage" and "Options" menu items.
      */
-    public void toggleMenuStates() {
+    void toggleMenuStates() {
         boolean state = loadMenu.isEnabled();
         loadMenu.setEnabled(!state);
         closeItem.setEnabled(state);

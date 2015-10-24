@@ -28,13 +28,18 @@ class TrackingUtils {
     private IntList colors;
     private final static float distThreshold = 0.25f;
     private PGraphics eventTimeline;
+    private boolean waggleMode = false;
+    private final ShapeRecognizer rec;
 
     /**
      * Class constructor.
+     * @param parent the instantiating object
      * @param debug whether or not debug mode is enabled
      */
     TrackingUtils(BeeTracker parent, boolean debug) {
         this.debug = debug;
+
+        rec = new ShapeRecognizer(parent, debug);
 
         init();
     }
@@ -186,42 +191,49 @@ class TrackingUtils {
                 BeeTracker.println(k + " point(s) paired");
             }
 
-            departures = departureTimes.get(color);
-            arrivals = arrivalTimes.get(color);
+            //TODO check for waggle dances
+            if(waggleMode) {
+                
+            }
 
-            //check all paired points
-            for(i = 0; i < k; i++) {
-                path = oldPaths.get(validPairs[i][0]);
-                point = path.get(path.size() - 1);
+            //check all paired points for arrivals/departures
+            else {
+                departures = departureTimes.get(color);
+                arrivals = arrivalTimes.get(color);
 
-                oldX = point[0]*frameDims[0]+frameOffset[0];
-                oldY = point[1]*frameDims[1]+frameOffset[1];
+                for(i = 0; i < k; i++) {
+                    path = oldPaths.get(validPairs[i][0]);
+                    point = path.get(path.size() - 1);
 
-                point = newPoints.get(validPairs[i][1]);
+                    oldX = point[0]*frameDims[0]+frameOffset[0];
+                    oldY = point[1]*frameDims[1]+frameOffset[1];
 
-                newX = point[0]*frameDims[0]+frameOffset[0];
-                newY = point[1]*frameDims[1]+frameOffset[1];
+                    point = newPoints.get(validPairs[i][1]);
 
-                isOldPointInExit = isInExit(oldX, oldY, exitCenterXY, exitAxes);
-                isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
+                    newX = point[0]*frameDims[0]+frameOffset[0];
+                    newY = point[1]*frameDims[1]+frameOffset[1];
 
-                if(debug) {
-                    BeeTracker.println(
-                        "pair " + i + ":\nold point " + validPairs[i][0] +
-                        " is inside exit: " + (isOldPointInExit ? "true" : "false") +
-                        "\nnew point " + validPairs[i][1] +" is inside exit: " +
-                        (isNewPointInExit ? "true" : "false")
-                    );
-                }
+                    isOldPointInExit = isInExit(oldX, oldY, exitCenterXY, exitAxes);
+                    isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
 
-                if(isOldPointInExit) {
-                    if(!isNewPointInExit) {
-                        departures.append(time);
+                    if(debug) {
+                        BeeTracker.println(
+                            "pair " + i + ":\nold point " + validPairs[i][0] +
+                            " is inside exit: " + (isOldPointInExit ? "true" : "false") +
+                            "\nnew point " + validPairs[i][1] +" is inside exit: " +
+                            (isNewPointInExit ? "true" : "false")
+                        );
                     }
-                }
 
-                else if(isNewPointInExit) {
-                    arrivals.append(time);
+                    if(isOldPointInExit) {
+                        if(!isNewPointInExit) {
+                            departures.append(time);
+                        }
+                    }
+
+                    else if(isNewPointInExit) {
+                        arrivals.append(time);
+                    }
                 }
             }
 
@@ -436,9 +448,16 @@ class TrackingUtils {
                 eventTimeline.rect(25, yOffset-25, 370, 20);
 
                 eventTimeline.fill(0xff000000);
-                eventTimeline.text("A", 7, yOffset-15);
-                eventTimeline.text("D", 7, yOffset-5);
                 eventTimeline.text("color:", 25, yOffset-32);
+
+                if(waggleMode) {
+                    eventTimeline.text("W", 7, yOffset-15);
+                }
+
+                else {
+                    eventTimeline.text("A", 7, yOffset-15);
+                    eventTimeline.text("D", 7, yOffset-5);
+                }
 
                 eventTimeline.fill(0xff000000 + color);
                 eventTimeline.text(String.format("%06x", color), 65, yOffset-32);
@@ -471,24 +490,30 @@ class TrackingUtils {
 
             eventTimeline.fill(0xff000000 + color);
 
-            //mark arrivals
-            for(float stamp : arrivalTimes.get(color)) {
-              eventTimeline.rect(
-                stamp/duration*369 + 26,
-                yOffset-20,
-                5,
-                5
-              );
+            if(waggleMode) {
+                //TODO mark detected waggle dances
             }
+            
+            else {
+                //mark arrivals
+                for(float stamp : arrivalTimes.get(color)) {
+                  eventTimeline.rect(
+                    stamp/duration*369 + 26,
+                    yOffset-20,
+                    5,
+                    5
+                  );
+                }
 
-            //mark departures
-            for(float stamp : departureTimes.get(color)) {
-              eventTimeline.ellipse(
-                stamp/duration*369 + 26,
-                yOffset-10,
-                5,
-                5
-              );
+                //mark departures
+                for(float stamp : departureTimes.get(color)) {
+                  eventTimeline.ellipse(
+                    stamp/duration*369 + 26,
+                    yOffset-10,
+                    5,
+                    5
+                  );
+                }
             }
 
             eventTimeline.stroke(0xff000000);
@@ -521,9 +546,6 @@ class TrackingUtils {
         PGraphics result = parent.createGraphics(eventTimeline.width,
             eventTimeline.height);
 
-        float xOffset = time/duration*369 + 26;
-        int yOffset;
-        
         result.beginDraw();
 
         result.copy(
@@ -536,6 +558,10 @@ class TrackingUtils {
 
         result.stroke(0xff555555);
 
+        float xOffset = time/duration*369 + 26;
+        int yOffset;
+
+        //mark current timestamp
         for(int i = 1; i <= colors.size(); i++) {
             yOffset = 50*i;
 
@@ -555,5 +581,13 @@ class TrackingUtils {
         }
 
         return result;
+    }
+
+    /**
+     * @param mode whether or not to track waggle dances instead of arrivals/
+     *   departures
+     */
+    void setTrackMode(boolean mode) {
+        waggleMode = mode;
     }
 }

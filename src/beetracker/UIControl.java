@@ -52,6 +52,7 @@ class UIControl {
     private static final MenuItem closeItem;
     private static final MenuItem exitItem;
     private static final MenuItem addSettingItem, removeSettingItem;
+    private static final CheckboxMenuItem exitEventItem, waggleEventItem;
     private static final MenuItem playItem;
     private static final CheckboxMenuItem recordItem, zoomItem;
     static {
@@ -93,6 +94,16 @@ class UIControl {
 
         optionMenu.add(recordItem);
         optionMenu.add(zoomItem);
+        optionMenu.addSeparator();
+
+        final Menu eventMenu = new Menu("Events");
+        exitEventItem = new CheckboxMenuItem("Arrivals/Departures", true);
+        waggleEventItem = new CheckboxMenuItem("Waggle Dances");
+
+        eventMenu.add(exitEventItem);
+        eventMenu.add(waggleEventItem);
+
+        optionMenu.add(eventMenu);
         optionMenu.addSeparator();
 
         final Menu settingsMenu = new Menu("Settings");
@@ -358,15 +369,17 @@ class UIControl {
             .setText("SETTINGS:");
 
         statusLabel = cp5.addButton("status")
-           .lock()
-           .setSize(190, 40)
-           .setPosition(50, 5)
-           .setGroup(playGroup);
+            .lock()
+            .setSize(190, 40)
+            .setPosition(50, 5)
+            .setGroup(playGroup);
         statusLabel.getCaptionLabel()
-           .setFont(new controlP5.ControlFont(cp5.getFont().getFont(), 24))
-           .toUpperCase(false)
-           .alignX(ControlP5Constants.CENTER)
-           .set(modes[0]);
+            .setFont(new controlP5.ControlFont(cp5.getFont().getFont(), 24))
+            .toUpperCase(false)
+            .alignX(ControlP5Constants.CENTER)
+            .set(modes[0]);
+
+        //TODO need ControlP5 element for toggling event types
 
         if(parent.frame != null) {
             parent.frame.setMenuBar(mbar);
@@ -425,6 +438,15 @@ class UIControl {
                     parent.removeSetting();
                 }
             });
+
+            ItemListener tmp = new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent arg0) {
+                    parent.toggleEventType();
+                }
+            };
+            exitEventItem.addItemListener(tmp);
+            waggleEventItem.addItemListener(tmp);
         }
     }
 
@@ -664,7 +686,7 @@ class UIControl {
      * @param val the value of the radio button to activate
      */
     void selectRadioButton(int val) {
-        radioButtons.activate(0);
+        radioButtons.activate(val);
     }
 
     /**
@@ -734,5 +756,14 @@ class UIControl {
      */
     void draw() {
         cp5.draw();
+    }
+
+    /**
+     * Sets the event detection type.
+     * @param type true for waggle dance detection
+     */
+    void setEventType(boolean type) {
+        waggleEventItem.setState(type);
+        exitEventItem.setState(!type);
     }
 }

@@ -23,7 +23,8 @@ import processing.data.IntList;
 class TrackingUtils {
     private final boolean debug;
     private HashMap<Integer, List<List<float[]>>> allPaths;
-    private HashMap<Integer, FloatList> departureTimes, arrivalTimes;
+    private HashMap<Integer, List<Boolean>> allWaggleStatus;
+    private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
     private HashMap<Integer, IntList> allTimeOuts;
     private IntList colors;
     private final static float distThreshold = 0.25f;
@@ -75,7 +76,9 @@ class TrackingUtils {
     ) {
         List<float[]> newPoints, path;
         List<List<float[]>> oldPaths;
-        FloatList departures, arrivals;
+        List<Boolean> waggleStates;
+        java.util.Iterator<Boolean> waggleIter;
+        FloatList departures, arrivals, waggles;
         IntList checkedIndicesOld, checkedIndicesNew, timeOuts;
         float oldX, oldY, newX, newY, minDist;
         float[] point;
@@ -96,6 +99,8 @@ class TrackingUtils {
             oldPaths = allPaths.get(color);
             newPoints = new ArrayList<>(newPointMap.get(color));
             timeOuts = allTimeOuts.get(color);
+
+            waggleStates = allWaggleStatus.get(color);
 
             checkedIndicesOld = new IntList();
             checkedIndicesNew = new IntList();
@@ -191,9 +196,21 @@ class TrackingUtils {
                 BeeTracker.println(k + " point(s) paired");
             }
 
-            //TODO check for waggle dances
+            //TODO (needs testing) check for waggle dances
             if(waggleMode) {
-                
+                waggles = waggleTimes.get(color);
+
+                waggleIter = waggleStates.listIterator();
+                i = 0;
+                Boolean hasWaggle;
+                while(waggleIter.hasNext()) {
+                    if(!(hasWaggle = waggleIter.next())) {
+                        hasWaggle = rec.recognize(oldPaths.get(i));
+                        waggles.append(time);
+                    }
+
+                    i++;
+                }
             }
 
             //check all paired points for arrivals/departures
@@ -255,6 +272,7 @@ class TrackingUtils {
                     path = new ArrayList<>();
                     path.add(newPoint);
                     oldPaths.add(path);
+                    waggleStates.add(false);
                     timeOuts.append(0);
 
                     j++;    //index offset for updating timeout values later
@@ -299,6 +317,11 @@ class TrackingUtils {
 
                 allPaths.put(color, new ArrayList<List<float[]>>());
 
+                //waggle dance events
+                allWaggleStatus.put(color, new LinkedList<Boolean>());
+                waggleTimes.put(color, new FloatList());
+
+                //arrival/departure events
                 departureTimes.put(color, new FloatList());
                 arrivalTimes.put(color, new FloatList());
 
@@ -350,8 +373,10 @@ class TrackingUtils {
      */
     final void init() {
         allPaths = new HashMap<>();
+        allWaggleStatus = new HashMap<>();
         departureTimes = new HashMap<>();
         arrivalTimes = new HashMap<>();
+        waggleTimes = new HashMap();
         colors = new IntList();
         allTimeOuts = new HashMap<>();
         eventTimeline = null;
@@ -491,28 +516,38 @@ class TrackingUtils {
             eventTimeline.fill(0xff000000 + color);
 
             if(waggleMode) {
-                //TODO mark detected waggle dances
+                //mark waggle dance detections
+                for(float stamp : waggleTimes.get(color)) {
+                    eventTimeline.triangle(
+                        stamp/duration*369 + 26,
+                        yOffset-17.5f,
+                        stamp/duration*369 + 23.5f,
+                        yOffset-12.5f,
+                        stamp/duration*369 + 28.5f,
+                        yOffset-12.5f
+                    );
+                }
             }
             
             else {
                 //mark arrivals
                 for(float stamp : arrivalTimes.get(color)) {
-                  eventTimeline.rect(
-                    stamp/duration*369 + 26,
-                    yOffset-20,
-                    5,
-                    5
-                  );
+                    eventTimeline.rect(
+                        stamp/duration*369 + 26,
+                        yOffset-20,
+                        5,
+                        5
+                    );
                 }
 
                 //mark departures
                 for(float stamp : departureTimes.get(color)) {
-                  eventTimeline.ellipse(
-                    stamp/duration*369 + 26,
-                    yOffset-10,
-                    5,
-                    5
-                  );
+                    eventTimeline.ellipse(
+                        stamp/duration*369 + 26,
+                        yOffset-10,
+                        5,
+                        5
+                    );
                 }
             }
 
@@ -584,10 +619,10 @@ class TrackingUtils {
     }
 
     /**
-     * @param mode whether or not to track waggle dances instead of arrivals/
-     *   departures
+     * Sets the event detection type.
+     * @param type true for waggle dance detection
      */
-    void setTrackMode(boolean mode) {
-        waggleMode = mode;
+    void setEventType(boolean type) {
+        waggleMode = type;
     }
 }

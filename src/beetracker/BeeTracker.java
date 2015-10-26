@@ -46,10 +46,13 @@ public class BeeTracker extends PApplet {
     private final java.util.concurrent.Semaphore sem =
         new java.util.concurrent.Semaphore(1, true);
 
-    private boolean isPlaying = false, imgSequenceMode = false;
+    private boolean isPlaying = false;
     private boolean record = false, replay = false;
     private boolean pip = false, selectExit = false;
     private int listVal = -1;
+
+    private boolean imgSequenceMode = false;
+    private boolean waggleMode = false;
 
     private File currentFile = null;
 
@@ -589,6 +592,8 @@ public class BeeTracker extends PApplet {
                         insetBox[2]*movieDims[0] + movieOffset[0] - 1,
                         insetBox[3]*movieDims[1] + movieOffset[1] - 1
                     );
+
+                    //TODO no exit circle for waggle mode?
 
                     //exit circle
                     ellipse(
@@ -2200,17 +2205,26 @@ public class BeeTracker extends PApplet {
     }
 
     /**
+     * @return the replay state
+     */
+    public boolean isReplay() {
+        return replay;
+    }
+
+    /**
+     * Switches between waggle dance detection and arrival/departure detection.
+     */
+    public void toggleEventType() {
+        waggleMode = !waggleMode;
+        uic.setEventType(waggleMode);
+        tu.setEventType(waggleMode);
+    }
+
+    /**
      * Main method for executing BeeTracker as a Java application.
      * @param args command line arguments
      */
     public static void main(String[] args) {
         PApplet.main(new String[] { beetracker.BeeTracker.class.getName() });
-    }
-
-    /**
-     * @return the replay state
-     */
-    public boolean isReplay() {
-        return replay;
     }
 }

@@ -1254,6 +1254,11 @@ public class BeeTracker extends PApplet {
      */
     public void modeRadios(int value) {
         waggleMode = value == 1;
+
+        if(waggleMode) {
+            selectExit = false;
+        }
+
         uic.setEventType(waggleMode);
         tu.setEventType(waggleMode);
     }
@@ -1513,9 +1518,9 @@ public class BeeTracker extends PApplet {
         saveJSONObject(settings, filePath);
 
         log.append("settings saved to ")
-	    	.append(filePath)
-	    	.append('\n')
-	    	.flush();
+            .append(filePath)
+            .append('\n')
+            .flush();
     }
 
     /**

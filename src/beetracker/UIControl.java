@@ -804,5 +804,12 @@ class UIControl {
     void setEventType(boolean type) {
         waggleEventItem.setState(type);
         exitEventItem.setState(!type);
+
+        if(type) {
+            selectRadios.activate(0);
+        }
+
+        selectRadios.getItem(0).setLock(type);
+        selectRadios.getItem(1).setVisible(!type);
     }
 }

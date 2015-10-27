@@ -278,7 +278,7 @@ class UIControl {
 
         cp5.addTextlabel("settingsLabel")
             .setPosition(
-                removeSetting.getPosition().x - 130,
+                removeSetting.getPosition().x - 128,
                 removeSetting.getPosition().y
             ).setGroup(setupGroup)
             .setText("SETTINGS:");
@@ -302,7 +302,7 @@ class UIControl {
             .setLabelVisible(false);
         toolTip.register(waggleMode, "Track Waggle Dances");
 
-        modeRadios = cp5.addRadioButton("TrackingMode")
+        modeRadios = cp5.addRadioButton("modeRadios")
             .setPosition(5, (parent.height - 180)/2)
             .setItemsPerRow(2)
             .addItem(normalMode, 0)
@@ -323,7 +323,7 @@ class UIControl {
             .setLabelVisible(false);
           toolTip.register(selectExit, "Exit Circle");
 
-        selectRadios = cp5.addRadioButton("SelectionMode")
+        selectRadios = cp5.addRadioButton("selectRadios")
             .setPosition(
                 modeRadios.getPosition().x,
                 modeRadios.getPosition().y + 60

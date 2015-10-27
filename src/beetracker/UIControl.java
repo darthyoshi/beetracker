@@ -460,15 +460,17 @@ class UIControl {
             ItemListener listener = new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent arg0) {
+                    String lbl = ((String)arg0.getItem());
+
                     if(BeeTracker.debug) {
-                        BeeTracker.println(arg0.getItem());
+                        BeeTracker.println(lbl);
                     }
 
-                    modeRadios.activate(
-                        ((String)arg0.getItem()).equals(waggleEventItem.getLabel()) ?
+                    modeRadios.getItem(
+                        lbl.equals(waggleEventItem.getLabel()) ?
                         1 :
                         0
-                    );
+                    ).toggle();
                 }
             };
             exitEventItem.addItemListener(listener);

@@ -18,21 +18,19 @@ import java.util.Vector;
  */
 class ShapeRecognizer {
     NDollarRecognizer rec;
-    private final boolean debug;
     private static final float shapeScore = 0.8f;
 
     /**
      * Class constructor.
+     * @param root the BeeTracker object
      */
-    ShapeRecognizer(BeeTracker parent, boolean debug) {
-        this.debug = debug;
-        
+    ShapeRecognizer(BeeTracker root) {
         rec = new NDollarRecognizer();
 
-        rec.LoadGesture(parent.createInputRaw("paths/waggle.xml"));
-        rec.LoadGesture(parent.createInputRaw("paths/waggle-vert.xml"));
+        rec.LoadGesture(root.createInputRaw("paths/waggle.xml"));
+        rec.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
     }
-    
+
     /**
      * Checks a path for the waggle dance.
      * @param path a List of float pairs representing a path

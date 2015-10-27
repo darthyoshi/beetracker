@@ -21,7 +21,6 @@ import processing.data.IntList;
  * @author Kay Choi
  */
 class TrackingUtils {
-    private final boolean debug;
     private HashMap<Integer, List<List<float[]>>> allPaths;
     private HashMap<Integer, List<Boolean>> allWaggleStatus;
     private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
@@ -35,12 +34,9 @@ class TrackingUtils {
     /**
      * Class constructor.
      * @param parent the instantiating object
-     * @param debug whether or not debug mode is enabled
      */
-    TrackingUtils(BeeTracker parent, boolean debug) {
-        this.debug = debug;
-
-        rec = new ShapeRecognizer(parent, debug);
+    TrackingUtils(BeeTracker parent) {
+        rec = new ShapeRecognizer(parent);
 
         init();
     }
@@ -107,7 +103,7 @@ class TrackingUtils {
 
             k = 0;
 
-            if(debug) {
+            if(BeeTracker.debug) {
                 BeeTracker.println(String.format(
                     "---checking blobs colored %06x---%s %d%s %d",
                     color,
@@ -179,7 +175,7 @@ class TrackingUtils {
 
                         k++;
 
-                        if(debug) {
+                        if(BeeTracker.debug) {
                             BeeTracker.println("points (" + minI + ", " + minJ + ") paired");
                         }
                     }
@@ -192,7 +188,7 @@ class TrackingUtils {
                 }
             }
 
-            if(debug) {
+            if(BeeTracker.debug) {
                 BeeTracker.println(k + " point(s) paired");
             }
 
@@ -233,7 +229,7 @@ class TrackingUtils {
                     isOldPointInExit = isInExit(oldX, oldY, exitCenterXY, exitAxes);
                     isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
 
-                    if(debug) {
+                    if(BeeTracker.debug) {
                         BeeTracker.println(
                             "pair " + i + ":\nold point " + validPairs[i][0] +
                             " is inside exit: " + (isOldPointInExit ? "true" : "false") +
@@ -279,7 +275,7 @@ class TrackingUtils {
                 }
             }
 
-            if(debug) {
+            if(BeeTracker.debug) {
                 BeeTracker.println("all paths:");
                 for(i = 0; i < oldPaths.size(); i++) {
                     BeeTracker.println(i + ":");
@@ -318,7 +314,7 @@ class TrackingUtils {
                 allPaths.put(color, new ArrayList<List<float[]>>());
 
                 //waggle dance events
-                allWaggleStatus.put(color, new LinkedList<Boolean>());
+                allWaggleStatus.put(color, new java.util.LinkedList<Boolean>());
                 waggleTimes.put(color, new FloatList());
 
                 //arrival/departure events
@@ -446,7 +442,7 @@ class TrackingUtils {
         float time,
         float duration
     ) {
-        if(debug) {
+        if(BeeTracker.debug) {
             BeeTracker.print("updating event timeline... ");
         }
 
@@ -528,7 +524,7 @@ class TrackingUtils {
                     );
                 }
             }
-            
+
             else {
                 //mark arrivals
                 for(float stamp : arrivalTimes.get(color)) {
@@ -557,7 +553,7 @@ class TrackingUtils {
 
         eventTimeline.endDraw();
 
-        if(debug) {
+        if(BeeTracker.debug) {
             BeeTracker.println("done");
         }
     }
@@ -574,7 +570,7 @@ class TrackingUtils {
         float time,
         float duration
     ) {
-        if(debug) {
+        if(BeeTracker.debug) {
             BeeTracker.print("retrieving event timeline... ");
         }
 
@@ -611,7 +607,7 @@ class TrackingUtils {
 
         result.endDraw();
 
-        if(debug) {
+        if(BeeTracker.debug) {
             BeeTracker.println("done");
         }
 

@@ -73,7 +73,7 @@ public class BeeTracker extends PApplet {
 
     private final PImage titleImg = loadImage("img/title.png");
 
-    private static final boolean debug = false;
+    static final boolean debug = false;
 
     private HashMap<Float, HashMap<Integer, List<float[]>>> allFramePoints = null;
     private HashMap<Integer, List<float[]>> centroids;

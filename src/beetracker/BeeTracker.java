@@ -157,7 +157,7 @@ public class BeeTracker extends PApplet {
 
         bdu = new BlobDetectionUtils(this, width, height);
 
-        tu = new TrackingUtils(debug);
+        tu = new TrackingUtils(this);
 
         movieOffset = new int[2];
         frameDims = new int[2];
@@ -1195,6 +1195,8 @@ public class BeeTracker extends PApplet {
     public void thresholdSlider(float value) {
         int type = uic.getThresholdType();
 
+        uic.thresholdValueLabelToInt();
+
         if(debug) {
             println("threshold slider value: " + value);
         }
@@ -1232,18 +1234,28 @@ public class BeeTracker extends PApplet {
 
     /**
      * ControlP5 callback method.
+     * @param value
      */
-    public void selectToggle() {
-        selectExit = !selectExit;
-        uic.toggleSelectLbl();
+    public void thresholdRadios(int value) {
+        uic.setThresholdValue(threshold[value]);
     }
 
     /**
      * ControlP5 callback method.
      * @param value
      */
-    public void radioButtons(int value) {
-        uic.setThresholdValue(threshold[value]);
+    public void selectRadios(int value) {
+        selectExit = value == 1;
+    }
+
+    /**
+     * ControlP5 callback method.
+     * @param value
+     */
+    public void modeRadios(int value) {
+        waggleMode = value == 1;
+        uic.setEventType(waggleMode);
+        tu.setEventType(waggleMode);
     }
 
     /**
@@ -1387,9 +1399,9 @@ public class BeeTracker extends PApplet {
         uic.setOpenButtonVisibility(true);
         uic.setPlayVisibility(false);
         uic.setThresholdVisibility(false);
-        uic.selectRadioButton(0);
+        uic.setThresholdType(0);
         uic.setSeekTime(0f, imgSequenceMode);
-        radioButtons(0);
+        thresholdRadios(0);
 
         log.append("video closed\n------\n").flush();
 
@@ -2209,15 +2221,6 @@ public class BeeTracker extends PApplet {
      */
     public boolean isReplay() {
         return replay;
-    }
-
-    /**
-     * Switches between waggle dance detection and arrival/departure detection.
-     */
-    public void toggleEventType() {
-        waggleMode = !waggleMode;
-        uic.setEventType(waggleMode);
-        tu.setEventType(waggleMode);
     }
 
     /**

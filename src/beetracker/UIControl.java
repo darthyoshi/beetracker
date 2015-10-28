@@ -630,7 +630,7 @@ class UIControl {
      *   <i>int</i>.
      * @param controller the controller to change
      */
-    static void valueLabelToInt(controlP5.Controller controller) {
+    static void valueLabelToInt(controlP5.Controller<?> controller) {
         controller.setValueLabel(Integer.toString((int)controller.getValue()));
     }
 

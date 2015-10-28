@@ -372,7 +372,7 @@ class TrackingUtils {
         allWaggleStatus = new HashMap<>();
         departureTimes = new HashMap<>();
         arrivalTimes = new HashMap<>();
-        waggleTimes = new HashMap();
+        waggleTimes = new HashMap<>();
         colors = new IntList();
         allTimeOuts = new HashMap<>();
         eventTimeline = null;

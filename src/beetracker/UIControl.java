@@ -652,7 +652,7 @@ class UIControl {
 
         if(imgSequenceMode) {
             tmp = (int)seekBar.getValue();
-            seekBar.setValueLabel(tmp + " of " + (int)seekBar.getMax())
+            seekBar.setValueLabel((tmp+1) + " of " + ((int)seekBar.getMax()+1))
                 .getValueLabel()
                 .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
                 .setPaddingX(0)

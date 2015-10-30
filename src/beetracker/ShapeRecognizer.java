@@ -7,28 +7,68 @@
 
 package beetracker;
 
-import $N.*;
+import $N.NDollarRecognizer;
+import $N.PointR;
+
+import de.voidplus.dollar.OneDollar;
 
 import java.util.LinkedList;
-import java.util.Vector;
+import java.util.ListIterator;
 
 /**
  *
  * @author Kay Choi
  */
 class ShapeRecognizer {
-    NDollarRecognizer rec;
+    NDollarRecognizer nDollar;
     private static final float shapeScore = 0.8f;
+
+    OneDollar oneDollar;
 
     /**
      * Class constructor.
      * @param root the BeeTracker object
      */
     ShapeRecognizer(BeeTracker root) {
-        rec = new NDollarRecognizer();
+/*        nDollar = new NDollarRecognizer();
+        nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
+        nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
+*/
+        oneDollar = new OneDollar(root);
+        readOneDollar(root, "waggle");
+        readOneDollar(root, "waggle-vert");
+        oneDollar.on("waggle waggle-vert", "oneDollar");
+    }
 
-        rec.LoadGesture(root.createInputRaw("paths/waggle.xml"));
-        rec.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
+    /**
+     * TODO javadoc
+     * @param root
+     * @param name
+     */
+    private void readOneDollar(BeeTracker root, String name) {
+        LinkedList<Integer> path = new LinkedList<>();
+        java.io.BufferedReader reader;
+        String line;
+        String[] split;
+        try {
+            reader = new java.io.BufferedReader(new java.io
+                .InputStreamReader(root.createInputRaw("paths/"+name+".xml")));
+            while((line = reader.readLine()) != null) {
+                if(line.startsWith("<Point")) {
+                    split = line.split("\\\"");
+                    path.add((int)Float.parseFloat(split[1]));
+                    path.add((int)Float.parseFloat(split[3]));
+                }
+            }
+        } catch (java.io.IOException ex) {
+            ex.printStackTrace(System.err);
+        }
+        int[] array = new int[path.size()];
+        ListIterator<Integer> intIter = path.listIterator();
+        for(int i = 0; i < path.size(); i++) {
+            array[i] = intIter.next();
+        }
+        oneDollar.learn(name, array);
     }
 
     /**
@@ -39,22 +79,23 @@ class ShapeRecognizer {
     boolean recognize(java.util.List<float[]> path) {
         boolean result = false;
 
-        LinkedList<PointR> list = new LinkedList<>();
+        java.util.Vector<PointR> list = new java.util.Vector<>();
+        ListIterator<float[]> iter = path.listIterator(path.size()-1);
+        float[] point;
 
-        for(float[] point : path) {
+        //check path in reverse
+        while(iter.hasPrevious()) {
+            point = iter.previous();
+/*
+            //$N
             list.add(new PointR(point[0], point[1]));
-        }
-
-        //check path
-        while(!list.isEmpty()) {
-            //TODO overload NDollarRecognizer.Recognize() to accept List instead of only Vector?
-            if(rec.Recognize(new Vector<PointR>(list), 1).getScore() >= shapeScore) {
+            if(nDollar.Recognize(list, 1).getScore() >= shapeScore) {
                 result = true;
                 break;
             }
-
-            //discard path head
-            list.pop();
+*/
+            //$1
+            oneDollar.track(point[0], point[1]);
         }
 
         return result;

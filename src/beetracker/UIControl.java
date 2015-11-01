@@ -295,6 +295,7 @@ class UIControl {
             .setBroadcast(false)
             .toggle()
             .setCaptionLabel("Event");
+        normalMode.getCaptionLabel().setPaddingX(-5);
         toolTip.register(normalMode, "Track Arrivals/Departures");
 
         Toggle waggleMode = cp5.addToggle("W")
@@ -303,11 +304,12 @@ class UIControl {
         toolTip.register(waggleMode, "Track Waggle Dances");
 
         modeRadios = cp5.addRadioButton("modeRadios")
-            .setPosition(5, (parent.height - 180)/2)
+            .setPosition(8, (parent.height - 180)/2)
             .setItemsPerRow(2)
             .addItem(normalMode, 0)
             .addItem(waggleMode, 1)
             .setSize(15, 15)
+            .setSpacingColumn(0)
             .setNoneSelectedAllowed(false)
             .setGroup(setupGroup);
 
@@ -315,13 +317,13 @@ class UIControl {
             .setBroadcast(false)
             .toggle()
             .setCaptionLabel("Select");
-        selectFrame.getCaptionLabel().setPaddingX(-4);
+        selectFrame.getCaptionLabel().setPaddingX(-8);
         toolTip.register(selectFrame, "Inset Frame");
 
         Toggle selectExit = cp5.addToggle("Ex")
             .setBroadcast(false)
             .setLabelVisible(false);
-          toolTip.register(selectExit, "Exit Circle");
+        toolTip.register(selectExit, "Exit Circle");
 
         selectRadios = cp5.addRadioButton("selectRadios")
             .setPosition(
@@ -331,6 +333,7 @@ class UIControl {
             .addItem(selectFrame, 0)
             .addItem(selectExit, 1)
             .setSize(15, 15)
+            .setSpacingColumn(0)
             .setNoneSelectedAllowed(false)
             .setGroup(setupGroup);
 
@@ -339,9 +342,10 @@ class UIControl {
             .setCaptionLabel("Zoom")
             .setGroup(playGroup)
             .setPosition(
-                selectRadios.getPosition().x,
+                15,
                 selectRadios.getPosition().y + 60
             );
+        pipToggle.getCaptionLabel().setPaddingX(-11);
 
         thresholdSlider = cp5.addSlider("thresholdSlider")
             .setBroadcast(false)

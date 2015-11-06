@@ -60,7 +60,8 @@ public class BeeTracker extends PApplet {
     private boolean isDrag = false;
 
     private Movie movie = null;
-    private String[] imgSequence = null;
+    private String[] imgNames = null;
+    private PImage[] imgSequence = null;
     private PImage stillFrame = null;
     private int imgIndex = -1;
     private float duration;
@@ -831,7 +832,11 @@ public class BeeTracker extends PApplet {
                 }
 
                 while(stillFrame == null) {
-                    stillFrame = loadImage(imgSequence[imgIndex]);
+                    if(imgSequence[imgIndex] == null) {
+                        updateImgSequence(imgIndex);
+                    }
+
+                    stillFrame = imgSequence[imgIndex];
 
                     if(stillFrame.width == -1) {
                         stillFrame = null;
@@ -864,6 +869,27 @@ public class BeeTracker extends PApplet {
         }
 
         return result;
+    }
+
+    /**
+     * Loads images in the image sequence into memory.
+     * @param index the position of the image in the sequence to load
+     */
+    private void updateImgSequence(int index) {
+        int i;
+        for(i = 0; i < index - 2; i++) {
+            imgSequence[i] = null;
+        }
+        while(i < index + 2) {
+            if(imgSequence[i] == null) {
+                imgSequence[i] = loadImage(imgNames[i]);
+            }
+            i++;
+        }
+        while(i < imgNames.length) {
+            imgSequence[i] = null;
+            i++;
+        }
     }
 
     /**
@@ -901,13 +927,19 @@ public class BeeTracker extends PApplet {
                 Thread.currentThread().interrupt();
             }
 
-            imgSequence = new String[list.size()];
-            list.toArray(imgSequence);
-            java.util.Arrays.sort(imgSequence);
+            imgNames = new String[list.size()];
+            imgSequence = new PImage[list.size()];
+            for(imgIndex = 0; imgIndex < imgSequence.length; imgIndex++) {
+                imgSequence[imgIndex] = null;
+            }
+            list.toArray(imgNames);
+            java.util.Arrays.sort(imgNames);
+
             imgIndex = 0;
+            updateImgSequence(imgIndex);
 
             if(debug) {
-                for(String fileName : imgSequence) {
+                for(String fileName : imgNames) {
                     println(fileName);
                 }
             }
@@ -1013,8 +1045,12 @@ public class BeeTracker extends PApplet {
 
     /**
      * Copies the inset frame for image processing and blob detection.
+     * @param frame the src frame to process
+     * @param width the width of the copy
+     * @param height the height of the copy
+     * @return a copy of the frame
      */
-    private PImage copyInsetFrame(PImage frame) {
+    private PImage copyInsetFrame(PImage src, int width, int height) {
         PImage result;
 
         //don't do anything until inset dimensions have stabilized
@@ -1023,26 +1059,35 @@ public class BeeTracker extends PApplet {
         }
 
         else {
-            //for best results, copy source and destination should be same size
-            result = createImage(
-                (int)(frame.width*(insetBox[2] - insetBox[0])),
-                (int)(frame.height*(insetBox[3] - insetBox[1])),
-                ARGB
-            );
+            result = createImage(width, height, ARGB);
+
             result.copy(
-                frame,
-                (int)(frame.width*insetBox[0]),
-                (int)(frame.height*insetBox[1]),
-                (int)(frame.width*(insetBox[2] - insetBox[0])),
-                (int)(frame.height*(insetBox[3] - insetBox[1])),
+                src,
+                (int)(src.width*insetBox[0]),
+                (int)(src.height*insetBox[1]),
+                (int)(src.width*(insetBox[2] - insetBox[0])),
+                (int)(src.height*(insetBox[3] - insetBox[1])),
                 0,
                 0,
-                result.width,
-                result.height
+                width,
+                height
             );
         }
 
         return result;
+    }
+
+    /**
+     * Copies the inset frame for image processing and blob detection.
+     * @param src the PImage frame to process
+     * @return a copy of the frame
+     */
+    private PImage copyInsetFrame(PImage src) {
+        return copyInsetFrame(
+            src,
+            (int)(src.width*(insetBox[2] - insetBox[0])),
+            (int)(src.height*(insetBox[3] - insetBox[1]))
+        );
     }
 
     /**
@@ -1369,6 +1414,7 @@ public class BeeTracker extends PApplet {
 
         if(imgSequenceMode) {
             imgSequence = null;
+            imgNames = null;
             stillFrame = null;
             imgIndex = -1;
         }
@@ -1440,7 +1486,7 @@ public class BeeTracker extends PApplet {
             }
 
             if(debug) {
-                print("saving settings");
+                System.out.print("saving settings");
             }
 
             //save current color and selection settings
@@ -1452,7 +1498,7 @@ public class BeeTracker extends PApplet {
             );
 
             if(debug) {
-                println(" - done");
+                System.out.println(" - done");
             }
         }
 

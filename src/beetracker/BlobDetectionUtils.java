@@ -53,11 +53,11 @@ class BlobDetectionUtils {
 
         thresholdShader = parent.loadShader("thresholdshader.glsl");
         morphoShader = parent.loadShader("morphoshader.glsl");
-        morphoShader.set("filterRadius", filterRadius);
+ //       morphoShader.set("filterRadius", filterRadius);
         alphaShader = parent.loadShader("alphashader.glsl");
 
         buf = parent.createGraphics(width, height, BeeTracker.P2D);
-        buf.colorMode(processing.core.PConstants.HSB, 1);
+        buf.colorMode(BeeTracker.HSB, 1);
     }
 
     /**
@@ -91,12 +91,21 @@ class BlobDetectionUtils {
         buf.filter(alphaShader);
 
         //fill blob holes
-        dilateImage(buf);
-        erodeImage(buf);
+        int i;
+        for(i = 0; i < filterRadius; i++) {
+            morphImage(true);
+        }
+        for(i = 0; i < filterRadius; i++) {
+            morphImage(false);
+        }
 
         //remove noise
-        erodeImage(buf);
-        dilateImage(buf);
+        for(i = 0; i < filterRadius; i++) {
+            morphImage(false);
+        }
+        for(i = 0; i < filterRadius; i++) {
+            morphImage(true);
+        }
 
         img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
     }
@@ -258,22 +267,12 @@ class BlobDetectionUtils {
     }
 
     /**
-     * Performs a morphological dilation operation. Any non-transparent blobs
-     *   will grow.
-     * @param img the operand image
+     * Performs a morphological operation. Any non-transparent blobs in the
+     *   the buffer will either grow or shrink.
+     * @param dilateMode true for dilation, false for erosion
      */
-    private void dilateImage(PGraphics img) {
-        morphoShader.set("dilateMode", true);
-        img.filter(morphoShader);
-    }
-
-    /**
-     * Performs a morphological erosion operation. Any non-transparent blobs
-     *   will shrink.
-     * @param img the operand image
-     */
-    private void erodeImage(PGraphics img) {
-        morphoShader.set("dilateMode", false);
-        img.filter(morphoShader);
+    private void morphImage(boolean dilateMode) {
+        morphoShader.set("dilateMode", dilateMode);
+        buf.filter(morphoShader);
     }
 }

@@ -597,15 +597,15 @@ public class BeeTracker extends PApplet {
                         insetBox[3]*movieDims[1] + movieOffset[1] - 1
                     );
 
-                    //TODO no exit circle for waggle mode?
-
-                    //exit circle
-                    ellipse(
-                        exitRadial[0]*movieDims[0] + movieOffset[0],
-                        exitRadial[1]*movieDims[1] + movieOffset[1],
-                        exitRadial[2]*movieDims[0],
-                        exitRadial[3]*movieDims[1]
-                    );
+                    if(!waggleMode) {
+                        //exit circle
+                        ellipse(
+                            exitRadial[0]*movieDims[0] + movieOffset[0],
+                            exitRadial[1]*movieDims[1] + movieOffset[1],
+                            exitRadial[2]*movieDims[0],
+                            exitRadial[3]*movieDims[1]
+                        );
+                    }
                 }
 
                 //zoomed
@@ -619,12 +619,14 @@ public class BeeTracker extends PApplet {
                     );
 
                     //exit circle
-                    ellipse(
-                        exitCenter[0],
-                        exitCenter[1],
-                        exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
-                        exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
-                    );
+                    if(!waggleMode) {
+                        ellipse(
+                            exitCenter[0],
+                            exitCenter[1],
+                            exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
+                            exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
+                        );
+                    }
                 }
 
                 if(isDrag && !selectExit) {
@@ -643,7 +645,7 @@ public class BeeTracker extends PApplet {
                     );
                 }
 
-                else {
+                else if(!waggleMode){
                     int[] tmpDims;
 
                     if(pip) {

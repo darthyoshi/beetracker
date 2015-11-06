@@ -271,7 +271,6 @@ public class BeeTracker extends PApplet {
                         //set thresholds
                         threshold = new int[3];
                         try {
-
                             setting = timeSetting.getJSONObject("thresholds");
 
                             for(tmp = 0; tmp < thresholdKeys.length; tmp++) {
@@ -360,9 +359,9 @@ public class BeeTracker extends PApplet {
             Thread.currentThread().interrupt();
         }
 
-        PImage frame = updateFrame();
+        PImage curFrame = updateFrame();
 
-        if(frame != null) {
+        if(curFrame != null) {
             float time = imgSequenceMode ? imgIndex : movie.time();
 
             if(movieDims != null) {
@@ -372,22 +371,22 @@ public class BeeTracker extends PApplet {
                 );
                 viewFrame.beginDraw();
                 viewFrame.copy(
-                    frame,
+                    curFrame,
                     0,
                     0,
-                    frame.width,
-                    frame.height,
+                    curFrame.width,
+                    curFrame.height,
                     (viewFrame.width-movieDims[0])/2,
                     (viewFrame.height-movieDims[1])/2,
                     movieDims[0],
                     movieDims[1]
                 );
 
-                PImage insetFrame = copyInsetFrame(frame);
+                //BlobDetection expects certain image size
+                PImage insetFrame = copyInsetFrame(curFrame,
+                    bdu.getImageWidth(), bdu.getImageHeight());
 
                 if(insetFrame != null) {
-                    viewFrame.noSmooth();
-
                     float timeStamp;
 
                     if(settingIndex >= 0 &&
@@ -406,7 +405,7 @@ public class BeeTracker extends PApplet {
                     }
 
                     if(replay) {
-                    	if(timeStampIndex >= 0 &&
+                        if(timeStampIndex >= 0 &&
                             timeStampIndex < allFrameTimes.size())
                         {
                             timeStamp = allFrameTimes.get(timeStampIndex);
@@ -442,8 +441,6 @@ public class BeeTracker extends PApplet {
                     }
 
                     else {
-                        //BlobDetection expects certain image size
-                        insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
                         bdu.filterImg(insetFrame, colors, threshold);
 
                         centroids = bdu.getCentroids(insetFrame, colors);
@@ -491,7 +488,7 @@ public class BeeTracker extends PApplet {
 
                     //zoomed
                     if(pip) {
-                        PImage zoomedInset = copyInsetFrame(frame);
+                        PImage zoomedInset = copyInsetFrame(curFrame);
 
                         insetOffset[0] = (viewFrame.width-frameDims[0])/2;
                         insetOffset[1] = (viewFrame.height-frameDims[1])/2;
@@ -773,14 +770,14 @@ public class BeeTracker extends PApplet {
 
                 uic.draw();
 
-                if(frame.height > 0) {
+                if(curFrame.height > 0) {
                     duration = imgSequenceMode ? imgSequence.length-1 : movie.duration();
 
                     uic.setSeekRange(duration, imgSequenceMode);
 
                     movieDims = scaledDims(
-                        frame.width,
-                        frame.height
+                        curFrame.width,
+                        curFrame.height
                     );
 
                     movieOffset[0] = (int)((width-movieDims[0])*.5f);
@@ -919,10 +916,6 @@ public class BeeTracker extends PApplet {
 
         else {
             log.append("file selection canceled\n").flush();
-        }
-
-        if(frame != null) {
-            requestFocusInWindow();
         }
     }
 
@@ -1996,10 +1989,6 @@ public class BeeTracker extends PApplet {
 
         else {
             log.append("file selection canceled\n").flush();
-        }
-
-        if(frame != null) {
-            requestFocusInWindow();
         }
     }
 

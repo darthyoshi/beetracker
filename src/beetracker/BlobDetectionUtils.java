@@ -17,7 +17,9 @@ import blobDetection.EdgeVertex;
 
 import processing.core.PConstants;
 import processing.core.PImage;
+import processing.core.PGraphics;
 import processing.data.IntList;
+import processing.opengl.PShader;
 
 /**
  *
@@ -28,12 +30,17 @@ class BlobDetectionUtils {
     private static final int filterRadius = 5;
     private final BlobDetection bd;
     private IntList blobColors;
+    private final PShader thresholdShader, morphoShader, alphaShader;
+    private final PGraphics buf;
 
     /**
      * Class constructor.
      * @param parent the instantiating object
      * @param width the width of the images to process
      * @param height the height of the images to process
+     * @param thresholdShader the shader to be used for color filtering
+     * @param morphoShader the shader to be used for morphological opening and
+     *   closing
      */
     BlobDetectionUtils(BeeTracker parent, int width, int height) {
         this.parent = parent;
@@ -43,6 +50,14 @@ class BlobDetectionUtils {
         bd = new BlobDetection(width, height);
         bd.setPosDiscrimination(true);
         bd.setThreshold(.2f);
+
+        thresholdShader = parent.loadShader("thresholdshader.glsl");
+        morphoShader = parent.loadShader("morphoshader.glsl");
+        morphoShader.set("filterRadius", filterRadius);
+        alphaShader = parent.loadShader("alphashader.glsl");
+
+        buf = parent.createGraphics(width, height, BeeTracker.P2D);
+        buf.colorMode(processing.core.PConstants.HSB, 1);
     }
 
     /**
@@ -55,51 +70,35 @@ class BlobDetectionUtils {
      * @param threshold an array containing the HSV thresholds
      */
     void filterImg(PImage img, IntList colors, int[] threshold) {
-        int pixelHue, pixelSat, pixelVal;
-        int i, j;
+        thresholdShader.set(
+            "threshold",
+            (float)threshold[0]/255f,
+            (float)threshold[1]/255f,
+            (float)threshold[2]/255f
+        );
 
-        int[] listHues = new int[colors.size()];
-        for(i = 0; i < listHues.length; i++) {
-            listHues[i] = (int)parent.hue(colors.get(i));
+        buf.copy(img, 0, 0, img.width, img.height, 0, 0, buf.width, buf.height);
+
+        alphaShader.set("keepVisible", true);
+        buf.filter(alphaShader);
+
+        for(int i = 0; i < colors.size(); i++) {
+            thresholdShader.set("basehue", buf.hue(colors.get(i)));
+            buf.filter(thresholdShader);
         }
 
-        img.loadPixels();
-
-        parent.colorMode(PConstants.HSB, 255);
-
-        //scan every pixel in image
-        scanPixel:
-        for(i = 0; i < img.pixels.length; i++) {
-            pixelHue = (int)parent.hue(img.pixels[i]);
-            pixelSat = (int)parent.saturation(img.pixels[i]);
-            pixelVal = (int)parent.brightness(img.pixels[i]);
-
-            //for color matches, brighten pixel
-            for(j = 0; j < colors.size(); j++) {
-                if(pixelHue > listHues[j] - threshold[0] &&
-                    pixelHue < listHues[j] + threshold[0] &&
-                    pixelSat > threshold[1] &&
-                    pixelVal > threshold[2])
-                {
-                    img.pixels[i] = parent.color(listHues[j], 255, 255);
-
-                    continue scanPixel;
-                }
-            }
-
-            //if no matches found, darken pixel
-            img.pixels[i] = 0;
-        }
+        alphaShader.set("keepVisible", false);
+        buf.filter(alphaShader);
 
         //fill blob holes
-        dilateImage(img.pixels);
-        erodeImage(img.pixels, colors);
+        dilateImage(buf);
+        erodeImage(buf);
 
         //remove noise
-        erodeImage(img.pixels, colors);
-        dilateImage(img.pixels);
+        erodeImage(buf);
+        dilateImage(buf);
 
-        img.updatePixels();
+        img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
     }
 
     /**
@@ -259,100 +258,22 @@ class BlobDetectionUtils {
     }
 
     /**
-     * Performs a morphological erosion operation. Any blobs consisting of the
-     *   specified colors will shrink. All other pixels will be set to black.
-     * @param pixels the operand pixel array
-     * @param colors a list of the integer RGB values to scan for
+     * Performs a morphological dilation operation. Any non-transparent blobs
+     *   will grow.
+     * @param img the operand image
      */
-    private void erodeImage(int[] pixels, IntList colors) {
-        int[] tmp = new int[pixels.length];
-        int i, j, k, l, offset;
-
-        for(i = 0; i < tmp.length; i++) {
-            tmp[i] = 0;
-        }
-
-        //iterate image x-axis
-        for(i = filterRadius; i < bd.imgWidth - filterRadius; i++) {
-            //iterate image y-axis
-            for(j = filterRadius; j < bd.imgHeight - filterRadius; j++) {
-                erodeProbe:
-                //iterate colors
-                for(Integer color : colors) {
-                    //iterate filter x-axis
-                    for(k = -filterRadius; k <= filterRadius; k++) {
-                        //iterate filter y-axis
-                        for(l = -filterRadius; l <= filterRadius; l++) {
-                            if(Math.abs(k) + Math.abs(l) <= (double)filterRadius) {
-                                offset = (i+k) + (j+l)*bd.imgWidth;
-
-                                if(!(
-                                    (int)parent.hue(pixels[offset]) ==
-                                    (int)parent.hue(color) &&
-                                    parent.brightness(pixels[offset]) > 0f
-                                )) {
-                                    //current pixel is miss, go to next color
-                                    continue erodeProbe;
-                                }
-                            }
-                        }
-                    }
-
-                    offset = i + j*bd.imgWidth;
-                    tmp[offset] = pixels[offset];
-                }
-            }
-        }
-
-        for(i = 0; i < tmp.length; i++) {
-            pixels[i] = tmp[i];
-        }
+    private void dilateImage(PGraphics img) {
+        morphoShader.set("dilateMode", true);
+        img.filter(morphoShader);
     }
 
     /**
-     * Performs a morphological dilation operation. Any non-black blobs will
-     *   grow.
-     * @param pixels the operand pixel array
+     * Performs a morphological erosion operation. Any non-transparent blobs
+     *   will shrink.
+     * @param img the operand image
      */
-    private void dilateImage(int[] pixels) {
-        int[] tmp = new int[pixels.length];
-        int i, j, k, l, m, n, offset;
-
-        //iterate image x-axis
-        for(i = 0; i < bd.imgWidth; i++) {
-            dilateProbe:
-            //iterate image y-axis
-            for(j = 0; j < bd.imgHeight; j++) {
-                //iterate filter x-axis
-                for(k = -filterRadius; k <= filterRadius; k++) {
-                    //iterate filter y-axis
-                    for(l = -filterRadius; l <= filterRadius; l++) {
-                        m = i + k;
-                        n = j + l;
-
-                        if(
-                            m >= 0 && m < bd.imgWidth &&
-                            n >= 0 && n < bd.imgHeight &&
-                            Math.abs(k) + Math.abs(l) <= (double)filterRadius
-                        ) {
-                            offset = m + n*bd.imgWidth;
-
-                            if(parent.brightness(pixels[offset]) > 0) {
-                                tmp[i + j*bd.imgWidth] = pixels[offset];
-
-                                //current image pixel is hit, go to next pixel
-                                continue dilateProbe;
-                            }
-                        }
-                    }
-                }
-
-                tmp[i + j*bd.imgWidth] = 0;
-            }
-        }
-
-        for(i = 0; i < tmp.length; i++) {
-            pixels[i] = tmp[i];
-        }
+    private void erodeImage(PGraphics img) {
+        morphoShader.set("dilateMode", false);
+        img.filter(morphoShader);
     }
 }

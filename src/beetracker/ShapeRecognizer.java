@@ -41,18 +41,18 @@ class ShapeRecognizer {
     }
 
     /**
-     * TODO javadoc
-     * @param root
-     * @param name
+     * Reads a gesture template into the $1 object.
+     * @param root the root BeeTracker
+     * @param fileName the template file name
      */
-    private void readOneDollar(BeeTracker root, String name) {
+    private void readOneDollar(BeeTracker root, String fileName) {
         LinkedList<Integer> path = new LinkedList<>();
-        java.io.BufferedReader reader;
+        java.io.BufferedReader reader = null;
         String line;
         String[] split;
         try {
             reader = new java.io.BufferedReader(new java.io
-                .InputStreamReader(root.createInputRaw("paths/"+name+".xml")));
+                .InputStreamReader(root.createInputRaw("paths/"+fileName+".xml"), "UTF-8"));
             while((line = reader.readLine()) != null) {
                 if(line.startsWith("<Point")) {
                     split = line.split("\\\"");
@@ -62,13 +62,21 @@ class ShapeRecognizer {
             }
         } catch (java.io.IOException ex) {
             ex.printStackTrace(System.err);
+        } finally {
+            if(reader != null) {
+                try {
+                    reader.close();
+                } catch (java.io.IOException ex) {
+                    ex.printStackTrace(System.err);
+                }
+            }
         }
         int[] array = new int[path.size()];
         ListIterator<Integer> intIter = path.listIterator();
         for(int i = 0; i < path.size(); i++) {
             array[i] = intIter.next();
         }
-        oneDollar.learn(name, array);
+        oneDollar.learn(fileName, array);
     }
 
     /**

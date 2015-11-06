@@ -334,12 +334,22 @@ class TrackingUtils {
     HashMap<Float, String> getSummary() {
         HashMap<Float, String> result = new HashMap<>();
 
-        for(int color : colors) {
-            for(Float time : arrivalTimes.get(color)) {
-                result.put(time, String.format("#%06x,arrival", color));
+        if(waggleMode) {
+            for(int color : colors) {
+                for(Float time : waggleTimes.get(color)) {
+                    result.put(time, String.format("#%06x,waggle", color));
+                }
             }
-            for(Float time : departureTimes.get(color)) {
-                result.put(time, String.format("#%06x,departure", color));
+        }
+
+        else {
+            for(int color : colors) {
+                for(Float time : arrivalTimes.get(color)) {
+                    result.put(time, String.format("#%06x,arrival", color));
+                }
+                for(Float time : departureTimes.get(color)) {
+                    result.put(time, String.format("#%06x,departure", color));
+                }
             }
         }
 
@@ -392,6 +402,14 @@ class TrackingUtils {
      */
     HashMap<Integer, FloatList> getArrivalTimes() {
         return arrivalTimes;
+    }
+
+    /**
+     * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
+     *   timestamps
+     */
+    HashMap<Integer, FloatList> getWaggleTimes() {
+        return waggleTimes;
     }
 
     /**

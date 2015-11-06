@@ -26,12 +26,10 @@ class VideoBrowser {
      * Displays a file browser that filters for video files.
      * @param parent the invoking BeeTracker
      * @param currentFile the most recently selected file
-     * @param log a PrintStream object used for logging
      */
     static void getVideoFile(
         final BeeTracker parent,
-        final File currentFile,
-        final java.io.PrintStream log
+        final File currentFile
     ) {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -51,7 +49,7 @@ class VideoBrowser {
                         fd.setVisible(true);
 
                         if(fd.getFile() != null) {
-                            log.append("selected file: \"")
+                            System.out.append("selected file: \"")
                                 .append(fd.getFile())
                                 .append("\"\n")
                                 .flush();
@@ -68,7 +66,7 @@ class VideoBrowser {
 
                             MessageDialogue.wrongFileTypeMessage(parent);
 
-                            log.append("invalid file extension: ")
+                            System.out.append("invalid file extension: ")
                                 .append(nameParts[nameParts.length-1])
                                 .append('\n')
                                 .flush();
@@ -97,7 +95,7 @@ class VideoBrowser {
                     fd.setVisible(true);
 
                     if(fd.getFile() != null) {
-                        log.append("selected file: \"")
+                        System.out.append("selected file: \"")
                             .append(fd.getFile())
                             .append("\"\n")
                             .flush();
@@ -107,7 +105,7 @@ class VideoBrowser {
                 }
 
                 if(selectedFile != null) {
-                    log.append("setting time stamp\n").flush();
+                    System.out.append("setting time stamp\n").flush();
 
                     setDateTime(parent);
                 }
@@ -164,12 +162,10 @@ class VideoBrowser {
      * Displays a file browser for image directories.
      * @param parent the invoking BeeTracker
      * @param currentDir the previously selected directory
-     * @param log a PrintStream object used for logging
      */
     static void getImageSequence(
         final BeeTracker parent,
-        final File currentDir,
-        final java.io.PrintStream log
+        final File currentDir
     ) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
@@ -187,7 +183,7 @@ class VideoBrowser {
                 }
 
                 if(selectedDir != null) {
-                    log.append("setting time stamp\n").flush();
+                    System.out.append("setting time stamp\n").flush();
 
                     setDateTime(parent);
                 }

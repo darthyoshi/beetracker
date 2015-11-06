@@ -70,6 +70,8 @@ public class BeeTracker extends PApplet {
     private TrackingUtils tu;
 
     private PrintStream log = null;
+    private static final PrintStream stdout = System.out;
+    private static final PrintStream stderr = System.err;
 
     private final PImage titleImg = loadImage("img/title.png");
 
@@ -98,6 +100,22 @@ public class BeeTracker extends PApplet {
      */
     @Override
     public void setup() {
+        //create log file
+        if(!debug) {
+            try {
+                log = new PrintStream(new File("Console.log"), "UTF-8");
+
+                System.setErr(log);
+                System.setOut(log);
+            } catch (java.io.FileNotFoundException |
+                java.io.UnsupportedEncodingException ex)
+            {
+                java.util.logging.Logger.getLogger(BeeTracker.class.getName())
+                    .log(java.util.logging.Level.SEVERE, null, ex);
+                crash(ex.toString());
+            }
+        }
+
         size(800, 600);
         frameRate(60);
         strokeWeight(1);
@@ -138,21 +156,6 @@ public class BeeTracker extends PApplet {
             });
         }
 
-        //create log file
-        try {
-            log = new PrintStream(new File("Console.log"), "UTF-8");
-
-            if(!debug) {
-                System.setErr(log);
-            }
-        } catch (java.io.FileNotFoundException |
-            java.io.UnsupportedEncodingException ex)
-        {
-            java.util.logging.Logger.getLogger(BeeTracker.class.getName())
-                .log(java.util.logging.Level.SEVERE, null, ex);
-            crash(ex.toString());
-        }
-
         uic = new UIControl(this, font);
 
         bdu = new BlobDetectionUtils(this, width, height);
@@ -178,7 +181,7 @@ public class BeeTracker extends PApplet {
 
         boolean[] settingsErrors = {!settings.exists(), false, false};
 
-        log.append("initializing settings... ").flush();
+        System.out.append("initializing settings... ").flush();
 
         if(!settingsErrors[0]) {
             try {
@@ -189,7 +192,7 @@ public class BeeTracker extends PApplet {
                 JSONObject jsonSetting, timeSetting, setting;
                 Iterator<?> jsonIter, settingIter;
 
-                log.append("reading from file - ").flush();
+                System.out.append("reading from file - ").flush();
 
                 //initialize color list
                 try {
@@ -206,7 +209,7 @@ public class BeeTracker extends PApplet {
                 } catch(NumberFormatException e1) {
                     settingsErrors[1] = true;
 
-                    e1.printStackTrace(log);
+                    e1.printStackTrace(System.err);
                 }
 
                 thresholds = new HashMap<>();
@@ -241,7 +244,7 @@ public class BeeTracker extends PApplet {
                             insetBox[0] = insetBox[1] = 0f;
                             insetBox[2] = insetBox[3] = 1f;
 
-                            e2.printStackTrace(log);
+                            e2.printStackTrace(System.err);
                         } finally {
                             insets.put(timeStamp, insetBox);
                         }
@@ -263,7 +266,7 @@ public class BeeTracker extends PApplet {
                             exitRadial[0] = exitRadial[1] = 0.5f;
                             exitRadial[2] = exitRadial[3] = 0.5f;
 
-                            e3.printStackTrace(log);
+                            e3.printStackTrace(System.err);
                         } finally {
                             radials.put(timeStamp, exitRadial);
                         }
@@ -281,7 +284,7 @@ public class BeeTracker extends PApplet {
                             threshold[1] = 90;
                             threshold[2] = 20;
 
-                            e4.printStackTrace(log);
+                            e4.printStackTrace(System.err);
                         } finally {
                             thresholds.put(timeStamp, threshold);
 
@@ -291,15 +294,15 @@ public class BeeTracker extends PApplet {
                 } catch(RuntimeException e5) {
                     settingsErrors[2] = true;
 
-                    e5.printStackTrace(log);
+                    e5.printStackTrace(System.err);
                 }
             } catch(RuntimeException ex) {
-                ex.printStackTrace(log);
+                ex.printStackTrace(System.err);
             }
         }
 
         else {
-            log.append("file not found - ").flush();
+            System.out.append("file not found - ").flush();
         }
 
         if(settingsErrors[0] || settingsErrors[1]) {
@@ -330,7 +333,7 @@ public class BeeTracker extends PApplet {
             insets.put(0f, insetBox);
         }
 
-        log.append("done\n").flush();
+        System.out.append("done\n").flush();
     }
 
     /**
@@ -354,7 +357,7 @@ public class BeeTracker extends PApplet {
         try {
             sem.acquire();
         } catch (InterruptedException ex) {
-            ex.printStackTrace(log);
+            ex.printStackTrace(System.err);
 
             Thread.currentThread().interrupt();
         }
@@ -890,7 +893,7 @@ public class BeeTracker extends PApplet {
             try {
                 sem.acquire();
             } catch (InterruptedException e) {
-                e.printStackTrace(log);
+                e.printStackTrace(System.err);
 
                 Thread.currentThread().interrupt();
             }
@@ -909,13 +912,13 @@ public class BeeTracker extends PApplet {
             //end critical section
             sem.release();
 
-            log.append("images loaded\n").flush();
+            System.out.append("images loaded\n").flush();
 
             postLoad();
         }
 
         else {
-            log.append("file selection canceled\n").flush();
+            System.out.append("file selection canceled\n").flush();
         }
     }
 
@@ -990,13 +993,13 @@ public class BeeTracker extends PApplet {
                         .flush();
                 }
             } catch (IOException e) {
-                e.printStackTrace(log);
+                e.printStackTrace(System.err);
             } finally {
                 if(writer != null) {
                     try {
                         writer.close();
                     } catch (IOException e) {
-                        e.printStackTrace(log);
+                        e.printStackTrace(System.err);
                     }
                 }
             }
@@ -1327,14 +1330,14 @@ public class BeeTracker extends PApplet {
      * ControlP5 callback method.
      */
     public void openButton() {
-        VideoBrowser.getVideoFile(this, currentFile, log);
+        VideoBrowser.getVideoFile(this, currentFile);
     }
 
     /**
      * ControlP5 callback method.
      */
     public void openButton2() {
-        VideoBrowser.getImageSequence(this, currentFile, log);
+        VideoBrowser.getImageSequence(this, currentFile);
     }
 
     /**
@@ -1352,7 +1355,7 @@ public class BeeTracker extends PApplet {
         try {
             sem.acquire();
         } catch (InterruptedException e) {
-            e.printStackTrace(log);
+            e.printStackTrace(System.err);
 
             Thread.currentThread().interrupt();
         }
@@ -1401,7 +1404,7 @@ public class BeeTracker extends PApplet {
         uic.setSeekTime(0f, imgSequenceMode);
         thresholdRadios(0);
 
-        log.append("video closed\n------\n").flush();
+        System.out.append("video closed\n------\n").flush();
 
         tu.init();
     }
@@ -1424,11 +1427,7 @@ public class BeeTracker extends PApplet {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 
-            e.printStackTrace(log);
-        }
-
-        if(log != null) {
-            log.close();
+            e.printStackTrace(System.err);
         }
 
         if(movie != null || imgSequence != null) {
@@ -1452,6 +1451,13 @@ public class BeeTracker extends PApplet {
             if(debug) {
                 println(" - done");
             }
+        }
+
+        if(log != null) {
+            log.close();
+
+            System.setOut(stdout);
+            System.setErr(stderr);
         }
 
         sem.release();
@@ -1510,7 +1516,7 @@ public class BeeTracker extends PApplet {
 
         saveJSONObject(settings, filePath);
 
-        log.append("settings saved to ")
+        System.out.append("settings saved to ")
             .append(filePath)
             .append('\n')
             .flush();
@@ -1851,9 +1857,9 @@ public class BeeTracker extends PApplet {
 
                 result = true;
 
-                log.append("frame annotations loaded\n").flush();
+                System.out.append("frame annotations loaded\n").flush();
             } catch(RuntimeException ex) {
-                ex.printStackTrace(log);
+                ex.printStackTrace(System.err);
 
                 result = false;
             }
@@ -1945,7 +1951,7 @@ public class BeeTracker extends PApplet {
 
         currentFile = file;
 
-        log.append("toggling UI elements\n").flush();
+        System.out.append("toggling UI elements\n").flush();
 
         uic.setSetupGroupVisibility(true);
         uic.setOpenButtonVisibility(false);
@@ -1979,7 +1985,7 @@ public class BeeTracker extends PApplet {
 
             movie = new Movie(this, file.getAbsolutePath());
 
-            log.append("video loaded\n").flush();
+            System.out.append("video loaded\n").flush();
 
             movie.play();
             movie.volume(0f);
@@ -1988,7 +1994,7 @@ public class BeeTracker extends PApplet {
         }
 
         else {
-            log.append("file selection canceled\n").flush();
+            System.out.append("file selection canceled\n").flush();
         }
     }
 
@@ -1998,7 +2004,7 @@ public class BeeTracker extends PApplet {
     private void postLoad() {
         isPlaying = false;
 
-        log.append("reading frame annotations... ").flush();
+        System.out.append("reading frame annotations... ").flush();
 
         replay = readFramePointsFromJSON();
         replayCheckForTimeOut = false;
@@ -2007,7 +2013,7 @@ public class BeeTracker extends PApplet {
         uic.setPlayState(false);
         uic.toggleMenuStates();
 
-        log.append(replay ? "success" : "failure").append('\n').flush();
+        System.out.append(replay ? "success" : "failure").append('\n').flush();
     }
 
     /**
@@ -2026,7 +2032,7 @@ public class BeeTracker extends PApplet {
      * Handles all operations necessary for restarting video playback.
      */
     void rewindVideo() {
-        log.append("rewinding video\n").flush();
+        System.out.append("rewinding video\n").flush();
 
         if(debug) {
             println("rewinding video... ");

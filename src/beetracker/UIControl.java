@@ -141,7 +141,7 @@ class UIControl {
      * @param parent the instantiating object
      * @param font the program font
      */
-    UIControl(final BeeTracker parent, processing.core.PFont font) {
+    UIControl(BeeTracker parent, processing.core.PFont font) {
         cp5 = new ControlP5(parent);
         cp5.setFont(font);
 
@@ -405,81 +405,86 @@ class UIControl {
 
         if(parent.frame != null) {
             parent.frame.setMenuBar(mbar);
-
-            loadVideo.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    parent.openButton();
-                }
-            });
-            loadImages.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    parent.openButton2();
-                }
-            });
-            closeItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    parent.ejectButton();
-                }
-            });
-            exitItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent arg0) {
-                    parent.exit();
-                }
-            });
-            recordItem.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent arg0) {
-                    parent.recordButton();
-                }
-            });
-            zoomItem.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent arg0) {
-                    parent.pipToggle();
-                }
-            });
-            playItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent arg0) {
-                    parent.playButton();
-                }
-            });
-            addSettingItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    parent.addSetting();
-                }
-            });
-            removeSettingItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    parent.removeSetting();
-                }
-            });
-
-            ItemListener listener = new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent arg0) {
-                    String lbl = ((String)arg0.getItem());
-
-                    if(BeeTracker.debug) {
-                        BeeTracker.println(lbl);
-                    }
-
-                    modeRadios.getItem(
-                        lbl.equals(waggleEventItem.getLabel()) ?
-                        1 :
-                        0
-                    ).toggle();
-                }
-            };
-            exitEventItem.addItemListener(listener);
-            waggleEventItem.addItemListener(listener);
         }
+    }
+
+    /**
+     * Initializes the menu bar item listeners.
+     */
+    void initListeners(final BeeTracker parent) {
+        loadVideo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                parent.openButton();
+            }
+        });
+        loadImages.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                parent.openButton2();
+            }
+        });
+        closeItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                parent.ejectButton();
+            }
+        });
+        exitItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                parent.exit();
+            }
+        });
+        recordItem.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent arg0) {
+                parent.recordButton();
+            }
+        });
+        zoomItem.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent arg0) {
+                parent.pipToggle();
+            }
+        });
+        playItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                parent.playButton();
+            }
+        });
+        addSettingItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                parent.addSetting();
+            }
+        });
+        removeSettingItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                parent.removeSetting();
+            }
+        });
+
+        ItemListener listener = new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent arg0) {
+                String lbl = ((String)arg0.getItem());
+
+                if(BeeTracker.debug) {
+                    BeeTracker.println(lbl);
+                }
+
+                modeRadios.getItem(
+                    lbl.equals(waggleEventItem.getLabel()) ?
+                    1 :
+                    0
+                ).toggle();
+            }
+        };
+        exitEventItem.addItemListener(listener);
+        waggleEventItem.addItemListener(listener);
     }
 
     /**

@@ -116,7 +116,13 @@ public class BeeTracker extends PApplet {
             }
         }
 
-        size(800, 600);
+        final processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
+        uic = new UIControl(this, font);
+
+        size(800, 600, P2D);
+
+        uic.initListeners(this);
+
         frameRate(60);
         strokeWeight(1);
 
@@ -124,7 +130,6 @@ public class BeeTracker extends PApplet {
             File.separatorChar + "output");
         outputDir.mkdir();
 
-        processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
         textFont(font);
 
         if(frame != null) {
@@ -155,8 +160,6 @@ public class BeeTracker extends PApplet {
                 public void windowOpened(WindowEvent arg0) {}
             });
         }
-
-        uic = new UIControl(this, font);
 
         bdu = new BlobDetectionUtils(this, width, height);
 

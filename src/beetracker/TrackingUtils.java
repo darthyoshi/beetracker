@@ -201,9 +201,13 @@ class TrackingUtils {
                 waggleIter = waggleStates.listIterator();
                 i = 0;
                 while(waggleIter.hasNext()) {
-                    if(!(hasWaggle = waggleIter.next())) {
-                        hasWaggle = rec.recognize(oldPaths.get(i));
-                        waggles.append(time);
+                    if(!(waggle = waggleIter.next())) {
+                        waggle = rec.recognize(oldPaths.get(i));
+                        if(waggle) {
+                            waggleIter.set(waggle);
+
+                            waggles.append(time);
+                        }
                     }
 
                     i++;
@@ -288,14 +292,18 @@ class TrackingUtils {
                 }
             }
 
+            waggleIter = waggleStates.listIterator();
             //update timeout values for old missing points
             for(i = timeOuts.size() - j; i >= 0; i--) {
                 timeOuts.increment(i);
+
+                waggle = waggleIter.next();
 
                 //remove points that have been missing for too long
                 if(timeOuts.get(i) > timeOutCount) {
                     timeOuts.remove(i);
                     oldPaths.remove(i);
+                    waggleIter.remove();
                 }
             }
         }

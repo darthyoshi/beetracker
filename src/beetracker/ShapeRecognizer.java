@@ -37,7 +37,7 @@ class ShapeRecognizer {
         oneDollar = new OneDollar(root);
         readOneDollar(root, "waggle");
         readOneDollar(root, "waggle-vert");
-        oneDollar.on("waggle waggle-vert", "oneDollar");
+        oneDollar.bind("waggle waggle-vert", "oneDollar");
     }
 
     /**
@@ -72,9 +72,9 @@ class ShapeRecognizer {
             }
         }
         int[] array = new int[path.size()];
-        ListIterator<Integer> intIter = path.listIterator();
+        ListIterator<Integer> intIter = path.listIterator(path.size());
         for(int i = 0; i < path.size(); i++) {
-            array[i] = intIter.next();
+            array[i] = intIter.previous();
         }
         oneDollar.learn(fileName, array);
     }
@@ -88,7 +88,7 @@ class ShapeRecognizer {
         boolean result = false;
 
         java.util.Vector<PointR> list = new java.util.Vector<>();
-        ListIterator<float[]> iter = path.listIterator(path.size()-1);
+        ListIterator<float[]> iter = path.listIterator(path.size());
         float[] point;
 
         //check path in reverse

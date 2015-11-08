@@ -96,5 +96,7 @@
 	<classpathentry kind="lib" path="lib/blobDetection/blobDetection.jar"/>
 	<classpathentry kind="lib" path="lib/$N/$N.jar"/>
 	<classpathentry kind="lib" path="lib/xpp3/xpp3-1.1.4.jar"/>
+	<classpathentry kind="lib" path="lib/$1/hdm.pia-1.0.2-jar-with-dependencies.jar"/>
+	<classpathentry kind="lib" path="lib/$1/OneDollarUnistrokeRecognizer.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -21,8 +21,11 @@ class ColorPicker {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                java.awt.Color newColor = javax.swing.JColorChooser
-                    .showDialog(parent, "Select Color", java.awt.Color.BLACK);
+                java.awt.Color newColor = javax.swing.JColorChooser.showDialog(
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                    "Select Color",
+                    java.awt.Color.BLACK
+                );
                 Integer result;
 
                 if(newColor != null) {

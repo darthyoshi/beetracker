@@ -14,7 +14,6 @@ uniform float basehue;
 
 void main() {
   vec4 col = texture2D(texture, vertTexCoord.st);
-
   //convert RGB to HSV
   float h, s, v = max(max(col.r, col.g), max(col.g, col.b));
   float delta = v - min(min(col.r, col.g), min(col.g, col.b));
@@ -50,50 +49,46 @@ void main() {
     v > threshold[2]
   ) {
     //convert HSV to RGB
-    s = v = 1.0;
-
-    float r, g, b, c, x, m;
-    c = v*s;
-    m = v - c;
-    x = c * (1 - abs(mod(basehue*6, 2.0)-1));
+    float r, g, b, x;
+    x = 1 - abs(mod(basehue*6.0, 2.0)-1);
 
     if(basehue < 1.0/6.0) {
-      r = c + m;
-      g = x + m;
-      b = m;
+      r = 1;
+      g = x;
+      b = 0;
     }
 
     else if(basehue < 1.0/3.0) {
-      r = x + m;
-      g = c + m;
-      b = m;
+      r = x;
+      g = 1;
+      b = 0;
     }
 
     else if(basehue < 0.5) {
-      r = m;
-      g = x + m;
-      b = c + m;
+      r = 0;
+      g = 1;
+      b = x;
     }
 
     else if(basehue < 2.0/3.0) {
-      r = m;
-      g = c + m;
-      b = x + m;
+      r = 0;
+      g = x;
+      b = 1;
     }
 
     else if(basehue < 5.0/6.0) {
-      r = x + m;
-      g = m;
-      b = c + m;
+      r = x;
+      g = 0;
+      b = 1;
     }
 
     else {
-      r = c + m;
-      g = m;
-      b = x + m;
+      r = 1;
+      g = 0;
+      b = x;
     }
 
-    gl_FragColor = vec4(r, g, b, 1);
+    gl_FragColor = vec4(r, g, b, 1.0);
   }
 
   else {

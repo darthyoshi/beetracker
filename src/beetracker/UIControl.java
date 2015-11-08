@@ -18,9 +18,9 @@ import java.awt.event.ItemListener;
 import controlP5.Button;
 import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
-import controlP5.DropdownList;
 import controlP5.Group;
 import controlP5.RadioButton;
+import controlP5.ScrollableList;
 import controlP5.Slider;
 import controlP5.Toggle;
 import controlP5.Tooltip;
@@ -35,14 +35,14 @@ class UIControl {
     private final ControlP5 cp5;
 
     private final Group setupGroup, playGroup, thresholdGroup;
-    private final DropdownList colorList;
+    private final ScrollableList colorList;
     private final Toggle pipToggle;
     private final Button playButton, recordButton;
     private final PImage[] playIcons, recordIcons;
     private final Slider thresholdSlider, seekBar;
     private final Button eventLineButton;
     private final RadioButton thresholdRadios, selectRadios, modeRadios;
-    private final Tooltip toolTip;
+ //   private final Tooltip toolTip;
     private final Button statusLabel;
     private final Button[] openButtons;
 
@@ -147,7 +147,8 @@ class UIControl {
 
         cp5.disableShortcuts();
         cp5.setAutoDraw(false);
-
+//TODO tooltips broken in ControlP5 2.2.5
+/*
         toolTip = cp5.getTooltip().setPositionOffset(0f, -15f).setAlpha(0);
         toolTip.setDelay(100)
             .getLabel()
@@ -155,13 +156,13 @@ class UIControl {
             .setColorBackground(0xffffffff)
             .getStyle()
             .setPadding(5, 5, 5, 5);
-
+*/
         setupGroup = cp5.addGroup("setup").setLabel("").close();
         playGroup = cp5.addGroup("playback").setLabel("").close();
         thresholdGroup = cp5.addGroup("threshold").setLabel("").close();
 
-        Button editColor = cp5.addButton("editColor").setSize(90, 19);
-        editColor.setPosition(parent.width - 265, 26)
+        Button editColor = cp5.addButton("editColor").setSize(90, 20);
+        editColor.setPosition(parent.width - 265, 27)
             .setCaptionLabel("Edit color")
             .setGroup(setupGroup)
             .getCaptionLabel()
@@ -169,26 +170,24 @@ class UIControl {
 
         Button removeColor = cp5.addButton("removeColor").setSize(120, 19);
         removeColor.setPosition(
-                editColor.getPosition().x + 95,
-                editColor.getPosition().y
+                editColor.getPosition()[0] + 95,
+                editColor.getPosition()[1]
             ).setCaptionLabel("Remove color")
             .setGroup(setupGroup)
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
-        colorList = cp5.addDropdownList("colorList").setSize(215, 560);
+        colorList = cp5.addScrollableList("colorList").setSize(215, 560);
         colorList.setPosition(
-                editColor.getPosition().x,
-                editColor.getPosition().y
-            ).setCaptionLabel("Colors")
-            .actAsPulldownMenu(true)
+                editColor.getPosition()[0],
+                editColor.getPosition()[1] - editColor.getHeight() - 3
+            ).setCaptionLabel(listLbl)
+            .setType(ControlP5Constants.DROPDOWN)
             .setGroup(setupGroup)
-            .setCaptionLabel(listLbl)
             .setBarHeight(20)
+            .setItemHeight(20)
+            .setOpen(false)
             .addItem(listLbl, -1);
-        colorList.getCaptionLabel()
-            .alignY(ControlP5Constants.CENTER)
-            .setPaddingX(10);
 
         openButtons = new Button[2];
         openButtons[0] = cp5.addButton("openButton").setSize(120, 50);
@@ -201,8 +200,8 @@ class UIControl {
 
         openButtons[1] = cp5.addButton("openButton2").setSize(120, 50);
         openButtons[1].setPosition(
-                openButtons[0].getPosition().x,
-                openButtons[0].getPosition().y + 60
+                openButtons[0].getPosition()[0],
+                openButtons[0].getPosition()[1] + 60
             ).setCaptionLabel("Load images")
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
@@ -216,7 +215,7 @@ class UIControl {
             .setSize(30, 30)
             .setGroup(playGroup)
             .setImage(recordIcons[0]);
-        toolTip.register(recordButton, recordTips[0]);
+  //      toolTip.register(recordButton, recordTips[0]);
 
         playIcons = new PImage[2];
         playIcons[0] = parent.loadImage("img/playbutton.png");
@@ -224,29 +223,29 @@ class UIControl {
         playButton = cp5.addButton("playButton")
             .setLabelVisible(false)
             .setPosition(
-                recordButton.getPosition().x + 40,
-                recordButton.getPosition().y
+                recordButton.getPosition()[0] + 40,
+                recordButton.getPosition()[1]
             ).setSize(30, 30)
             .setGroup(playGroup)
             .setImage(playIcons[0]);
-        toolTip.register(playButton, playTips[0]);
+ //       toolTip.register(playButton, playTips[0]);
 
         cp5.addButton("ejectButton")
             .setLabelVisible(false)
             .setPosition(
-                playButton.getPosition().x + 40,
-                playButton.getPosition().y
+                playButton.getPosition()[0] + 40,
+                playButton.getPosition()[1]
             ).setSize(30, 30)
             .setGroup(playGroup)
             .setImage(parent.loadImage("img/ejectbutton.png"));
 
         seekBar = cp5.addSlider("seek").setBroadcast(false)
             .setSize(
-                (int)(parent.width - 50 - (playButton.getPosition().x + 120)),
+                (int)(parent.width - 50 - (playButton.getPosition()[0] + 120)),
                 15
             ).setPosition(
-                playButton.getPosition().x + 120,
-                playButton.getPosition().y
+                playButton.getPosition()[0] + 120,
+                playButton.getPosition()[1]
             ).setGroup(playGroup)
             .showTickMarks(true)
             .setSliderMode(Slider.FLEXIBLE)
@@ -257,29 +256,29 @@ class UIControl {
             .setCaptionLabel("Del")
             .setSize(50, 18)
             .setPosition(
-                seekBar.getPosition().x + seekBar.getWidth() - 50,
-                seekBar.getPosition().y + 17
+                seekBar.getPosition()[0] + seekBar.getWidth() - 50,
+                seekBar.getPosition()[1] + 17
             ).setGroup(setupGroup);
         removeSetting.getCaptionLabel()
             .align(ControlP5Constants.CENTER, ControlP5Constants.CENTER);
-        toolTip.register(removeSetting, "Remove the current threshold and selection settings");
+//        toolTip.register(removeSetting, "Remove the current threshold and selection settings");
 
         cp5.addButton("addSetting")
             .setCaptionLabel("Add")
             .setSize(50, 18)
             .setPosition(
-                removeSetting.getPosition().x - 55,
-                removeSetting.getPosition().y
+                removeSetting.getPosition()[0] - 55,
+                removeSetting.getPosition()[1]
             )
             .setGroup(setupGroup)
             .getCaptionLabel()
             .align(ControlP5Constants.CENTER, ControlP5Constants.CENTER);
-        toolTip.register("addSetting", "Add new threshold and selection settings to this point");
+  //      toolTip.register("addSetting", "Add new threshold and selection settings to this point");
 
         cp5.addTextlabel("settingsLabel")
             .setPosition(
-                removeSetting.getPosition().x - 128,
-                removeSetting.getPosition().y
+                removeSetting.getPosition()[0] - 128,
+                removeSetting.getPosition()[1]
             ).setGroup(setupGroup)
             .setText("SETTINGS:");
 
@@ -296,12 +295,12 @@ class UIControl {
             .toggle()
             .setCaptionLabel("Event");
         normalMode.getCaptionLabel().setPaddingX(-5);
-        toolTip.register(normalMode, "Track Arrivals/Departures");
+//        toolTip.register(normalMode, "Track Arrivals/Departures");
 
         Toggle waggleMode = cp5.addToggle("W")
             .setBroadcast(false)
             .setLabelVisible(false);
-        toolTip.register(waggleMode, "Track Waggle Dances");
+     //   toolTip.register(waggleMode, "Track Waggle Dances");
 
         modeRadios = cp5.addRadioButton("modeRadios")
             .setPosition(8, (parent.height - 180)/2)
@@ -318,17 +317,17 @@ class UIControl {
             .toggle()
             .setCaptionLabel("Select");
         selectFrame.getCaptionLabel().setPaddingX(-8);
-        toolTip.register(selectFrame, "Inset Frame");
+   //     toolTip.register(selectFrame, "Inset Frame");
 
         Toggle selectExit = cp5.addToggle("Ex")
             .setBroadcast(false)
             .setLabelVisible(false);
-        toolTip.register(selectExit, "Exit Circle");
+    //    toolTip.register(selectExit, "Exit Circle");
 
         selectRadios = cp5.addRadioButton("selectRadios")
             .setPosition(
-                modeRadios.getPosition().x,
-                modeRadios.getPosition().y + 60
+                modeRadios.getPosition()[0],
+                modeRadios.getPosition()[1] + 60
             ).setItemsPerRow(2)
             .addItem(selectFrame, 0)
             .addItem(selectExit, 1)
@@ -343,7 +342,7 @@ class UIControl {
             .setGroup(playGroup)
             .setPosition(
                 15,
-                selectRadios.getPosition().y + 60
+                selectRadios.getPosition()[1] + 60
             );
         pipToggle.getCaptionLabel().setPaddingX(-11);
 
@@ -364,24 +363,24 @@ class UIControl {
         hue.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
-        toolTip.register(hue, "Set hue tolerance threshold");
+  //      toolTip.register(hue, "Set hue tolerance threshold");
 
         Toggle sat = cp5.addToggle("S").setBroadcast(false);
         sat.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
-        toolTip.register(sat, "Set minimum saturation threshold");
+  //      toolTip.register(sat, "Set minimum saturation threshold");
 
         Toggle val = cp5.addToggle("V").setBroadcast(false);
         val.getCaptionLabel()
             .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
             .setPaddingX(5);
-        toolTip.register(val, "Set minimum value threshold");
+  //      toolTip.register(val, "Set minimum value threshold");
 
         thresholdRadios = cp5.addRadioButton("thresholdRadios")
             .setPosition(
-                thresholdSlider.getPosition().x,
-                thresholdSlider.getPosition().y + 260
+                thresholdSlider.getPosition()[0],
+                thresholdSlider.getPosition()[1] + 260
             )
             .setItemsPerRow(1)
             .addItem(hue, 0)
@@ -390,7 +389,7 @@ class UIControl {
             .setSize(15, 15)
             .setNoneSelectedAllowed(false)
             .setGroup(thresholdGroup);
-        toolTip.register(thresholdSlider, "Adjust the selected threshold");
+    //    toolTip.register(thresholdSlider, "Adjust the selected threshold");
 
         statusLabel = cp5.addButton("status")
             .lock()
@@ -402,10 +401,9 @@ class UIControl {
             .toUpperCase(false)
             .alignX(ControlP5Constants.CENTER)
             .set(modes[0]);
-
-        if(parent.frame != null) {
-            parent.frame.setMenuBar(mbar);
-        }
+//TODO use ScrollableList to create menu
+//        java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame();
+//        frame.setMenuBar(mbar);
     }
 
     /**
@@ -505,7 +503,7 @@ class UIControl {
      * @param label the item label
      */
     void addListItem(String label) {
-        colorList.addItem(label, colorList.getListBoxItems().length-1);
+        colorList.addItem(label, colorList.getItems().size()-1);
     }
 
     /**
@@ -513,22 +511,8 @@ class UIControl {
      * @param lbl the label of the item to remove
      */
     void removeListItem(String lbl) {
-        String[][] oldLbls = colorList.getListBoxItems();
-        String[] newLbls = new String[oldLbls.length-1];
+        colorList.removeItem(lbl);
 
-        int j = 0;
-        for(int i = 0; i < oldLbls.length && j < newLbls.length; i++) {
-            if(!oldLbls[i][0].equalsIgnoreCase(lbl)) {
-                newLbls[j] = oldLbls[i][0];
-                j++;
-            }
-        }
-
-        colorList.clear();
-
-        for(j = 0; j < newLbls.length; j++) {
-            colorList.addItem(newLbls[j], j-1);
-        }
         colorList.setCaptionLabel(listLbl);
     }
 
@@ -538,7 +522,7 @@ class UIControl {
      * @param index the index of the item
      */
     void setListItem(String newLbl, int index) {
-        colorList.getItem(index+1).setText(newLbl);
+        colorList.getItem(index+1).put("name", newLbl);
         colorList.setCaptionLabel(newLbl);
     }
 
@@ -560,7 +544,7 @@ class UIControl {
         }
 
         playButton.setImage(playIcons[i]);
-        toolTip.register(playButton, playTips[j]);
+//        toolTip.register(playButton, playTips[j]);
 
         playItem.setLabel((state ? "Pause" : "Play"));
 
@@ -713,12 +697,12 @@ class UIControl {
         int index = (state ? 1 : 0);
         recordButton.setImage(recordIcons[index]);
         recordItem.setState(state);
-        toolTip.register(recordButton, recordTips[index]);
+  //      toolTip.register(recordButton, recordTips[index]);
 
         updateEventButtonVisibility();
 
         if(!isPlaying) {
-            toolTip.register(playButton, playTips[index]);
+ //          toolTip.register(playButton, playTips[index]);
         }
     }
 
@@ -748,7 +732,7 @@ class UIControl {
     /**
      * @return the position of the seekbar in pixels
      */
-    processing.core.PVector getSeekBarPosition() {
+    float[] getSeekBarPosition() {
        return seekBar.getPosition();
     }
 
@@ -807,10 +791,10 @@ class UIControl {
     }
 
     /**
-     * Sets the event detection type.
+     * Updates UI elements based on the event detection type.
      * @param type true for waggle dance detection
      */
-    void setEventType(boolean type) {
+    void updateEventType(boolean type) {
         waggleEventItem.setState(type);
         exitEventItem.setState(!type);
 

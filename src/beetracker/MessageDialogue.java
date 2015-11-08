@@ -7,7 +7,6 @@
 
 package beetracker;
 
-import java.awt.Dimension;
 import java.awt.EventQueue;
 
 import javax.swing.JDialog;
@@ -51,8 +50,12 @@ class MessageDialogue {
                     msg.append(errorMsg[1]);
                 }
 
-                JOptionPane.showMessageDialog(parent, msg.toString(), "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                    msg.toString(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
             }
         });
     }
@@ -63,7 +66,7 @@ class MessageDialogue {
      */
     static void wrongFileTypeMessage(BeeTracker parent) {
         JOptionPane.showMessageDialog(
-            parent,
+            null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
             "Please select a video file!",
             "Error",
             JOptionPane.ERROR_MESSAGE
@@ -80,7 +83,7 @@ class MessageDialogue {
             public void run() {
                 if(
                     JOptionPane.showConfirmDialog(
-                        parent,
+                        null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
                         "Cancel playback? Current video statistics will not be saved.",
                         "Warning",
                         JOptionPane.YES_NO_OPTION
@@ -102,7 +105,7 @@ class MessageDialogue {
     static void endVideoMessage(
         final BeeTracker parent,
         final String msg,
-        final processing.core.PGraphics events,
+        final processing.core.PImage events,
         final String fileName
     ) {
         EventQueue.invokeLater(new Runnable() {
@@ -113,14 +116,14 @@ class MessageDialogue {
                 textArea.setWrapStyleWord(true);
 
                 JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setPreferredSize(new Dimension(400, 300));
+                scrollPane.setPreferredSize(new java.awt.Dimension(400, 300));
 
                 javax.swing.JTabbedPane tabPane;
 
                 if(events != null) {
                     JScrollPane scrollPane2 = new JScrollPane(
                         new javax.swing.JLabel(new javax.swing.ImageIcon(
-                            (java.awt.Image)events.getNative()))
+                            (java.awt.image.BufferedImage)events.getNative()))
                     );
 
                     tabPane = new javax.swing.JTabbedPane();
@@ -134,7 +137,7 @@ class MessageDialogue {
 
                 if(
                     JOptionPane.showOptionDialog(
-                        parent,
+                        null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
                         (events == null ? scrollPane : tabPane),
                         "Session Summary",
                         JOptionPane.YES_NO_OPTION,
@@ -172,8 +175,12 @@ class MessageDialogue {
                 StringBuilder builder = new StringBuilder(crashMsg[0]);
                 builder.append(msg).append(crashMsg[1]);
 
-                JOptionPane.showMessageDialog(parent, builder.toString(),
-                    "Fatal Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                    builder.toString(),
+                    "Fatal Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
 
                 parent.exit();
             }
@@ -197,12 +204,13 @@ class MessageDialogue {
                     '\"';
 
             if(parent.isReplay()) {
-                JOptionPane.showMessageDialog(parent, msg);
+                JOptionPane.showMessageDialog(
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/, msg);
             }
 
             else {
                 result = JOptionPane.showConfirmDialog(
-                    parent,
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
                     msg + "\nSave frame annotations?",
                     "Results Saved",
                     JOptionPane.YES_NO_OPTION
@@ -220,7 +228,7 @@ class MessageDialogue {
      */
     static void showEventTimeline(
         final BeeTracker parent,
-        final processing.core.PGraphics graphic
+        final processing.core.PImage graphic
     ) {
         EventQueue.invokeLater(new Runnable() {
             @Override
@@ -238,17 +246,18 @@ class MessageDialogue {
 
                 JScrollPane scrollPane = new JScrollPane(
                     new javax.swing.JLabel(new javax.swing.ImageIcon(
-                        (java.awt.Image)graphic.getNative()))
+                        (java.awt.image.BufferedImage)graphic.getNative()))
                 );
                 scrollPane.setSize(width, height);
 
                 JDialog dialog = (new JOptionPane(
-                        scrollPane,
-                        JOptionPane.PLAIN_MESSAGE,
-                        JOptionPane.DEFAULT_OPTION,
-                        null,
-                        eventOptions
-                    )).createDialog(parent, "Event Timeline");
+                    scrollPane,
+                    JOptionPane.PLAIN_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION,
+                    null,
+                    eventOptions
+                )).createDialog(null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface()
+                    .getNative()).getFrame()*/, "Event Timeline");
                 dialog.setModalityType(java.awt.Dialog.ModalityType.MODELESS);
                 dialog.pack();
                 dialog.setVisible(true);

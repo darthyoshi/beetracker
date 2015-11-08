@@ -57,7 +57,9 @@ class BlobDetectionUtils {
         alphaShader = parent.loadShader("alphashader.glsl");
 
         buf = parent.createGraphics(width, height, BeeTracker.P2D);
+        buf.beginDraw();
         buf.colorMode(BeeTracker.HSB, 1);
+        buf.endDraw();
     }
 
     /**
@@ -72,14 +74,14 @@ class BlobDetectionUtils {
     void filterImg(PImage img, IntList colors, int[] threshold) {
         thresholdShader.set(
             "threshold",
-            (float)threshold[0]/255f,
-            (float)threshold[1]/255f,
-            (float)threshold[2]/255f
+            ((float)threshold[0])/255f,
+            ((float)threshold[1])/255f,
+            ((float)threshold[2])/255f
         );
 
         buf.copy(img, 0, 0, img.width, img.height, 0, 0, buf.width, buf.height);
 
-        alphaShader.set("keepVisible", true);
+        alphaShader.set("init", true);
         buf.filter(alphaShader);
 
         for(int i = 0; i < colors.size(); i++) {
@@ -87,7 +89,7 @@ class BlobDetectionUtils {
             buf.filter(thresholdShader);
         }
 
-        alphaShader.set("keepVisible", false);
+        alphaShader.set("init", false);
         buf.filter(alphaShader);
 
         //fill blob holes
@@ -189,6 +191,8 @@ class BlobDetectionUtils {
         for(int tmpColor : colors) {
             result.put(tmpColor, new ArrayList<float[]>());
         }
+
+        parent.colorMode(BeeTracker.HSB, 255);
 
         //iterate through blobs
         for(i = 0; i < bd.getBlobNb(); i++) {

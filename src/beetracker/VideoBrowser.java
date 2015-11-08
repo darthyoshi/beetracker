@@ -145,7 +145,7 @@ class VideoBrowser {
                 panel.add(dateTimeSpinner);
 
                 javax.swing.JOptionPane.showMessageDialog(
-                    parent,
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
                     panel,
                     "Set the video time stamp",
                     javax.swing.JOptionPane.PLAIN_MESSAGE
@@ -177,7 +177,8 @@ class VideoBrowser {
 
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-                int returnVal = chooser.showOpenDialog(parent);
+                int returnVal = chooser.showOpenDialog(
+                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/);
                 if(returnVal == JFileChooser.APPROVE_OPTION) {
                     selectedDir = chooser.getSelectedFile();
                 }

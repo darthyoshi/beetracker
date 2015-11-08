@@ -7,7 +7,9 @@
 
 package beetracker;
 
-import java.awt.event.WindowEvent;
+import com.jogamp.newt.event.WindowEvent;
+
+//import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -74,7 +76,7 @@ public class BeeTracker extends PApplet {
     private static final PrintStream stdout = System.out;
     private static final PrintStream stderr = System.err;
 
-    private final PImage titleImg = loadImage("img/title.png");
+    private PImage titleImg;
 
     static final boolean debug = false;
 
@@ -100,7 +102,14 @@ public class BeeTracker extends PApplet {
      * Overrides from PApplet.
      */
     @Override
+    public void settings() {
+        size(800, 600, P2D);
+    }
+
+    @Override
     public void setup() {
+        titleImg = loadImage("img/title.png");
+
         //create log file
         if(!debug) {
             try {
@@ -118,10 +127,8 @@ public class BeeTracker extends PApplet {
         }
 
         final processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
+
         uic = new UIControl(this, font);
-
-        size(800, 600, P2D);
-
         uic.initListeners(this);
 
         frameRate(60);
@@ -133,35 +140,65 @@ public class BeeTracker extends PApplet {
 
         textFont(font);
 
-        if(frame != null) {
-            frame.setIconImage((java.awt.Image)loadImage("img/icon.png").getNative());
-            frame.setTitle("BeeTracker");
-            frame.addWindowListener(new java.awt.event.WindowListener() {
-                @Override
-                public void windowActivated(WindowEvent arg0) {}
+        surface.setIcon(loadImage("img/icon.png"));
+        surface.setTitle("BeeTracker");
 
+        ((com.jogamp.newt.opengl.GLWindow)surface.getNative()).addWindowListener(
+            new com.jogamp.newt.event.WindowListener() {
                 @Override
-                public void windowClosed(WindowEvent arg0) {}
-
-                @Override
-                public void windowClosing(WindowEvent arg0) {
+                public void windowDestroyNotify(WindowEvent arg0) {
                     exit();
                 }
 
                 @Override
-                public void windowDeactivated(WindowEvent arg0) {}
+                public void windowDestroyed(WindowEvent arg0) {}
 
                 @Override
-                public void windowDeiconified(WindowEvent arg0) {}
+                public void windowGainedFocus(WindowEvent arg0) {}
 
                 @Override
-                public void windowIconified(WindowEvent arg0) {}
+                public void windowLostFocus(WindowEvent arg0) {}
 
                 @Override
-                public void windowOpened(WindowEvent arg0) {}
-            });
-        }
+                public void windowMoved(WindowEvent arg0) {}
 
+                @Override
+                public void windowRepaint(com.jogamp.newt.event.WindowUpdateEvent arg0) {}
+
+                @Override
+                public void windowResized(WindowEvent arg0) {}
+                
+            }
+        );
+
+/*        java.awt.Frame frame = ((PSurfaceAWT.SmoothCanvas)surface.getNative()).getFrame();
+        frame.setIconImage((java.awt.Image)loadImage("img/icon.png").getNative());
+        frame.setTitle("BeeTracker");
+        frame.addWindowListener(new java.awt.event.WindowListener() {
+            @Override
+            public void windowActivated(WindowEvent arg0) {}
+
+            @Override
+            public void windowClosed(WindowEvent arg0) {}
+
+            @Override
+            public void windowClosing(WindowEvent arg0) {
+                exit();
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent arg0) {}
+
+            @Override
+            public void windowDeiconified(WindowEvent arg0) {}
+
+            @Override
+            public void windowIconified(WindowEvent arg0) {}
+
+            @Override
+            public void windowOpened(WindowEvent arg0) {}
+        });
+*/
         bdu = new BlobDetectionUtils(this, width, height);
 
         tu = new TrackingUtils(this);
@@ -755,7 +792,7 @@ public class BeeTracker extends PApplet {
                     }
 
                     MessageDialogue.endVideoMessage(this, msg.toString(),
-                        events, path);
+                        (events == null ? events : events.get()), path);
                 }
 
                 uic.draw();
@@ -764,12 +801,12 @@ public class BeeTracker extends PApplet {
                 textAlign(LEFT, TOP);
                 textSize(10);
                 fill(0xffffffff);
+                float[] pos = uic.getSeekBarPosition();
                 for(float stamp : settingsTimeStamps) {
                     text(
                         "l",
-                        stamp/duration*(uic.getSeekBarWidth()-5) +
-                            (uic.getSeekBarPosition().x+2),
-                        uic.getSeekBarPosition().y + 5
+                        stamp/duration*(uic.getSeekBarWidth()-5) + (pos[0]+2),
+                        pos[1] + 5
                     );
                 }
             }
@@ -1206,31 +1243,30 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * ControlP5 callback method. Used for control group events.
-     * @param event the originating event
+     * ControlP5 callback method.
+     * @param event
      */
     public void controlEvent(controlP5.ControlEvent event) {
         if(debug) {
             println("ControlEvent: " + event.getName());
         }
+    }
 
-        switch(event.getName()) {
-        case "colorList":
-            listVal = (int)event.getValue();
+    /**
+     * ControlP5 callback method.
+     * @param index
+     */
+    public void colorList(int index) {
+        listVal = index-1;
 
-            if(debug) {
-                println(listVal + " " +
-                    (
-                        listVal > -1 ?
-                        String.format("%06x",colors.get(listVal)) :
-                        "new color"
-                    )
-                );
-            }
-
-            break;
-
-        default: //do nothing
+        if(debug) {
+            println(listVal + " " +
+                (
+                    listVal > -1 ?
+                    String.format("%06x",colors.get(listVal)) :
+                    "new color"
+                )
+            );
         }
     }
 
@@ -1305,7 +1341,7 @@ public class BeeTracker extends PApplet {
             selectExit = false;
         }
 
-        uic.setEventType(waggleMode);
+        uic.updateEventType(waggleMode);
         tu.setEventType(waggleMode);
     }
 
@@ -1488,7 +1524,7 @@ public class BeeTracker extends PApplet {
             }
 
             if(debug) {
-                System.out.print("saving settings");
+                print("saving settings");
             }
 
             //save current color and selection settings
@@ -1500,7 +1536,7 @@ public class BeeTracker extends PApplet {
             );
 
             if(debug) {
-                System.out.println(" - done");
+                println(" - done");
             }
         }
 
@@ -2075,7 +2111,7 @@ public class BeeTracker extends PApplet {
         videoDate = date;
 
         if(debug) {
-        	println("video time stamp: " + date.getTime());
+            println("video time stamp: " + date.getTime());
         }
     }
 
@@ -2245,18 +2281,22 @@ public class BeeTracker extends PApplet {
         }
 
         int time = imgSequenceMode ? (int)imgIndex : (int)movie.time();
+
         PGraphics graphic = tu.getEventTimeline(this, time, duration);
+        if(graphic != null) {
+            graphic.beginDraw();
+            graphic.fill(0xff000000);
+            graphic.textAlign(RIGHT);
+            graphic.text(String.format(
+                    "current time: %02d:%02d:%02d",
+                    time/3600,
+                    time/60,
+                    time%60
+                ), 395, 18);
+            graphic.endDraw();
 
-        graphic.fill(0xff000000);
-        graphic.textAlign(RIGHT);
-        graphic.text(String.format(
-                "current time: %02d:%02d:%02d",
-                time/3600,
-                time/60,
-                time%60
-            ), 395, 18);
-
-        MessageDialogue.showEventTimeline(this, graphic);
+            MessageDialogue.showEventTimeline(this, graphic.get());
+        }
     }
 
     /**
@@ -2295,7 +2335,7 @@ public class BeeTracker extends PApplet {
         int endX,
         int endY
     ) {
-        //TODO implement
+        println("Need to implement - " + percentOfSimilarity);
     }
 
     /**

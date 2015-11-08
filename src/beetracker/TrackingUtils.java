@@ -26,10 +26,11 @@ class TrackingUtils {
     private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
     private HashMap<Integer, IntList> allTimeOuts;
     private IntList colors;
-    private final static float distThreshold = 0.25f;
-    private PGraphics eventTimeline;
+    private static final float distThreshold = 0.25f;
+    private processing.core.PImage eventTimeline;
     private boolean waggleMode = false;
     private final ShapeRecognizer rec;
+    private static final int timeOutCount = 7;
 
     /**
      * Class constructor.
@@ -73,7 +74,7 @@ class TrackingUtils {
         List<float[]> newPoints, path;
         List<List<float[]>> oldPaths;
         List<Boolean> waggleStates;
-        java.util.Iterator<Boolean> waggleIter;
+        java.util.ListIterator<Boolean> waggleIter;
         FloatList departures, arrivals, waggles;
         IntList checkedIndicesOld, checkedIndicesNew, timeOuts;
         float oldX, oldY, newX, newY, minDist;
@@ -82,6 +83,7 @@ class TrackingUtils {
         int i, j, k, numPairs, minI, minJ;
         int[][] validPairs = null;
         boolean isOldPointInExit, isNewPointInExit;
+        Boolean waggle;
 
         float[] exitCenterXY = new float[2];
         exitCenterXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
@@ -104,7 +106,7 @@ class TrackingUtils {
             k = 0;
 
             if(BeeTracker.debug) {
-                BeeTracker.println(String.format(
+                System.out.println(String.format(
                     "---checking blobs colored %06x---%s %d%s %d",
                     color,
                     "\npoints in last frame:",
@@ -176,7 +178,7 @@ class TrackingUtils {
                         k++;
 
                         if(BeeTracker.debug) {
-                            BeeTracker.println("points (" + minI + ", " + minJ + ") paired");
+                            System.out.println("points (" + minI + ", " + minJ + ") paired");
                         }
                     }
 
@@ -189,7 +191,7 @@ class TrackingUtils {
             }
 
             if(BeeTracker.debug) {
-                BeeTracker.println(k + " point(s) paired");
+                System.out.println(k + " point(s) paired");
             }
 
             //TODO (needs testing) check for waggle dances
@@ -198,7 +200,6 @@ class TrackingUtils {
 
                 waggleIter = waggleStates.listIterator();
                 i = 0;
-                Boolean hasWaggle;
                 while(waggleIter.hasNext()) {
                     if(!(hasWaggle = waggleIter.next())) {
                         hasWaggle = rec.recognize(oldPaths.get(i));
@@ -230,7 +231,7 @@ class TrackingUtils {
                     isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
 
                     if(BeeTracker.debug) {
-                        BeeTracker.println(
+                        System.out.println(
                             "pair " + i + ":\nold point " + validPairs[i][0] +
                             " is inside exit: " + (isOldPointInExit ? "true" : "false") +
                             "\nnew point " + validPairs[i][1] +" is inside exit: " +
@@ -276,13 +277,13 @@ class TrackingUtils {
             }
 
             if(BeeTracker.debug) {
-                BeeTracker.println("all paths:");
+                System.out.println("all paths:");
                 for(i = 0; i < oldPaths.size(); i++) {
-                    BeeTracker.println(i + ":");
+                    System.out.println(i + ":");
                     path = oldPaths.get(i);
 
                     for(float[] tmpPoint : path) {
-                        BeeTracker.println(tmpPoint[0] + "," + tmpPoint[1]);
+                        System.out.println(tmpPoint[0] + "," + tmpPoint[1]);
                     }
                 }
             }
@@ -292,7 +293,7 @@ class TrackingUtils {
                 timeOuts.increment(i);
 
                 //remove points that have been missing for too long
-                if(timeOuts.get(i) > 5) {
+                if(timeOuts.get(i) > timeOutCount) {
                     timeOuts.remove(i);
                     oldPaths.remove(i);
                 }
@@ -467,49 +468,55 @@ class TrackingUtils {
         int color, yOffset;
         float xOffset = time/duration*369f + 26f;
 
+        PGraphics img = parent.createGraphics(400, colors.size() * 50);
+        img.beginDraw();
+
         if(eventTimeline == null) {
-            eventTimeline = parent.createGraphics(400, colors.size() * 50);
+            img.background(0xffeeeeee);
 
-            eventTimeline.beginDraw();
-
-            eventTimeline.background(0xffeeeeee);
-
-            eventTimeline.textAlign(PConstants.LEFT);
+            img.textAlign(PConstants.LEFT);
 
             for(int i = 1; i <= colors.size(); i++) {
                 color = colors.get(i-1);
                 yOffset = 50*i;
 
-                eventTimeline.strokeWeight(1);
-                eventTimeline.stroke(0xff000000);
-                eventTimeline.fill(0xffcccccc);
-                eventTimeline.rectMode(PConstants.CORNER);
-                eventTimeline.rect(25, yOffset-25, 370, 20);
+                img.strokeWeight(1);
+                img.stroke(0xff000000);
+                img.fill(0xffcccccc);
+                img.rectMode(PConstants.CORNER);
+                img.rect(25, yOffset-25, 370, 20);
 
-                eventTimeline.fill(0xff000000);
-                eventTimeline.text("color:", 25, yOffset-32);
+                img.fill(0xff000000);
+                img.text("color:", 25, yOffset-32);
 
                 if(waggleMode) {
-                    eventTimeline.text("W", 7, yOffset-15);
+                    img.text("W", 7, yOffset-15);
                 }
 
                 else {
-                    eventTimeline.text("A", 7, yOffset-15);
-                    eventTimeline.text("D", 7, yOffset-5);
+                    img.text("A", 7, yOffset-15);
+                    img.text("D", 7, yOffset-5);
                 }
 
-                eventTimeline.fill(0xff000000 + color);
-                eventTimeline.text(String.format("%06x", color), 65, yOffset-32);
+                img.fill(0xff000000 + color);
+                img.text(String.format("%06x", color), 65, yOffset-32);
             }
         }
 
         else {
-            eventTimeline.beginDraw();
+            img.copy(
+                eventTimeline,
+                0, 0,
+                eventTimeline.width, eventTimeline.height,
+                0, 0,
+                img.width, img.height
+            );
+            img.beginDraw();
         }
 
-        eventTimeline.ellipseMode(PConstants.CENTER);
-        eventTimeline.rectMode(PConstants.CENTER);
-        eventTimeline.stroke(0xff000000);
+        img.ellipseMode(PConstants.CENTER);
+        img.rectMode(PConstants.CENTER);
+        img.stroke(0xff000000);
 
         for(int i = 1; i <= colors.size(); i++) {
             color = colors.get(i-1);
@@ -517,22 +524,22 @@ class TrackingUtils {
 
             //mark intervals with detected bees
             if(!allPaths.get(color).isEmpty()) {
-                eventTimeline.stroke(0xff000000 + color);
-                eventTimeline.line(
+                img.stroke(0xff000000 + color);
+                img.line(
                     xOffset,
                     yOffset-20,
                     xOffset,
                     yOffset-10
                 );
-                eventTimeline.stroke(0xff000000);
+                img.stroke(0xff000000);
             }
 
-            eventTimeline.fill(0xff000000 + color);
+            img.fill(0xff000000 + color);
 
             if(waggleMode) {
                 //mark waggle dance detections
                 for(float stamp : waggleTimes.get(color)) {
-                    eventTimeline.triangle(
+                    img.triangle(
                         stamp/duration*369 + 26,
                         yOffset-17.5f,
                         stamp/duration*369 + 23.5f,
@@ -546,7 +553,7 @@ class TrackingUtils {
             else {
                 //mark arrivals
                 for(float stamp : arrivalTimes.get(color)) {
-                    eventTimeline.rect(
+                    img.rect(
                         stamp/duration*369 + 26,
                         yOffset-20,
                         5,
@@ -556,7 +563,7 @@ class TrackingUtils {
 
                 //mark departures
                 for(float stamp : departureTimes.get(color)) {
-                    eventTimeline.ellipse(
+                    img.ellipse(
                         stamp/duration*369 + 26,
                         yOffset-10,
                         5,
@@ -565,14 +572,16 @@ class TrackingUtils {
                 }
             }
 
-            eventTimeline.stroke(0xff000000);
-            eventTimeline.line(25, yOffset-15, 395, yOffset-15);
+            img.stroke(0xff000000);
+            img.line(25, yOffset-15, 395, yOffset-15);
         }
 
-        eventTimeline.endDraw();
+        img.endDraw();
+
+        eventTimeline = img.get();
 
         if(BeeTracker.debug) {
-            BeeTracker.println("done");
+            System.out.println("done");
         }
     }
 
@@ -592,41 +601,49 @@ class TrackingUtils {
             BeeTracker.print("retrieving event timeline... ");
         }
 
-        PGraphics result = parent.createGraphics(eventTimeline.width,
-            eventTimeline.height);
+        PGraphics result;
 
-        result.beginDraw();
+        if(eventTimeline != null) {
+            result = parent.createGraphics(eventTimeline.width,
+                eventTimeline.height);
 
-        result.copy(
-            eventTimeline,
-            0, 0,
-            eventTimeline.width, eventTimeline.height,
-            0, 0,
-            result.width, result.height
-        );
+            result.beginDraw();
 
-        result.stroke(0xff555555);
-
-        float xOffset = time/duration*369 + 26;
-        int yOffset;
-
-        //mark current timestamp
-        for(int i = 1; i <= colors.size(); i++) {
-            yOffset = 50*i;
-
-            result.line(
-              xOffset,
-              yOffset-24,
-              xOffset,
-              yOffset-6
+            result.copy(
+                eventTimeline,
+                0, 0,
+                eventTimeline.width, eventTimeline.height,
+                0, 0,
+                result.width, result.height
             );
-            result.line(0, yOffset, 400, yOffset);
+
+            result.stroke(0xff555555);
+
+            float xOffset = time/duration*369 + 26;
+            int yOffset;
+
+            //mark current timestamp
+            for(int i = 1; i <= colors.size(); i++) {
+                yOffset = 50*i;
+
+                result.line(
+                  xOffset,
+                  yOffset-24,
+                  xOffset,
+                  yOffset-6
+                );
+                result.line(0, yOffset, 400, yOffset);
+            }
+
+            result.endDraw();
+
+            if(BeeTracker.debug) {
+                System.out.println("done");
+            }
         }
 
-        result.endDraw();
-
-        if(BeeTracker.debug) {
-            BeeTracker.println("done");
+        else {
+            result = null;
         }
 
         return result;

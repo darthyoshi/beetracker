@@ -258,6 +258,10 @@ public class BeeTracker extends PApplet {
                 insets = new HashMap<>();
 
                 try {
+                    waggleMode = jsonSettings.getString("eventType", "exit").equals("waggle");
+                    uic.activateEventRadio(waggleMode);
+                    modeRadios(waggleMode ? 1: 0);
+
                     jsonSetting = jsonSettings.getJSONObject("time");
                     settingIter = jsonSetting.keyIterator();
                     float timeStamp;
@@ -713,8 +717,8 @@ public class BeeTracker extends PApplet {
                 //end of movie reached
                 if(
                     isPlaying &&
-                    (imgSequenceMode && (int)time >= (int)duration ||
-                        !imgSequenceMode && duration - time < 1f/movie.frameRate)
+                    ((imgSequenceMode && (int)time >= (int)duration) ||
+                        (!imgSequenceMode && duration - time < 1f/movie.frameRate))
                 ) {
                     isPlaying = false;
 
@@ -870,7 +874,7 @@ public class BeeTracker extends PApplet {
                     uic.setSeekTime(imgIndex, imgSequenceMode);
                 }
 
-                while(stillFrame == null) {
+                while(stillFrame == null && imgIndex < imgSequence.length) {
                     if(imgSequence[imgIndex] == null) {
                         updateImgSequence(imgIndex);
                     }
@@ -1571,6 +1575,8 @@ public class BeeTracker extends PApplet {
             uic.removeListItem(lbl);
         }
         settings.setJSONObject("colors", setting);
+
+        settings.setString("eventType", waggleMode ? "waggle" : "exit");
 
         for(float timeStamp : settingsTimeStamps) {
             set = new JSONObject();

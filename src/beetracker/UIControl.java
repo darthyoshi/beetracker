@@ -791,6 +791,14 @@ class UIControl {
     }
 
     /**
+     * Manually activates an event detection type radio button.
+     * @param type true for waggle dance detection
+     */
+    void activateEventRadio(boolean type) {
+        modeRadios.activate(type ? 1 : 0);
+    }
+
+    /**
      * Updates UI elements based on the event detection type.
      * @param type true for waggle dance detection
      */

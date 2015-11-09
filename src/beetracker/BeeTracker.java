@@ -717,8 +717,11 @@ public class BeeTracker extends PApplet {
                 //end of movie reached
                 if(
                     isPlaying &&
-                    ((imgSequenceMode && (int)time >= (int)duration) ||
-                        (!imgSequenceMode && duration - time < 1f/movie.frameRate))
+                    (
+                        (imgSequenceMode && (int)time >= (int)duration) ||
+                        (!imgSequenceMode && ((int)(10000f*(duration - time))) <=
+                            ((int)(10000f/movie.frameRate)))
+                    )
                 ) {
                     isPlaying = false;
 

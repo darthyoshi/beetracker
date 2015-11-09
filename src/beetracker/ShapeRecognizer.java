@@ -22,6 +22,7 @@ import java.util.ListIterator;
 class ShapeRecognizer {
     NDollarRecognizer nDollar;
     private static final float shapeScore = 0.8f;
+    private boolean status = false;
 
     OneDollar oneDollar;
 
@@ -34,7 +35,8 @@ class ShapeRecognizer {
         nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
         nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
 */
-        oneDollar = new OneDollar(root);
+        oneDollar = new OneDollar(root).setMinSimilarity((int)(shapeScore*100f))
+            .enableMinSimilarity();
         readOneDollar(root, "waggle");
         readOneDollar(root, "waggle-vert");
         oneDollar.bind("waggle waggle-vert", "oneDollar");
@@ -56,8 +58,8 @@ class ShapeRecognizer {
             while((line = reader.readLine()) != null) {
                 if(line.startsWith("<Point")) {
                     split = line.split("\\\"");
-                    path.add((int)Float.parseFloat(split[1]));
                     path.add((int)Float.parseFloat(split[3]));
+                    path.add((int)Float.parseFloat(split[1]));
                 }
             }
         } catch (java.io.IOException ex) {
@@ -81,31 +83,62 @@ class ShapeRecognizer {
 
     /**
      * Checks a path for the waggle dance.
-     * @param path a List of float pairs representing a path
+     * @param path a List of normalized float pairs representing a path
+     * @param frameDims the dimensions of the inset frame
      * @return true if the waggle dance shape is part of the path
      */
-    boolean recognize(java.util.List<float[]> path) {
-        boolean result = false;
-
-        java.util.Vector<PointR> list = new java.util.Vector<>();
+    void recognize(java.util.List<float[]> path, int[] frameDims) {
         ListIterator<float[]> iter = path.listIterator(path.size());
         float[] point;
+
+        //$N
+        java.util.Vector<PointR> list = new java.util.Vector<>();
+
+        //$1
+        LinkedList<Integer> candidate = new LinkedList<>();
+        int[] array;
+        int i;
 
         //check path in reverse
         while(iter.hasPrevious()) {
             point = iter.previous();
 /*
             //$N
-            list.add(new PointR(point[0], point[1]));
+            list.add(new PointR(point[0]*frameDims[0], point[1]*frameDims[1]));
             if(nDollar.Recognize(list, 1).getScore() >= shapeScore) {
-                result = true;
-                break;
+                status = true;
             }
 */
             //$1
-            oneDollar.track(point[0], point[1]);
-        }
+            candidate.add((int)(point[0]*frameDims[0]));
+            candidate.add((int)(point[1]*frameDims[1]));
+            array = new int[candidate.size()];
+            i = 0;
+            for(Integer c : candidate) {
+                array[i] = c;
+                i++;
+            }
+            oneDollar.check(array);
 
-        return result;
+            //current path contains recognized gesture, no need to continue
+            if(status) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Callback method for storing candidate recognition state.
+     * @param state true it the current gesture candidate matches a template
+     */
+    void setCandidateRecognized(boolean state) {
+        status = state;
+    }
+
+    /**
+     * @return true if the current gesture candidate matches a template
+     */
+    boolean isCandidateRecognized() {; 
+        return status; 
     }
 }

@@ -30,7 +30,7 @@ class TrackingUtils {
     private processing.core.PImage eventTimeline;
     private boolean waggleMode = false;
     private final ShapeRecognizer rec;
-    private static final int timeOutCount = 7;
+    private static final int timeOutCount = 5;
 
     /**
      * Class constructor.
@@ -202,7 +202,9 @@ class TrackingUtils {
                 i = 0;
                 while(waggleIter.hasNext()) {
                     if(!(waggle = waggleIter.next())) {
-                        waggle = rec.recognize(oldPaths.get(i));
+                        rec.recognize(oldPaths.get(i), frameDims);
+
+                        waggle = rec.isCandidateRecognized();
                         if(waggle) {
                             waggleIter.set(waggle);
 

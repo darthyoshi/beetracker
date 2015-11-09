@@ -2344,7 +2344,7 @@ public class BeeTracker extends PApplet {
         int endX,
         int endY
     ) {
-        println("Need to implement - " + percentOfSimilarity);
+        System.err.println("Need to implement - " + percentOfSimilarity);
     }
 
     /**

@@ -51,10 +51,10 @@ class BlobDetectionUtils {
         bd.setPosDiscrimination(true);
         bd.setThreshold(.2f);
 
-        thresholdShader = parent.loadShader("thresholdshader.glsl");
-        morphoShader = parent.loadShader("morphoshader.glsl");
+        thresholdShader = parent.loadShader("shaders/thresholdshader.glsl");
+        morphoShader = parent.loadShader("shaders/morphoshader.glsl");
  //       morphoShader.set("filterRadius", filterRadius);
-        alphaShader = parent.loadShader("alphashader.glsl");
+        alphaShader = parent.loadShader("shaders/alphashader.glsl");
 
         buf = parent.createGraphics(width, height, BeeTracker.P2D);
         buf.beginDraw();

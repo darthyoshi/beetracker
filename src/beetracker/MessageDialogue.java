@@ -28,6 +28,11 @@ class MessageDialogue {
     };
     private static final String endOptions[] = {"Replay video", "Close video"};
     private static final String eventOptions[] = {"Close"};
+    private static final JDialog dialog = new JDialog();
+    static {
+        dialog.pack();
+        dialog.setAlwaysOnTop(true);
+    }
 
     /**
      * Displays an error message if setup parameters have not been set.
@@ -51,7 +56,7 @@ class MessageDialogue {
                 }
 
                 JOptionPane.showMessageDialog(
-                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                    dialog,
                     msg.toString(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE
@@ -66,7 +71,7 @@ class MessageDialogue {
      */
     static void wrongFileTypeMessage(BeeTracker parent) {
         JOptionPane.showMessageDialog(
-            null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+            dialog,
             "Please select a video file!",
             "Error",
             JOptionPane.ERROR_MESSAGE
@@ -83,7 +88,7 @@ class MessageDialogue {
             public void run() {
                 if(
                     JOptionPane.showConfirmDialog(
-                        null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                        dialog,
                         "Cancel playback? Current video statistics will not be saved.",
                         "Warning",
                         JOptionPane.YES_NO_OPTION
@@ -137,7 +142,7 @@ class MessageDialogue {
 
                 if(
                     JOptionPane.showOptionDialog(
-                        null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                        dialog,
                         (events == null ? scrollPane : tabPane),
                         "Session Summary",
                         JOptionPane.YES_NO_OPTION,
@@ -176,7 +181,7 @@ class MessageDialogue {
                 builder.append(msg).append(crashMsg[1]);
 
                 JOptionPane.showMessageDialog(
-                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                    dialog,
                     builder.toString(),
                     "Fatal Error",
                     JOptionPane.ERROR_MESSAGE
@@ -204,13 +209,12 @@ class MessageDialogue {
                     '\"';
 
             if(parent.isReplay()) {
-                JOptionPane.showMessageDialog(
-                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/, msg);
+                JOptionPane.showMessageDialog(dialog, msg);
             }
 
             else {
                 result = JOptionPane.showConfirmDialog(
-                    null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+                    dialog,
                     msg + "\nSave frame annotations?",
                     "Results Saved",
                     JOptionPane.YES_NO_OPTION
@@ -256,8 +260,7 @@ class MessageDialogue {
                     JOptionPane.DEFAULT_OPTION,
                     null,
                     eventOptions
-                )).createDialog(null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface()
-                    .getNative()).getFrame()*/, "Event Timeline");
+                )).createDialog(null, "Event Timeline");
                 dialog.setModalityType(java.awt.Dialog.ModalityType.MODELESS);
                 dialog.pack();
                 dialog.setVisible(true);

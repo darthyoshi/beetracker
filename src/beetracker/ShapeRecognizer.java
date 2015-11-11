@@ -7,36 +7,37 @@
 
 package beetracker;
 
-import $N.NDollarRecognizer;
 import $N.PointR;
 
-import de.voidplus.dollar.OneDollar;
-
 import java.util.LinkedList;
-import java.util.ListIterator;
 
 /**
  *
  * @author Kay Choi
  */
 class ShapeRecognizer {
-    NDollarRecognizer nDollar;
+    $N.NDollarRecognizer nDollar;
     private static final float shapeScore = 0.8f;
     private boolean status = false;
+    private static final int rate = 32;
 
-    OneDollar oneDollar;
+    de.voidplus.dollar.OneDollar oneDollar;
 
     /**
      * Class constructor.
      * @param root the BeeTracker object
      */
     ShapeRecognizer(BeeTracker root) {
-/*        nDollar = new NDollarRecognizer();
+/*        //$N
+        nDollar = new $N.NDollarRecognizer();
         nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
         nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
 */
-        oneDollar = new OneDollar(root).setMinSimilarity((int)(shapeScore*100f))
-            .enableMinSimilarity();
+        //$1
+        oneDollar = new de.voidplus.dollar.OneDollar(root)
+            .setMinSimilarity((int)(shapeScore*100f))
+            .enableMinSimilarity()
+            .setFragmentationRate(rate);
         readOneDollarTemplate(root, "waggle");
         readOneDollarTemplate(root, "waggle-vert");
         oneDollar.bind("waggle waggle-vert", this, "oneDollarCallback");
@@ -56,6 +57,7 @@ class ShapeRecognizer {
         try {
             reader = new java.io.BufferedReader(new java.io
                 .InputStreamReader(root.createInputRaw("paths/"+fileName+".xml"), "UTF-8"));
+
             while((line = reader.readLine()) != null) {
                 if(line.startsWith("<Point")) {
                     split = line.split("\\\"");
@@ -76,9 +78,9 @@ class ShapeRecognizer {
             }
         }
         int[] array = new int[path.size()*2];
-        ListIterator<int[]> intIter = path.listIterator(path.size());
+        java.util.ListIterator<int[]> iter = path.listIterator(path.size());
         for(int i = 0; i < array.length; i += 2) {
-            point = intIter.previous();
+            point = iter.previous();
             array[i] = point[0];
             array[i+1] = point[1];
         }
@@ -92,44 +94,65 @@ class ShapeRecognizer {
      * @return true if the waggle dance shape is part of the path
      */
     void recognize(java.util.List<float[]> path, int[] frameDims) {
-        ListIterator<float[]> iter = path.listIterator(path.size());
-        float[] point;
+        java.util.ListIterator<float[]> iter = path.listIterator(path.size());
+        float[] point, prevCandPoint = null;
+        float dx, dy;
+        int i;
 
         //$N
-        java.util.Vector<PointR> list = new java.util.Vector<>();
+//        java.util.Vector<PointR> candidateVec = new java.util.Vector<>();
 
         //$1
-        LinkedList<Integer> candidate = new LinkedList<>();
-        int[] array;
-        int i;
+        LinkedList<float[]> candidateList = new LinkedList<>();
+        int[] candidateArray;
 
         status = false;
 
         //check path in reverse
         while(iter.hasPrevious()) {
             point = iter.previous();
+
+            //artificially increase candidate sample rate
+            if(prevCandPoint != null) {
+                dx = (prevCandPoint[0]-point[0])/rate;
+                dy = (prevCandPoint[1]-point[1])/rate;
+
+                for(i = 1; i < rate; i++) {
+                    //$N
+//                    candidateVec.add(new PointR((point[0]+i*dx)*frameDims[0],
+//                        (point[1]+i*dy)*frameDims[1]));
+
+                    //$1
+                    candidateList.add(new float[] {(point[0]+i*dx)*frameDims[0],
+                        (point[1]+i*dy)*frameDims[1]});
+                }
+            }
 /*
             //$N
-            list.add(new PointR(point[0]*frameDims[0], point[1]*frameDims[1]));
-            if(nDollar.Recognize(list, 1).getScore() >= shapeScore) {
+            candidateVec.add(new PointR(point[0]*frameDims[0], point[1]*frameDims[1]));
+            if(nDollar.Recognize(candidateVec, 1).getScore() >= shapeScore) {
                 status = true;
             }
 */
             //$1
-            candidate.add((int)(point[0]*frameDims[0]));
-            candidate.add((int)(point[1]*frameDims[1]));
-            array = new int[candidate.size()];
+            candidateList.add(new float[] {point[0]*frameDims[0],
+                point[1]*frameDims[1]});
+            candidateArray = new int[candidateList.size()*2];
             i = 0;
-            for(Integer c : candidate) {
-                array[i] = c;
+            for(float[] tmpPoint : candidateList) {
+                candidateArray[i] = (int)tmpPoint[0];
+                i++;
+                candidateArray[i] = (int)tmpPoint[1];
                 i++;
             }
-            oneDollar.check(array);
+            oneDollar.check(candidateArray);
 
             //current path contains recognized gesture, no need to continue
             if(status) {
                 break;
             }
+
+            prevCandPoint = point;
         }
     }
 

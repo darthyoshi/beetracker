@@ -134,14 +134,6 @@ class ShapeRecognizer {
     }
 
     /**
-     * Callback method for storing candidate recognition state.
-     * @param state true it the current gesture candidate matches a template
-     */
-    void setCandidateRecognized(boolean state) {
-        status = state;
-    }
-
-    /**
      * @return true if the current gesture candidate matches a template
      */
     boolean isCandidateRecognized() {

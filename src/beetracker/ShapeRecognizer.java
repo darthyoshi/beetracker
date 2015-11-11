@@ -37,8 +37,8 @@ class ShapeRecognizer {
 */
         oneDollar = new OneDollar(root).setMinSimilarity((int)(shapeScore*100f))
             .enableMinSimilarity();
-        readOneDollar(root, "waggle");
-        readOneDollar(root, "waggle-vert");
+        readOneDollarTemplate(root, "waggle");
+        readOneDollarTemplate(root, "waggle-vert");
         oneDollar.bind("waggle waggle-vert", this, "oneDollarCallback");
     }
 
@@ -47,8 +47,9 @@ class ShapeRecognizer {
      * @param root the root BeeTracker
      * @param fileName the template file name
      */
-    private void readOneDollar(BeeTracker root, String fileName) {
-        LinkedList<Integer> path = new LinkedList<>();
+    private void readOneDollarTemplate(BeeTracker root, String fileName) {
+        LinkedList<int[]> path = new LinkedList<>();
+        int[] point;
         java.io.BufferedReader reader = null;
         String line;
         String[] split;
@@ -58,8 +59,9 @@ class ShapeRecognizer {
             while((line = reader.readLine()) != null) {
                 if(line.startsWith("<Point")) {
                     split = line.split("\\\"");
-                    path.add((int)Float.parseFloat(split[3]));
-                    path.add((int)Float.parseFloat(split[1]));
+                    point = new int[] {(int)Float.parseFloat(split[1]),
+                        (int)Float.parseFloat(split[3])};
+                    path.add(point);
                 }
             }
         } catch (java.io.IOException ex) {
@@ -73,10 +75,12 @@ class ShapeRecognizer {
                 }
             }
         }
-        int[] array = new int[path.size()];
-        ListIterator<Integer> intIter = path.listIterator(path.size());
-        for(int i = 0; i < path.size(); i++) {
-            array[i] = intIter.previous();
+        int[] array = new int[path.size()*2];
+        ListIterator<int[]> intIter = path.listIterator(path.size());
+        for(int i = 0; i < array.length; i += 2) {
+            point = intIter.previous();
+            array[i] = point[0];
+            array[i+1] = point[1];
         }
         oneDollar.learn(fileName, array);
     }
@@ -98,6 +102,8 @@ class ShapeRecognizer {
         LinkedList<Integer> candidate = new LinkedList<>();
         int[] array;
         int i;
+
+        status = false;
 
         //check path in reverse
         while(iter.hasPrevious()) {

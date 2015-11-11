@@ -39,7 +39,7 @@ class ShapeRecognizer {
             .enableMinSimilarity();
         readOneDollar(root, "waggle");
         readOneDollar(root, "waggle-vert");
-        oneDollar.bind("waggle waggle-vert", "oneDollar");
+        oneDollar.bind("waggle waggle-vert", this, "oneDollarCallback");
     }
 
     /**
@@ -138,7 +138,32 @@ class ShapeRecognizer {
     /**
      * @return true if the current gesture candidate matches a template
      */
-    boolean isCandidateRecognized() {; 
+    boolean isCandidateRecognized() {
         return status; 
+    }
+
+    /**
+     * $1 recognizer callback method.
+     * @param gestureName
+     * @param percentOfSimilarity
+     * @param startX
+     * @param startY
+     * @param centroidX
+     * @param centroidY
+     * @param endX
+     * @param endY
+     */
+    void oneDollarCallback(
+        String gestureName,
+        float percentOfSimilarity,
+        int startX,
+        int startY,
+        int centroidX,
+        int centroidY,
+        int endX,
+        int endY
+    ) {
+        //System.err.println("Need to implement - " + percentOfSimilarity);
+        status = true;
     }
 }

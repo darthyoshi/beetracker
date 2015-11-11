@@ -2324,30 +2324,6 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * $1 recognizer callback method.
-     * @param gestureName
-     * @param percentOfSimilarity
-     * @param startX
-     * @param startY
-     * @param centroidX
-     * @param centroidY
-     * @param endX
-     * @param endY
-     */
-    public void oneDollar(
-        String gestureName,
-        float percentOfSimilarity,
-        int startX,
-        int startY,
-        int centroidX,
-        int centroidY,
-        int endX,
-        int endY
-    ) {
-        System.err.println("Need to implement - " + percentOfSimilarity);
-    }
-
-    /**
      * Main method for executing BeeTracker as a Java application.
      * @param args command line arguments
      */

@@ -53,7 +53,7 @@ class BlobDetectionUtils {
 
         thresholdShader = parent.loadShader("shaders/thresholdshader.glsl");
         morphoShader = parent.loadShader("shaders/morphoshader.glsl");
- //       morphoShader.set("filterRadius", filterRadius);
+        morphoShader.set("filterRadius", (float)filterRadius);
         alphaShader = parent.loadShader("shaders/alphashader.glsl");
 
         buf = parent.createGraphics(width, height, BeeTracker.P2D);
@@ -93,21 +93,12 @@ class BlobDetectionUtils {
         buf.filter(alphaShader);
 
         //fill blob holes
-        int i;
-        for(i = 0; i < filterRadius; i++) {
-            morphImage(true);
-        }
-        for(i = 0; i < filterRadius; i++) {
-            morphImage(false);
-        }
+        morphImage(true);
+        morphImage(false);
 
         //remove noise
-        for(i = 0; i < filterRadius; i++) {
-            morphImage(false);
-        }
-        for(i = 0; i < filterRadius; i++) {
-            morphImage(true);
-        }
+        morphImage(false);
+        morphImage(true);
 
         img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
     }

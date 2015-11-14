@@ -28,7 +28,7 @@ import java.util.LinkedList;
  * @date 13 Nov 15
  * @description Provides shape recognition for waggle dance detection.
  */
-class ShapeRecognizer {
+public class ShapeRecognizer {
     $N.NDollarRecognizer nDollar;
     private static final float shapeScore = 0.8f;
     private boolean status = false;
@@ -50,6 +50,7 @@ class ShapeRecognizer {
         oneDollar = new de.voidplus.dollar.OneDollar(root)
             .setMinSimilarity((int)(shapeScore*100f))
             .enableMinSimilarity()
+            .setVerbose(BeeTracker.debug)
             .setFragmentationRate(rate);
         readOneDollarTemplate(root, "waggle");
         readOneDollarTemplate(root, "waggle-vert");
@@ -187,7 +188,7 @@ class ShapeRecognizer {
      * @param endX
      * @param endY
      */
-    void oneDollarCallback(
+    public void oneDollarCallback(
         String gestureName,
         float percentOfSimilarity,
         int startX,
@@ -197,7 +198,6 @@ class ShapeRecognizer {
         int endX,
         int endY
     ) {
-        //System.err.println("Need to implement - " + percentOfSimilarity);
         status = true;
     }
 }

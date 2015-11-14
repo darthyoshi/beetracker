@@ -42,7 +42,6 @@ class BlobDetectionUtils {
     private final BeeTracker parent;
     private static final int filterRadius = 5;
     private final BlobDetection bd;
-    private IntList blobColors;
     private final PShader thresholdShader, morphoShader, alphaShader;
     private final PGraphics buf;
 
@@ -57,8 +56,6 @@ class BlobDetectionUtils {
      */
     BlobDetectionUtils(BeeTracker parent, int width, int height) {
         this.parent = parent;
-
-        blobColors = new IntList();
 
         bd = new BlobDetection(width, height);
         bd.setPosDiscrimination(true);
@@ -143,7 +140,7 @@ class BlobDetectionUtils {
             if (b != null) {
 
                 //mark edges all blobs
-                buf.stroke(0xFFFF00AA);
+                buf.stroke(0xFFFFFFFF);
                 for (int m = 0; m < b.getEdgeNb(); m++) {
                     eA = b.getEdgeVertexA(m);
                     eB = b.getEdgeVertexB(m);
@@ -159,7 +156,6 @@ class BlobDetectionUtils {
                 }
 
                 //bounding boxes
-                buf.stroke(blobColors.get(n));
                 buf.rectMode(PConstants.CORNER);
                 buf.rect(
                     b.xMin*frameDims[0] + frameOffset[0] - bufOffset[0],
@@ -185,12 +181,9 @@ class BlobDetectionUtils {
         float[] point;
         Blob b;
         int i, j, color, pixel, hue;
-        boolean added;
 
         frame.loadPixels();
         bd.computeBlobs(frame.pixels);
-
-        blobColors = new IntList();
 
         for(int tmpColor : colors) {
             result.put(tmpColor, new ArrayList<float[]>());
@@ -200,8 +193,6 @@ class BlobDetectionUtils {
 
         //iterate through blobs
         for(i = 0; i < bd.getBlobNb(); i++) {
-            added = false;
-
             b = bd.getBlob(i);
 
             point = new float[2];
@@ -220,9 +211,6 @@ class BlobDetectionUtils {
                 if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
                     result.get(color).add(point);
 
-                    blobColors.append(parent.color(hue, 255, 255));
-
-                    added = true;
                     break;
                 }
 
@@ -246,9 +234,6 @@ class BlobDetectionUtils {
                             {
                                 result.get(color).add(point);
 
-                                blobColors.append(parent.color(hue, 255, 255));
-
-                                added = true;
                                 break loop;
                             }
                         }

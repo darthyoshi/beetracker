@@ -18,7 +18,7 @@ uniform bool dilateMode;
  */
 vec4 probeColor() {
   float i, j, x, y;
-  vec4 col, blank = vec4(0, 0, 0, 0);
+  vec4 col, result = (dilateMode ? vec4(0, 0, 0, 0) : texture2D(texture, vertTexCoord.st));
 
   for(i = -filterRadius; i <= filterRadius; i++) {
     x = i*texOffset.s + vertTexCoord.s;
@@ -27,22 +27,25 @@ vec4 probeColor() {
         y = j*texOffset.t + vertTexCoord.t;
         col = texture2D(texture, vec2(x, y));
 
-        if(col.a > 0.0) {
-          //dilate: hit
-          if(dilateMode) {
-            return col;
+        if(dilateMode) {
+          //dilate: take texel with greatest intensity
+          if(max(max(col.r, col.g), max(col.g, col.b)) >
+            max(max(result.r, result.g), max(result.g, result.b))) {
+            result = col;
           }
         }
         else if(!dilateMode){
-          //erode: miss
-          return blank;
+          //erode: take texel with least intensity
+          if(max(max(col.r, col.g), max(col.g, col.b)) <
+            max(max(result.r, result.g), max(result.g, result.b))) {
+            result = col;
+          }
         }
       }
     }
   }
 
-  //dilate: miss, erode: hit
-  return dilateMode ? blank : col;
+  return result;
 }
 
 void main() {

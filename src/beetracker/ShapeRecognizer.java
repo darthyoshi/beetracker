@@ -30,7 +30,8 @@ import java.util.LinkedList;
  */
 public class ShapeRecognizer {
     $N.NDollarRecognizer nDollar;
-    private static final float shapeScore = 0.8f;
+//    private static final float shapeScore = 0.75f;
+    private static final int shapeScore = 60;
     private boolean status = false;
     private static final int rate = 32;
 
@@ -45,16 +46,20 @@ public class ShapeRecognizer {
         nDollar = new $N.NDollarRecognizer();
         nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
         nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
-*/
+/*/
         //$1
         oneDollar = new de.voidplus.dollar.OneDollar(root)
-            .setMinSimilarity((int)(shapeScore*100f))
+            .setMinSimilarity(shapeScore)
             .enableMinSimilarity()
             .setVerbose(BeeTracker.debug)
             .setFragmentationRate(rate);
         readOneDollarTemplate(root, "waggle");
-        readOneDollarTemplate(root, "waggle-vert");
-        oneDollar.bind("waggle waggle-vert", this, "oneDollarCallback");
+  //      readOneDollarTemplate(root, "waggle-vert");
+        oneDollar.bind("waggle", this, "oneDollarCallback");
+/*/
+//        oneDollar.setMinSimilarity(30);
+        readOneDollarTemplate(root, "circle");
+        oneDollar.on("circle", this, "oneDollarCallback");//*/
     }
 
     /**
@@ -144,10 +149,12 @@ public class ShapeRecognizer {
 /*
             //$N
             candidateVec.add(new PointR(point[0]*frameDims[0], point[1]*frameDims[1]));
-            if(nDollar.Recognize(candidateVec, 1).getScore() >= shapeScore) {
-                status = true;
+            if(candidateVec.size() > 1) {
+                if(nDollar.Recognize(candidateVec, 1).getScore() >= shapeScore) {
+                    status = true;
+                }
             }
-*/
+/*/
             //$1
             candidateList.add(new float[] {point[0]*frameDims[0],
                 point[1]*frameDims[1]});
@@ -160,7 +167,7 @@ public class ShapeRecognizer {
                 i++;
             }
             oneDollar.check(candidateArray);
-
+//*/
             //current path contains recognized gesture, no need to continue
             if(status) {
                 break;

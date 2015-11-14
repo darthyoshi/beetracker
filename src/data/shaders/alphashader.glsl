@@ -36,7 +36,7 @@ void main() {
     gl_FragColor = vec4(col.rgb, 0.5);
   }
   else {
-    if(col.a != 1.0) {
+    if(col.a < 1.0) {
       gl_FragColor = vec4(0,0,0,0);
     }
     else {

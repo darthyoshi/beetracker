@@ -40,7 +40,7 @@ import processing.opengl.PShader;
  */
 class BlobDetectionUtils {
     private final BeeTracker parent;
-    private static final int filterRadius = 5;
+    private static final float filterRadius = 6f;
     private final BlobDetection bd;
     private final PShader thresholdShader, morphoShader, alphaShader;
     private final PGraphics buf;
@@ -63,7 +63,7 @@ class BlobDetectionUtils {
 
         thresholdShader = parent.loadShader("shaders/thresholdshader.glsl");
         morphoShader = parent.loadShader("shaders/morphoshader.glsl");
-        morphoShader.set("filterRadius", (float)filterRadius);
+        morphoShader.set("filterRadius", filterRadius);
         alphaShader = parent.loadShader("shaders/alphashader.glsl");
 
         buf = parent.createGraphics(width, height, BeeTracker.P2D);
@@ -136,9 +136,7 @@ class BlobDetectionUtils {
         buf.strokeWeight(1);
 
         for (int n = 0; n < bd.getBlobNb(); n++) {
-            b = bd.getBlob(n);
-            if (b != null) {
-
+            if ((b = bd.getBlob(n)) != null) {
                 //mark edges all blobs
                 buf.stroke(0xFFFFFFFF);
                 for (int m = 0; m < b.getEdgeNb(); m++) {
@@ -193,48 +191,48 @@ class BlobDetectionUtils {
 
         //iterate through blobs
         for(i = 0; i < bd.getBlobNb(); i++) {
-            b = bd.getBlob(i);
+            if((b = bd.getBlob(i)) != null) {
+                point = new float[2];
+                point[0] = b.x;
+                point[1] = b.y;
 
-            point = new float[2];
-            point[0] = b.x;
-            point[1] = b.y;
+                for(j = 0; j < colors.size(); j++) {
+                    color = colors.get(j);
+                    hue = (int)parent.hue(color);
+                    pixel = frame.pixels[
+                         (int)(b.y*frame.height)*frame.width +
+                         (int)(b.x*frame.width)
+                    ];
 
-            for(j = 0; j < colors.size(); j++) {
-                color = colors.get(j);
-                hue = (int)parent.hue(color);
-                pixel = frame.pixels[
-                     (int)(b.y*frame.height)*frame.width +
-                     (int)(b.x*frame.width)
-                ];
+                    //case: centroid is in blob
+                    if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
+                        result.get(color).add(point);
 
-                //case: centroid is in blob
-                if(parent.brightness(pixel) > 0f && (int)parent.hue(pixel) == hue) {
-                    result.get(color).add(point);
+                        break;
+                    }
 
-                    break;
-                }
-
-                //case: centroid is not in blob
-                else {
-                    loop:
-                    for(
-                        int k = (int)(b.yMin*frame.height);
-                        k < (int)(b.yMax*frame.height);
-                        k++
-                    ) {
+                    //case: centroid is not in blob
+                    else {
+                        loop:
                         for(
-                            int l = (int)(b.xMin*frame.width);
-                            l < (int)(b.xMax*frame.width);
-                            l++
+                            int k = (int)(b.yMin*frame.height);
+                            k < (int)(b.yMax*frame.height);
+                            k++
                         ) {
-                            pixel = frame.pixels[k*frame.width + l];
+                            for(
+                                int l = (int)(b.xMin*frame.width);
+                                l < (int)(b.xMax*frame.width);
+                                l++
+                            ) {
+                                pixel = frame.pixels[k*frame.width + l];
 
-                            if(parent.brightness(pixel) > 0f &&
-                                (int)parent.hue(pixel) == hue)
-                            {
-                                result.get(color).add(point);
+                                if(parent.brightness(pixel) > 0f &&
+                                    (int)parent.hue(pixel) == hue)
+                                {
+                                    result.get(color).add(point);
 
-                                break loop;
+                                    break loop;
+                                }
                             }
                         }
                     }

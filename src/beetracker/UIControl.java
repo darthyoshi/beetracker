@@ -1,9 +1,20 @@
-/**
- * @file UIControl.java
- * @author Kay Choi, 909926828
- * @date 14 Feb 15
- * @description Manages the UI elements for BeeTracker.
- */
+/*
+* BeeTracker
+* Copyright (C) 2015 Kay Choi
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 package beetracker;
 
@@ -28,8 +39,10 @@ import controlP5.Tooltip;
 import processing.core.PImage;
 
 /**
- *
+ * @class UIControl
  * @author Kay Choi
+ * @date 13 Nov 15
+ * @description Manages the UI elements for BeeTracker.
  */
 class UIControl {
     private final ControlP5 cp5;

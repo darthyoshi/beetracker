@@ -1,9 +1,20 @@
-/**
- * @file ShapeRecognizer.java
- * @author Kay Choi, 909926828
- * @date 21 Oct 15
- * @description Provides shape recognition for waggle dance detection.
- */
+/*
+* BeeTracker
+* Copyright (C) 2015 Kay Choi
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 package beetracker;
 
@@ -12,8 +23,10 @@ import $N.PointR;
 import java.util.LinkedList;
 
 /**
- *
+ * @class ShapeRecognizer
  * @author Kay Choi
+ * @date 13 Nov 15
+ * @description Provides shape recognition for waggle dance detection.
  */
 class ShapeRecognizer {
     $N.NDollarRecognizer nDollar;
@@ -160,7 +173,7 @@ class ShapeRecognizer {
      * @return true if the current gesture candidate matches a template
      */
     boolean isCandidateRecognized() {
-        return status; 
+        return status;
     }
 
     /**

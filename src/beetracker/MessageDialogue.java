@@ -20,7 +20,6 @@ package beetracker;
 
 import java.awt.EventQueue;
 
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 
@@ -41,11 +40,6 @@ class MessageDialogue {
     };
     private static final String endOptions[] = {"Replay video", "Close video"};
     private static final String eventOptions[] = {"Close"};
-    private static final JDialog dialog = new JDialog();
-    static {
-        dialog.pack();
-        dialog.setAlwaysOnTop(true);
-    }
 
     /**
      * Displays an error message if setup parameters have not been set.
@@ -69,7 +63,7 @@ class MessageDialogue {
                 }
 
                 JOptionPane.showMessageDialog(
-                    dialog,
+                    null,
                     msg.toString(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE
@@ -84,7 +78,7 @@ class MessageDialogue {
      */
     static void wrongFileTypeMessage(BeeTracker parent) {
         JOptionPane.showMessageDialog(
-            dialog,
+            null,
             "Please select a video file!",
             "Error",
             JOptionPane.ERROR_MESSAGE
@@ -101,7 +95,7 @@ class MessageDialogue {
             public void run() {
                 if(
                     JOptionPane.showConfirmDialog(
-                        dialog,
+                        null,
                         "Cancel playback? Current video statistics will not be saved.",
                         "Warning",
                         JOptionPane.YES_NO_OPTION
@@ -155,7 +149,7 @@ class MessageDialogue {
 
                 if(
                     JOptionPane.showOptionDialog(
-                        dialog,
+                        null,
                         (events == null ? scrollPane : tabPane),
                         "Session Summary",
                         JOptionPane.YES_NO_OPTION,
@@ -194,7 +188,7 @@ class MessageDialogue {
                 builder.append(msg).append(crashMsg[1]);
 
                 JOptionPane.showMessageDialog(
-                    dialog,
+                    null,
                     builder.toString(),
                     "Fatal Error",
                     JOptionPane.ERROR_MESSAGE
@@ -222,12 +216,12 @@ class MessageDialogue {
                     '\"';
 
             if(parent.isReplay()) {
-                JOptionPane.showMessageDialog(dialog, msg);
+                JOptionPane.showMessageDialog(null, msg);
             }
 
             else {
                 result = JOptionPane.showConfirmDialog(
-                    dialog,
+                    null,
                     msg + "\nSave frame annotations?",
                     "Results Saved",
                     JOptionPane.YES_NO_OPTION
@@ -267,7 +261,7 @@ class MessageDialogue {
                 );
                 scrollPane.setSize(width, height);
 
-                JDialog dialog = (new JOptionPane(
+                javax.swing.JDialog dialog = (new JOptionPane(
                     scrollPane,
                     JOptionPane.PLAIN_MESSAGE,
                     JOptionPane.DEFAULT_OPTION,

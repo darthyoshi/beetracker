@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 
 /**
@@ -34,13 +35,6 @@ import javax.swing.JFileChooser;
 class VideoBrowser {
     private static final String[] videoExts = {"mov", "mpg", "mpeg", "avi", "mp4"};
     private static final String OS = System.getProperty("os.name");
-    private static final javax.swing.JDialog dialog = new javax.swing.JDialog();
-    private static final JFileChooser chooser = new JFileChooser();
-    static {
-        dialog.add(chooser);
-        dialog.pack();
-        dialog.setAlwaysOnTop(true);
-    }
 
     /**
      * Displays a file browser that filters for video files.
@@ -56,7 +50,14 @@ class VideoBrowser {
             public void run() {
                 File selectedFile = null;
 
-                FileDialog fd = new FileDialog(dialog, "Select video", FileDialog.LOAD);
+                JDialog dialog = new JDialog();
+                dialog.setAlwaysOnTop(true);
+
+                FileDialog fd = new FileDialog(
+                    dialog,
+                    "Select video",
+                    FileDialog.LOAD
+                );
 
                 if(currentFile != null) {
                     fd.setDirectory(currentFile.getParentFile().getAbsolutePath());
@@ -192,11 +193,15 @@ class VideoBrowser {
             public void run() {
                 File selectedDir = null;
 
-                dialog.requestFocusInWindow();
-
+                JFileChooser chooser = new JFileChooser();
                 chooser.setCurrentDirectory(currentDir);
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 chooser.requestFocusInWindow();
+
+                JDialog dialog = new JDialog();
+                dialog.add(chooser);
+                dialog.pack();
+                dialog.setAlwaysOnTop(true);
 
                 int returnVal = chooser.showOpenDialog(dialog);
                 if(returnVal == JFileChooser.APPROVE_OPTION) {

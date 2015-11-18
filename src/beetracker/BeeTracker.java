@@ -141,7 +141,7 @@ public class BeeTracker extends PApplet {
         final processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
 
         uic = new UIControl(this, font);
-        uic.initListeners(this);
+//        uic.initListeners(this);
 
         frameRate(60);
         strokeWeight(1);

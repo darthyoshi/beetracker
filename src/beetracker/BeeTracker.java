@@ -20,7 +20,6 @@ package beetracker;
 
 import com.jogamp.newt.event.WindowEvent;
 
-//import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -157,59 +156,27 @@ public class BeeTracker extends PApplet {
         surface.setTitle("BeeTracker");
 
         ((com.jogamp.newt.opengl.GLWindow)surface.getNative()).addWindowListener(
-            new com.jogamp.newt.event.WindowListener() {
+            new com.jogamp.newt.event.WindowAdapter() {
                 @Override
                 public void windowDestroyNotify(WindowEvent arg0) {
                     exit();
                 }
 
                 @Override
-                public void windowDestroyed(WindowEvent arg0) {}
-
-                @Override
-                public void windowGainedFocus(WindowEvent arg0) {}
-
-                @Override
-                public void windowLostFocus(WindowEvent arg0) {}
-
-                @Override
-                public void windowMoved(WindowEvent arg0) {}
-
-                @Override
-                public void windowRepaint(com.jogamp.newt.event.WindowUpdateEvent arg0) {}
-
-                @Override
-                public void windowResized(WindowEvent arg0) {}
-                
+                public void windowDestroyed(WindowEvent arg0) {
+                    exit();
+                }
             }
         );
-
-/*        java.awt.Frame frame = ((PSurfaceAWT.SmoothCanvas)surface.getNative()).getFrame();
+/*
+        java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)surface.getNative()).getFrame();
         frame.setIconImage((java.awt.Image)loadImage("img/icon.png").getNative());
         frame.setTitle("BeeTracker");
-        frame.addWindowListener(new java.awt.event.WindowListener() {
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
-            public void windowActivated(WindowEvent arg0) {}
-
-            @Override
-            public void windowClosed(WindowEvent arg0) {}
-
-            @Override
-            public void windowClosing(WindowEvent arg0) {
+            public void windowClosing(java.awt.event.WindowEvent arg0) {
                 exit();
             }
-
-            @Override
-            public void windowDeactivated(WindowEvent arg0) {}
-
-            @Override
-            public void windowDeiconified(WindowEvent arg0) {}
-
-            @Override
-            public void windowIconified(WindowEvent arg0) {}
-
-            @Override
-            public void windowOpened(WindowEvent arg0) {}
         });
 */
         bdu = new BlobDetectionUtils(this, width, height);

@@ -175,13 +175,15 @@ class UIControl {
         thresholdGroup = cp5.addGroup("threshold").setLabel("").close();
 
         Button editColor = cp5.addButton("editColor").setSize(90, 20);
-        editColor.setPosition(parent.width - 265, 27)
-            .setCaptionLabel("Edit color")
+        editColor.setPosition(
+                BeeTracker.viewBounds[2] - 214,
+                BeeTracker.viewBounds[1] - 24
+            ).setCaptionLabel("Edit color")
             .setGroup(setupGroup)
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
 
-        Button removeColor = cp5.addButton("removeColor").setSize(120, 19);
+        Button removeColor = cp5.addButton("removeColor").setSize(120, 20);
         removeColor.setPosition(
                 editColor.getPosition()[0] + 95,
                 editColor.getPosition()[1]
@@ -205,8 +207,8 @@ class UIControl {
         openButtons = new Button[2];
         openButtons[0] = cp5.addButton("openButton").setSize(120, 50);
         openButtons[0].setPosition(
-                (parent.width - openButtons[0].getWidth())*.5f,
-                parent.height/2 + 100
+                (BeeTracker.viewBounds[0] + BeeTracker.viewBounds[2] - openButtons[0].getWidth())/2,
+                (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3])/2 + 100
             ).setCaptionLabel("Load video")
             .getCaptionLabel()
             .alignX(ControlP5Constants.CENTER);
@@ -224,7 +226,7 @@ class UIControl {
         recordIcons[1] = parent.requestImage("img/recordbutton2.png");
         recordButton = cp5.addButton("recordButton")
             .setLabelVisible(false)
-            .setPosition(50, parent.height - 40)
+            .setPosition(BeeTracker.viewBounds[0], BeeTracker.viewBounds[3] + 11)
             .setSize(30, 30)
             .setGroup(playGroup)
             .setImage(recordIcons[0]);
@@ -254,7 +256,7 @@ class UIControl {
 
         seekBar = cp5.addSlider("seek").setBroadcast(false)
             .setSize(
-                (int)(parent.width - 50 - (playButton.getPosition()[0] + 120)),
+                BeeTracker.viewBounds[2] - (int)playButton.getPosition()[0] - 119,
                 15
             ).setPosition(
                 playButton.getPosition()[0] + 120,
@@ -297,7 +299,7 @@ class UIControl {
 
         eventLineButton = cp5.addButton("eventsButton")
             .setSize(150, 30)
-            .setPosition(parent.width - 200, 10)
+            .setPosition(BeeTracker.viewBounds[2] - 149, BeeTracker.viewBounds[1] - 40)
             .setVisible(false)
             .lock()
             .setCaptionLabel("Show Event Timeline");
@@ -307,7 +309,7 @@ class UIControl {
             .setBroadcast(false)
             .toggle()
             .setCaptionLabel("Event");
-        normalMode.getCaptionLabel().setPaddingX(-5);
+        normalMode.getCaptionLabel().setPaddingX(-6);
 //        toolTip.register(normalMode, "Track Arrivals/Departures");
 
         Toggle waggleMode = cp5.addToggle("W")
@@ -316,8 +318,10 @@ class UIControl {
      //   toolTip.register(waggleMode, "Track Waggle Dances");
 
         modeRadios = cp5.addRadioButton("modeRadios")
-            .setPosition(8, (parent.height - 180)/2)
-            .setItemsPerRow(2)
+            .setPosition(
+                BeeTracker.viewBounds[0] - 41,
+                (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 180)/2
+            ).setItemsPerRow(2)
             .addItem(normalMode, 0)
             .addItem(waggleMode, 1)
             .setSize(15, 15)
@@ -329,7 +333,7 @@ class UIControl {
             .setBroadcast(false)
             .toggle()
             .setCaptionLabel("Select");
-        selectFrame.getCaptionLabel().setPaddingX(-8);
+        selectFrame.getCaptionLabel().setPaddingX(-9);
    //     toolTip.register(selectFrame, "Inset Frame");
 
         Toggle selectExit = cp5.addToggle("Ex")
@@ -357,7 +361,7 @@ class UIControl {
                 15,
                 selectRadios.getPosition()[1] + 60
             );
-        pipToggle.getCaptionLabel().setPaddingX(-11);
+        pipToggle.getCaptionLabel()/*.setPaddingX(-12)*/.alignX(ControlP5Constants.CENTER);
 
         thresholdSlider = cp5.addSlider("thresholdSlider")
             .setBroadcast(false)
@@ -365,8 +369,8 @@ class UIControl {
             .setRange(0, 255)
             .changeValue(40f)
             .setPosition(
-                parent.width - 43,
-                (parent.height - 307)/2
+                BeeTracker.viewBounds[2] + 9,
+                (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 307)/2
             ).setCaptionLabel("")
             .setGroup(thresholdGroup)
             .setBroadcast(true);
@@ -393,7 +397,7 @@ class UIControl {
         thresholdRadios = cp5.addRadioButton("thresholdRadios")
             .setPosition(
                 thresholdSlider.getPosition()[0],
-                thresholdSlider.getPosition()[1] + 260
+                thresholdSlider.getPosition()[1] + 261
             )
             .setItemsPerRow(1)
             .addItem(hue, 0)
@@ -407,7 +411,7 @@ class UIControl {
         statusLabel = cp5.addButton("status")
             .lock()
             .setSize(190, 40)
-            .setPosition(50, 5)
+            .setPosition(BeeTracker.viewBounds[0], BeeTracker.viewBounds[1] - 45)
             .setGroup(playGroup);
         statusLabel.getCaptionLabel()
             .setFont(new controlP5.ControlFont(cp5.getFont().getFont(), 24))

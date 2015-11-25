@@ -46,7 +46,7 @@ import processing.video.Movie;
  */
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
-    private static final int[] viewBounds = {50, 50, 749, 549};
+    static final int[] viewBounds = {50, 50, 749, 549};
     private static final String months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -829,7 +829,11 @@ public class BeeTracker extends PApplet {
 
         else {
             imageMode(CENTER);
-            image(titleImg, .5f*width, .5f*height-50);
+            image(
+                titleImg,
+                (viewBounds[0]+viewBounds[2])/2,
+                (viewBounds[1]+viewBounds[3])/2-50
+            );
 
             uic.draw();
         }

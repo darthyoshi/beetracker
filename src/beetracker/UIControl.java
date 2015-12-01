@@ -33,6 +33,7 @@ import controlP5.Group;
 import controlP5.RadioButton;
 import controlP5.ScrollableList;
 import controlP5.Slider;
+import controlP5.Textlabel;
 import controlP5.Toggle;
 import controlP5.Tooltip;
 
@@ -135,6 +136,8 @@ class UIControl {
     }
 */
     private static final String listLbl = "New color";
+    private static final String[] eventTypes = {"Exit", "Waggle"};
+    private static final String[] selectTypes = {"Frame", eventTypes[0]};
     private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
     private static final String[] playTips = {
         "Begin playback without tracking",
@@ -296,21 +299,20 @@ class UIControl {
                 removeSetting.getPosition()[0] - 128,
                 removeSetting.getPosition()[1]
             ).setGroup(setupGroup)
-            .setText("SETTINGS:");
+            .setValueLabel("SETTINGS:");
 
         eventLineButton = cp5.addButton("eventsButton")
             .setSize(150, 30)
             .setPosition(BeeTracker.viewBounds[2] - 149, BeeTracker.viewBounds[1] - 40)
             .setVisible(false)
-            .lock()
             .setCaptionLabel("Show Event Timeline");
         eventLineButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
 
         Toggle normalMode = cp5.addToggle("N")
             .setBroadcast(false)
             .toggle()
-            .setCaptionLabel("Event");
-        normalMode.getCaptionLabel().setPaddingX(-6);
+            .setCaptionLabel("Event:");
+        normalMode.getCaptionLabel().setPaddingX(-7);
 //        toolTip.register(normalMode, "Track Arrivals/Departures");
 
         Toggle waggleMode = cp5.addToggle("W")
@@ -321,7 +323,7 @@ class UIControl {
         modeRadios = cp5.addRadioButton("modeRadios")
             .setPosition(
                 BeeTracker.viewBounds[0] - 41,
-                (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 180)/2
+                (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 190)/2
             ).setItemsPerRow(2)
             .addItem(normalMode, 0)
             .addItem(waggleMode, 1)
@@ -329,6 +331,14 @@ class UIControl {
             .setSpacingColumn(0)
             .setNoneSelectedAllowed(false)
             .setGroup(setupGroup);
+
+        modeLabel = cp5.addLabel("eventType")
+            .setSize(49, 20)
+            .setPosition(
+                BeeTracker.viewBounds[0] - 50,
+                modeRadios.getPosition()[1] + 40
+            ).setGroup(setupGroup)
+            .setValueLabel(eventTypes[0]);
 
         Toggle selectFrame = cp5.addToggle("F")
             .setBroadcast(false)
@@ -345,7 +355,7 @@ class UIControl {
         selectRadios = cp5.addRadioButton("selectRadios")
             .setPosition(
                 modeRadios.getPosition()[0],
-                modeRadios.getPosition()[1] + 60
+                modeRadios.getPosition()[1] + 80
             ).setItemsPerRow(2)
             .addItem(selectFrame, 0)
             .addItem(selectExit, 1)
@@ -354,15 +364,23 @@ class UIControl {
             .setNoneSelectedAllowed(false)
             .setGroup(setupGroup);
 
+        selectLabel = cp5.addTextlabel("selectType")
+            .setValueLabel(selectTypes[0])
+            .setSize(49,20)
+            .setPosition(
+                modeLabel.getPosition()[0],
+                selectRadios.getPosition()[1] + 40
+            ).setGroup(setupGroup);
+
         pipToggle = cp5.addToggle("pipToggle")
             .setSize(15, 15)
             .setCaptionLabel("Zoom")
             .setGroup(playGroup)
             .setPosition(
                 15,
-                selectRadios.getPosition()[1] + 60
+                selectRadios.getPosition()[1] + 80
             );
-        pipToggle.getCaptionLabel()/*.setPaddingX(-12)*/.alignX(ControlP5Constants.CENTER);
+        pipToggle.getCaptionLabel().alignX(ControlP5Constants.CENTER);
 
         thresholdSlider = cp5.addSlider("thresholdSlider")
             .setBroadcast(false)
@@ -410,7 +428,7 @@ class UIControl {
     //    toolTip.register(thresholdSlider, "Adjust the selected threshold");
 
         statusLabel = cp5.addButton("status")
-            .lock()
+            .setLock(true)
             .setSize(190, 40)
             .setPosition(BeeTracker.viewBounds[0], BeeTracker.viewBounds[1] - 45)
             .setGroup(playGroup);
@@ -588,7 +606,7 @@ class UIControl {
      */
     void setOpenButtonVisibility(boolean visible) {
         for(Button button : openButtons) {
-            button.setVisible(visible).setBroadcast(visible).setLock(!visible);
+            button.setVisible(visible).setBroadcast(visible);
         }
     }
 
@@ -778,7 +796,7 @@ class UIControl {
      */
     private void updateEventButtonVisibility() {
         boolean tmp = isPlaying && isRecord;
-        eventLineButton.setVisible(tmp).setLock(!tmp);
+        eventLineButton.setVisible(tmp);
     }
 
     /**
@@ -826,9 +844,20 @@ class UIControl {
 
         if(type) {
             selectRadios.activate(0);
+            selectLabel.setValueLabel(selectTypes[0]);
         }
 
-        selectRadios.getItem(0).setLock(type);
-        selectRadios.getItem(1).setVisible(!type);
+        selectRadios.setVisible(!type);
+        selectLabel.setVisible(!type);
+
+        modeLabel.setValueLabel(eventTypes[type ? 1 : 0]);
+    }
+
+    /**
+     * Updates UI elements based on the boundary selection type.
+     * @param type true for exit circle selection
+     */
+    void updateSelectType(boolean type) {
+        selectLabel.setValueLabel(selectTypes[type ? 1 : 0]);
     }
 }

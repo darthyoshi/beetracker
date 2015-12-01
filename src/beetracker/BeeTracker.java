@@ -1319,6 +1319,7 @@ public class BeeTracker extends PApplet {
      */
     public void selectRadios(int value) {
         selectExit = value == 1;
+        uic.updateSelectType(selectExit);
     }
 
     /**

@@ -162,6 +162,8 @@ class UIControl {
         cp5 = new ControlP5(parent);
         cp5.setFont(font);
 
+        cp5.setBroadcast(false);
+
         cp5.disableShortcuts();
         cp5.setAutoDraw(false);
 //TODO tooltips broken in ControlP5 2.2.5
@@ -258,7 +260,7 @@ class UIControl {
             .setGroup(playGroup)
             .setImage(parent.loadImage("img/ejectbutton.png"));
 
-        seekBar = cp5.addSlider("seek").setBroadcast(false)
+        seekBar = cp5.addSlider("seek")
             .setSize(
                 BeeTracker.viewBounds[2] - (int)playButton.getPosition()[0] - 119,
                 15
@@ -267,8 +269,7 @@ class UIControl {
                 playButton.getPosition()[1]
             ).setGroup(playGroup)
             .showTickMarks(true)
-            .setSliderMode(Slider.FLEXIBLE)
-            .setBroadcast(true);
+            .setSliderMode(Slider.FLEXIBLE);
         seekBar.setCaptionLabel("");
 
         Button removeSetting = cp5.addButton("removeSetting")
@@ -383,7 +384,6 @@ class UIControl {
         pipToggle.getCaptionLabel().alignX(ControlP5Constants.CENTER);
 
         thresholdSlider = cp5.addSlider("thresholdSlider")
-            .setBroadcast(false)
             .setSize(15, 255)
             .setRange(0, 255)
             .changeValue(40f)
@@ -391,8 +391,7 @@ class UIControl {
                 BeeTracker.viewBounds[2] + 9,
                 (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 307)/2
             ).setCaptionLabel("")
-            .setGroup(thresholdGroup)
-            .setBroadcast(true);
+            .setGroup(thresholdGroup);
         valueLabelToInt(thresholdSlider);
 
         Toggle hue = cp5.addToggle("H").setBroadcast(false).toggle();
@@ -437,6 +436,8 @@ class UIControl {
             .toUpperCase(false)
             .alignX(ControlP5Constants.CENTER)
             .set(modes[0]);
+
+        cp5.setBroadcast(true);
 //TODO use ScrollableList to create menu
 //        java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame();
 //        frame.setMenuBar(mbar);

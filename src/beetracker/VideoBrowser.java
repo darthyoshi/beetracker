@@ -25,6 +25,7 @@ import java.util.Date;
 
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * @class VideoBrowser
@@ -35,6 +36,17 @@ import javax.swing.JFileChooser;
 class VideoBrowser {
     private static final String[] videoExts = {"mov", "mpg", "mpeg", "avi", "mp4"};
     private static final String OS = System.getProperty("os.name");
+
+    private static final FileNameExtensionFilter movFilter =
+        new FileNameExtensionFilter("*.mov", "mov");
+    private static final FileNameExtensionFilter allFilter =
+        new FileNameExtensionFilter("All video files", "mov", "mpg", "mpeg", "avi", "mp4");
+    private static final FileNameExtensionFilter aviFilter =
+        new FileNameExtensionFilter("*.avi", "avi");
+    private static final FileNameExtensionFilter mpgFilter =
+        new FileNameExtensionFilter("*.mpg, *.mpeg", "mpg", "mpeg");
+    private static final FileNameExtensionFilter mp4Filter =
+        new FileNameExtensionFilter("*.mp4", "mp4");
 
     /**
      * Displays a file browser that filters for video files.
@@ -53,49 +65,22 @@ class VideoBrowser {
                 JDialog dialog = new JDialog();
                 dialog.setAlwaysOnTop(true);
 
-                FileDialog fd = new FileDialog(
-                    dialog,
-                    "Select video",
-                    FileDialog.LOAD
-                );
+                //Use AWT FileDialog on Mac OS X
+                if(OS.toLowerCase(java.util.Locale.ROOT).contains("mac")) {
+                    System.setProperty("apple.awt.fileDialogForDirectories", "false");
 
-                if(currentFile != null) {
-                    fd.setDirectory(currentFile.getParentFile().getAbsolutePath());
-                }
+                    FileDialog fd = new FileDialog(
+                        dialog,
+                        "Select video",
+                        FileDialog.LOAD
+                    );
+                    fd.requestFocusInWindow();
+                    dialog.pack();
 
-                //FilenameFilter has no functionality on Windows
-                if(OS.toLowerCase(java.util.Locale.ROOT).contains("windows")) {
-                    fileCheck:
-                    do {
-                        fd.setVisible(true);
+                    if(currentFile != null) {
+                        fd.setDirectory(currentFile.getParentFile().getAbsolutePath());
+                    }
 
-                        if(fd.getFile() != null) {
-                            System.out.append("selected file: \"")
-                                .append(fd.getFile())
-                                .append("\"\n")
-                                .flush();
-
-                            String nameParts[] = fd.getFiles()[0].getName().split("\\.");
-
-                            for(String ext : videoExts) {
-                                if(ext.equalsIgnoreCase(nameParts[nameParts.length-1])) {
-                                    selectedFile = fd.getFiles()[0];
-
-                                    break fileCheck;
-                                }
-                            }
-
-                            MessageDialogue.wrongFileTypeMessage(parent);
-
-                            System.out.append("invalid file extension: ")
-                                .append(nameParts[nameParts.length-1])
-                                .append('\n')
-                                .flush();
-                        }
-                    } while(fd.getFile() != null);
-                }
-
-                else {
                     fd.setFilenameFilter(new java.io.FilenameFilter() {
                         @Override
                         public boolean accept(File dir, String name) {
@@ -116,17 +101,38 @@ class VideoBrowser {
                     fd.setVisible(true);
 
                     if(fd.getFile() != null) {
-                        System.out.append("selected file: \"")
-                            .append(fd.getFile())
-                            .append("\"\n")
-                            .flush();
-
                         selectedFile = fd.getFiles()[0];
                     }
                 }
 
+                //Use Swing JFileChooser on Linux/Windows
+                else {
+                    JFileChooser chooser = new JFileChooser();
+                    chooser.setDialogTitle("Select video");
+                    chooser.setCurrentDirectory(currentFile);
+
+                    chooser.setFileFilter(allFilter);
+                    chooser.addChoosableFileFilter(aviFilter);
+                    chooser.addChoosableFileFilter(mpgFilter);
+                    chooser.addChoosableFileFilter(mp4Filter);
+                    chooser.addChoosableFileFilter(movFilter);
+                    chooser.removeChoosableFileFilter(chooser.getAcceptAllFileFilter());
+
+                    chooser.requestFocusInWindow();
+
+                    dialog.add(chooser);
+                    dialog.pack();
+
+                    if(chooser.showOpenDialog(dialog) == JFileChooser.APPROVE_OPTION) {
+                        selectedFile = chooser.getSelectedFile();
+                    }
+                }
+
                 if(selectedFile != null) {
-                    System.out.append("setting time stamp\n").flush();
+                    System.out.append("selected directory: \"")
+                        .append(selectedFile.getAbsolutePath())
+                        .append("\"\nsetting time stamp\n")
+                        .flush();
 
                     setDateTime(parent);
                 }
@@ -188,28 +194,57 @@ class VideoBrowser {
         final BeeTracker parent,
         final File currentDir
     ) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 File selectedDir = null;
 
-                JFileChooser chooser = new JFileChooser();
-                chooser.setCurrentDirectory(currentDir);
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                chooser.requestFocusInWindow();
-
                 JDialog dialog = new JDialog();
-                dialog.add(chooser);
-                dialog.pack();
                 dialog.setAlwaysOnTop(true);
 
-                int returnVal = chooser.showOpenDialog(dialog);
-                if(returnVal == JFileChooser.APPROVE_OPTION) {
-                    selectedDir = chooser.getSelectedFile();
+                //Use AWT FileDialog on Mac OS X
+                if(OS.toLowerCase(java.util.Locale.ROOT).contains("mac")) {
+                    System.setProperty("apple.awt.fileDialogForDirectories", "true");
+
+                    FileDialog fd = new FileDialog(
+                        dialog,
+                        "Select image directory",
+                        FileDialog.LOAD
+                    );
+                    dialog.pack();
+
+                    if(currentDir != null) {
+                        fd.setDirectory(currentDir.getParentFile().getAbsolutePath());
+                    }
+
+                    fd.setVisible(true);
+
+                    if(fd.getFile() != null) {
+                        selectedDir = fd.getFiles()[0];
+                    }
+                }
+
+                //Use Swing JFileChooser on Linux/Windows
+                else {
+                    JFileChooser chooser = new JFileChooser();
+                    chooser.setDialogTitle("Select image directory");
+                    chooser.setCurrentDirectory(currentDir);
+                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    chooser.requestFocusInWindow();
+
+                    dialog.add(chooser);
+                    dialog.pack();
+
+                    if(chooser.showOpenDialog(dialog) == JFileChooser.APPROVE_OPTION) {
+                        selectedDir = chooser.getSelectedFile();
+                    }
                 }
 
                 if(selectedDir != null) {
-                    System.out.append("setting time stamp\n").flush();
+                    System.out.append("selected directory: \"")
+                        .append(selectedDir.getAbsolutePath())
+                        .append("\"\nsetting time stamp\n")
+                        .flush();
 
                     setDateTime(parent);
                 }
@@ -217,5 +252,7 @@ class VideoBrowser {
                 parent.loadImgSequence(selectedDir);
             }
         });
+
+        thread.start();
     }
 }

@@ -58,7 +58,8 @@ class UIControl {
  //   private final Tooltip toolTip;
     private final Button statusLabel;
     private final Button[] openButtons;
-
+    private final Textlabel modeLabel, selectLabel;
+/*
     private static final java.awt.MenuBar mbar;
     private static final Menu loadMenu, optionMenu;
     private static final MenuItem loadVideo, loadImages;
@@ -132,7 +133,7 @@ class UIControl {
         mbar.add(footageMenu);
         mbar.add(optionMenu);
     }
-
+*/
     private static final String listLbl = "New color";
     private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
     private static final String[] playTips = {
@@ -426,7 +427,7 @@ class UIControl {
     /**
      * Initializes the menu bar item listeners.
      */
-    void initListeners(final BeeTracker parent) {
+/*    void initListeners(final BeeTracker parent) {
         loadVideo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -501,7 +502,7 @@ class UIControl {
         exitEventItem.addItemListener(listener);
         waggleEventItem.addItemListener(listener);
     }
-
+*/
     /**
      * Toggles the visibility of the playback controls.
      * @param visible the visibility state
@@ -553,17 +554,17 @@ class UIControl {
         int i, j;
         if(state) {
             i = 1;
-            j = 2;
+//            j = 2;
         }
         else {
             i = 0;
-            j = isRecord || !recordButton.isVisible() ? 1 : 0;
+//            j = isRecord || !recordButton.isVisible() ? 1 : 0;
         }
 
         playButton.setImage(playIcons[i]);
 //        toolTip.register(playButton, playTips[j]);
 
-        playItem.setLabel((state ? "Pause" : "Play"));
+//        playItem.setLabel((state ? "Pause" : "Play"));
 
         updateEventButtonVisibility();
     }
@@ -713,7 +714,7 @@ class UIControl {
         isRecord = state;
         int index = (state ? 1 : 0);
         recordButton.setImage(recordIcons[index]);
-        recordItem.setState(state);
+//        recordItem.setState(state);
   //      toolTip.register(recordButton, recordTips[index]);
 
         updateEventButtonVisibility();
@@ -786,20 +787,20 @@ class UIControl {
      */
     void setZoomState(boolean state) {
         pipToggle.setBroadcast(false).setState(state).setBroadcast(true);
-        zoomItem.setState(state);
+//        zoomItem.setState(state);
     }
 
     /**
      * Toggles the activation states of the "Footage" and "Options" menu items.
      */
-    void toggleMenuStates() {
+/*    void toggleMenuStates() {
         boolean state = loadMenu.isEnabled();
         loadMenu.setEnabled(!state);
         closeItem.setEnabled(state);
         playItem.setEnabled(state);
         optionMenu.setEnabled(state);
     }
-
+*/
     /**
      * Draws the ControlP5 elements.
      */
@@ -820,8 +821,8 @@ class UIControl {
      * @param type true for waggle dance detection
      */
     void updateEventType(boolean type) {
-        waggleEventItem.setState(type);
-        exitEventItem.setState(!type);
+//        waggleEventItem.setState(type);
+//        exitEventItem.setState(!type);
 
         if(type) {
             selectRadios.activate(0);

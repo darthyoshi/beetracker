@@ -2089,7 +2089,7 @@ public class BeeTracker extends PApplet {
         replay = readFramePointsFromJSON();
         replayCheckForTimeOut = false;
         uic.setRecordVisibility(!replay);
-            uic.setRecordState(replay);
+        uic.setRecordState(replay);
         uic.setPlayState(false);
         uic.toggleMenuStates();
 
@@ -2160,29 +2160,32 @@ public class BeeTracker extends PApplet {
     public void addSetting() {
         float time = imgSequenceMode ? imgIndex : movie.time();
 
-        //duplicate current settings
-        float[] newExit = new float[4], newBox = new float[4];
-        int[] newThreshold = new int[3];
-        short i;
+        //current timestamp doesn't already have settings
+        if(!settingsTimeStamps.hasValue(time)) {
+            //duplicate current settings
+            float[] newExit = new float[4], newBox = new float[4];
+            int[] newThreshold = new int[3];
+            short i;
 
-        for(i = 0; i < 4; i++) {
-            newExit[i] = exitRadial[i];
-            newBox[i] = insetBox[i];
+            for(i = 0; i < 4; i++) {
+                newExit[i] = exitRadial[i];
+                newBox[i] = insetBox[i];
+            }
+
+            for(i = 0; i < 3; i++) {
+                newThreshold[i] = threshold[i];
+            }
+
+            //add new settings to appropriate data structures
+            insets.put(time, newBox);
+            radials.put(time, newExit);
+            thresholds.put(time, newThreshold);
+
+            settingsTimeStamps.append(time);
+            settingsTimeStamps.sort();
+
+            updateSettings(time);
         }
-
-        for(i = 0; i < 3; i++) {
-            newThreshold[i] = threshold[i];
-        }
-
-        //add new settings to appropriate data structures
-        insets.put(time, newBox);
-        radials.put(time, newExit);
-        thresholds.put(time, newThreshold);
-
-        settingsTimeStamps.append(time);
-        settingsTimeStamps.sort();
-
-        updateSettings(time);
     }
 
     /**

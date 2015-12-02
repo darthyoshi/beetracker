@@ -461,7 +461,7 @@ public class BeeTracker extends PApplet {
                         ) {
                             replayCheckForTimeOut = false;
 
-                            centroids = new HashMap<>(colors.size());
+                            centroids = new HashMap<>();
 
                             for(int color : colors) {
                                 centroids.put(color, new ArrayList<float[]>(1));
@@ -1917,7 +1917,7 @@ public class BeeTracker extends PApplet {
 
                     jsonColors = json.getJSONObject(keyString);
 
-                    colorMap = new HashMap<>(jsonColors.size());
+                    colorMap = new HashMap<>();
 
                     colorsIter = jsonColors.keyIterator();
                     while(colorsIter.hasNext()) {
@@ -1977,7 +1977,7 @@ public class BeeTracker extends PApplet {
 
         timeStampIndex = 0;
 
-        centroids = new HashMap<>(colors.size());
+        centroids = new HashMap<>();
         for(int tmp : colors) {
             centroids.put(tmp, tmpList);
         }
@@ -2159,7 +2159,7 @@ public class BeeTracker extends PApplet {
 
             timeStampIndex = 0;
 
-            centroids = new HashMap<>(colors.size());
+            centroids = new HashMap<>();
             List<float[]> tmpList = new ArrayList<>(1);
             for(int tmp : colors) {
                 centroids.put(tmp, tmpList);

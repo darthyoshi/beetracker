@@ -911,8 +911,12 @@ public class BeeTracker extends PApplet {
         for(i = 0; i < index - 2; i++) {
             imgSequence[i] = null;
         }
-        while(i < index + 2) {
+        while(i < index + 2 && i < imgNames.length) {
             if(imgSequence[i] == null) {
+                if(debug) {
+                    println("image sequence \"stream\": " + imgNames[i]);
+                }
+
                 imgSequence[i] = loadImage(imgNames[i]);
             }
             i++;

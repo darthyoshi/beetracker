@@ -52,6 +52,7 @@ public class BeeTracker extends PApplet {
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
     private static final String[] thresholdKeys = {"hue", "sat", "val"};
+    private static final String[] imgTypes = {"gif", "jpg", "png", "tga"};
 
     private processing.data.IntList colors;
     private int[] movieDims = null, movieOffset, frameDims, frameOffset;
@@ -942,9 +943,19 @@ public class BeeTracker extends PApplet {
                 "settings.json"
             );
 
+            String name;
             for(File file : dir.listFiles()) {
                 if(file.isFile()) {
-                    list.add(file.getAbsolutePath());
+                    name = file.getName();
+
+                    //only add images
+                    for(String ext : imgTypes) {
+                        if(name.toLowerCase(java.util.Locale.ROOT).endsWith(ext)) {
+                            list.add(file.getAbsolutePath());
+
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -958,21 +969,22 @@ public class BeeTracker extends PApplet {
             }
 
             imgNames = new String[list.size()];
+            list.toArray(imgNames);
+            java.util.Arrays.sort(imgNames);
+
             imgSequence = new PImage[list.size()];
             for(imgIndex = 0; imgIndex < imgSequence.length; imgIndex++) {
                 imgSequence[imgIndex] = null;
             }
-            list.toArray(imgNames);
-            java.util.Arrays.sort(imgNames);
-
-            imgIndex = 0;
-            updateImgSequence(imgIndex);
 
             if(debug) {
                 for(String fileName : imgNames) {
                     println(fileName);
                 }
             }
+
+            imgIndex = 0;
+            updateImgSequence(imgIndex);
 
             //end critical section
             sem.release();

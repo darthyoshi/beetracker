@@ -54,8 +54,13 @@ public class ShapeRecognizer {
             .setVerbose(BeeTracker.debug)
             .setFragmentationRate(rate);
         readOneDollarTemplate(root, "waggle");
-  //      readOneDollarTemplate(root, "waggle-vert");
         oneDollar.bind("waggle", this, "oneDollarCallback");
+
+//        readOneDollarTemplate(root, "waggle-vert");
+//        oneDollar.bind("waggle-vert", this, "oneDollarCallback");
+
+        readOneDollarTemplate(root, "waggle2");
+        oneDollar.bind("waggle2", this, "oneDollarCallback");
 /*/
 //        oneDollar.setMinSimilarity(30);
         readOneDollarTemplate(root, "circle");

@@ -325,9 +325,7 @@ public class BeeTracker extends PApplet {
             } catch(RuntimeException ex) {
                 ex.printStackTrace(System.err);
             }
-        }
-
-        else {
+        } else {
             System.out.append("file not found - ").flush();
         }
 
@@ -467,9 +465,7 @@ public class BeeTracker extends PApplet {
                                 centroids.put(color, new ArrayList<float[]>(1));
                             }
                         }
-                    }
-
-                    else {
+                    } else {
                         bdu.filterImg(insetFrame, colors, threshold);
 
                         centroids = bdu.getCentroids(insetFrame, colors);
@@ -535,9 +531,7 @@ public class BeeTracker extends PApplet {
                                 frameDims[1]
                             );
                         }
-                    }
-
-                    else {
+                    } else {
                         insetOffset[0] = (int)(insetBox[0]*movieDims[0]) +
                             movieOffset[0] - viewBounds[0];
                         insetOffset[1] = (int)(insetBox[1]*movieDims[1]) +
@@ -562,10 +556,7 @@ public class BeeTracker extends PApplet {
                         //draw detected blobs
                         bdu.drawBlobs(viewFrame, viewBounds,
                             frameDims, frameOffset, exitCenter);
-                    }
-
-                    //mark bees
-                    else {
+                    } else {  //mark bees
                         viewFrame.stroke(0xffdddd00);
                         viewFrame.ellipseMode(CENTER);
                         viewFrame.colorMode(RGB, 255);
@@ -628,16 +619,13 @@ public class BeeTracker extends PApplet {
                             exitRadial[3]*movieDims[1]
                         );
                     }
-                }
-
-                //zoomed
-                else {
+                } else {  //zoomed
                     //inset box
                     rect(
                         frameOffset[0],
                         frameOffset[1],
-                        frameDims[0] - 1 + frameOffset[0],
-                        frameDims[1] - 1 + frameOffset[1]
+                        frameDims[0] - 1,
+                        frameDims[1] - 1
                     );
 
                     //exit circle
@@ -665,18 +653,14 @@ public class BeeTracker extends PApplet {
                         insetBox[2]*movieDims[0] + movieOffset[0],
                         insetBox[1]*movieDims[1] + movieOffset[1]
                     );
-                }
-
-                else if(!waggleMode){
+                } else if(!waggleMode){
                     int[] tmpDims;
 
                     if(pip) {
                         tmpDims = new int[2];
                         tmpDims[0] = (int)(frameDims[0]/(insetBox[2]-insetBox[0]));
                         tmpDims[1] = (int)(frameDims[1]/(insetBox[3]-insetBox[1]));
-                    }
-
-                    else {
+                    } else {
                         tmpDims = movieDims;
                     }
 
@@ -716,9 +700,7 @@ public class BeeTracker extends PApplet {
                     if(allFramePoints.isEmpty()) {
                         msg.append("No points saved!")
                             .append(" Enable recording to generate events.\n");
-                    }
-
-                    else {
+                    } else {
                         msg.append("Summary of events: \n");
 
                         for(Float timeStamp : summary.keySet()) {
@@ -774,8 +756,7 @@ public class BeeTracker extends PApplet {
                         tmp[tmp.length - 1] = 'g';
 
                         events.save(String.valueOf(tmp));
-                    }
-                    else {
+                    } else {
                         events = null;
                     }
 
@@ -797,9 +778,7 @@ public class BeeTracker extends PApplet {
                         pos[1] + 5
                     );
                 }
-            }
-
-            else {
+            } else {
                 text("Loading...", width*.5f, height*.5f);
 
                 uic.draw();
@@ -826,9 +805,7 @@ public class BeeTracker extends PApplet {
                     updateExitCenter();
                 }
             }
-        }
-
-        else {
+        } else {
             imageMode(CENTER);
             image(
                 titleImg,
@@ -880,18 +857,14 @@ public class BeeTracker extends PApplet {
 
                 result = stillFrame;
             }
-        }
-
-        else if(movie != null) {
+        } else if(movie != null) {
             if(movie.available()) {
                 movie.read();
 
                 if(!isPlaying) {
                     movie.jump(uic.getSeekTime());
                     movie.pause();
-                }
-
-                else {
+                } else {
                     uic.setSeekTime(movie.time(), imgSequenceMode);
                 }
             }
@@ -996,9 +969,7 @@ public class BeeTracker extends PApplet {
             System.out.append("images loaded\n").flush();
 
             postLoad();
-        }
-
-        else {
+        } else {
             System.out.append("file selection canceled\n").flush();
         }
     }
@@ -1010,9 +981,7 @@ public class BeeTracker extends PApplet {
         if(!pip) {
             exitCenter[0] = exitRadial[0]*movieDims[0] + movieOffset[0];
             exitCenter[1] = exitRadial[1]*movieDims[1] + movieOffset[1];
-        }
-
-        else {
+        } else {
             exitCenter[0] = (exitRadial[0]-insetBox[0])*frameDims[0]/
                 (insetBox[2]-insetBox[0]) + frameOffset[0];
             exitCenter[1] = (exitRadial[1]-insetBox[1])*frameDims[1]/
@@ -1102,9 +1071,7 @@ public class BeeTracker extends PApplet {
         //don't do anything until inset dimensions have stabilized
         if(isDrag && !selectExit) {
             result = null;
-        }
-
-        else {
+        } else {
             result = createImage(width, height, ARGB);
 
             result.copy(
@@ -1157,9 +1124,7 @@ public class BeeTracker extends PApplet {
 
                     colors.append(newColor);
                 }
-            }
-
-            else {
+            } else {
                 colors.set(listVal, newColor);
 
                 uic.setListItem(String.format("%06x", newColor), listVal);
@@ -1205,18 +1170,14 @@ public class BeeTracker extends PApplet {
                     if(debug) {
                         print("starting playback...");
                     }
-                }
-
-                else {
+                } else {
                     MessageDialogue.playButtonErrorMessage(this, errors);
 
                     if(debug) {
                         println("error");
                     }
                 }
-            }
-
-            else {
+            } else {
                 isPlaying = false;
                 status = true;
 
@@ -1308,9 +1269,7 @@ public class BeeTracker extends PApplet {
             );
             frameOffset[0] = (int)((width-frameDims[0])*.5f);
             frameOffset[1] = (int)((height-frameDims[1])*.5f);
-        }
-
-        else {
+        } else {
             frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
             frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
 
@@ -1366,9 +1325,7 @@ public class BeeTracker extends PApplet {
 
             movie.jump(value);
             uic.setSeekTime(value, imgSequenceMode);
-        }
-
-        else {
+        } else {
             imgIndex = (int)value;
             uic.setSeekTime(imgIndex, imgSequenceMode);
             stillFrame = null;
@@ -1391,13 +1348,9 @@ public class BeeTracker extends PApplet {
 
                 if(time - value > 0.000001f) {
                     stop = i - 1;
-                }
-
-                else if(value - time > 0.000001f) {
+                } else if(value - time > 0.000001f) {
                     start = i + 1;
-                }
-
-                else {
+                } else {
                     break;
                 }
             }
@@ -1463,9 +1416,7 @@ public class BeeTracker extends PApplet {
             imgNames = null;
             stillFrame = null;
             imgIndex = -1;
-        }
-
-        else {
+        } else {
             movie.stop();
             movie = null;
         }
@@ -1640,15 +1591,11 @@ public class BeeTracker extends PApplet {
 
                     isDrag = true;
                 }
-            }
-
-            else {
+            } else {
                 if(!pip) {
                     exitRadial[0] = 1f*(mouseX-movieOffset[0])/movieDims[0];
                     exitRadial[1] = 1f*(mouseY-movieOffset[1])/movieDims[1];
-                }
-
-                else {
+                } else {
                     exitRadial[0] = insetBox[0] + (
                         (insetBox[2]-insetBox[0]) *
                         (mouseX-frameOffset[0]) /
@@ -1679,9 +1626,7 @@ public class BeeTracker extends PApplet {
 
                 insetBox[2] = 1f*(mouse[0]-movieOffset[0])/movieDims[0];
                 insetBox[3] = 1f*(mouse[1]-movieOffset[1])/movieDims[1];
-            }
-
-            else {
+            } else {
                 float[] tmp = constrainRadius(mouseX, mouseY);
 
                 exitRadial[2] = tmp[0];
@@ -1705,9 +1650,7 @@ public class BeeTracker extends PApplet {
         if(!pip) {
             offset = movieOffset;
             dims = movieDims;
-        }
-
-        else {
+        } else {
             offset = frameOffset;
             dims = frameDims;
         }
@@ -1742,9 +1685,7 @@ public class BeeTracker extends PApplet {
         //choose smaller axis
         if(result[0] < result[1]) {
             result[1] = result[0];
-        }
-
-        else {
+        } else {
             result[0] = result[1];
         }
 
@@ -1752,9 +1693,7 @@ public class BeeTracker extends PApplet {
         if(!pip) {
             result[0] /= movieDims[0];
             result[1] /= movieDims[1];
-        }
-
-        else {
+        } else {
             result[0] /= frameDims[0]/(insetBox[2]-insetBox[0]);
             result[1] /= frameDims[1]/(insetBox[3]-insetBox[1]);
         }
@@ -1774,17 +1713,13 @@ public class BeeTracker extends PApplet {
 
         if(mouseX < offset[0]) {
             result[0] = offset[0];
-        }
-
-        else if (mouseX > width-offset[0]) {
+        } else if (mouseX > width-offset[0]) {
             result[0] = width-offset[0];
         }
 
         if(mouseY < offset[1]) {
             result[1] = offset[1];
-        }
-
-        else if(mouseY > height-offset[1]) {
+        } else if(mouseY > height-offset[1]) {
             result[1] = height-offset[1];
         }
 
@@ -1811,9 +1746,7 @@ public class BeeTracker extends PApplet {
                 ) {
                     insetBox[0] = insetBox[1] = 0f;
                     insetBox[2] = insetBox[3] = 1f;
-                }
-
-                else {
+                } else {
                     float tmp;
 
                     //ensure coordinates are in ascending order
@@ -1969,9 +1902,7 @@ public class BeeTracker extends PApplet {
             if(debug) {
                 println("failure");
             }
-        }
-
-        else if(debug) {
+        } else if(debug) {
             println("done");
         }
 
@@ -2088,9 +2019,7 @@ public class BeeTracker extends PApplet {
             movie.volume(0f);
 
             postLoad();
-        }
-
-        else {
+        } else {
             System.out.append("file selection canceled\n").flush();
         }
     }
@@ -2220,13 +2149,9 @@ public class BeeTracker extends PApplet {
 
             if(time - seek > 0.000001f) {
                 stop = i - 1;
-            }
-
-            else if(seek - time > 0.000001f) {
+            } else if(seek - time > 0.000001f) {
                 start = i + 1;
-            }
-
-            else {
+            } else {
                 break;
             }
         }
@@ -2268,10 +2193,7 @@ public class BeeTracker extends PApplet {
                 radials.replace(timeStamp, radials.remove(tmp));
                 insets.replace(timeStamp, insets.remove(tmp));
                 thresholds.replace(timeStamp, thresholds.remove(tmp));
-            }
-
-            //remove current settings
-            else {
+            } else {  //remove current settings
                 timeStamp = settingsTimeStamps.remove(index);
 
                 radials.remove(timeStamp);

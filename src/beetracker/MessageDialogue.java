@@ -141,9 +141,7 @@ class MessageDialogue {
                     tabPane = new javax.swing.JTabbedPane();
                     tabPane.add("Text summary", scrollPane);
                     tabPane.add("Visual summary", scrollPane2);
-                }
-
-                else {
+                } else {
                     tabPane = null;
                 }
 
@@ -160,9 +158,7 @@ class MessageDialogue {
                     ) == JOptionPane.YES_OPTION
                 ) {
                     parent.rewindVideo();
-                }
-
-                else {
+                } else {
                     if(MessageDialogue.saveStatisticsMessage(parent, fileName) ==
                         JOptionPane.YES_OPTION)
                     {
@@ -217,9 +213,7 @@ class MessageDialogue {
 
             if(parent.isReplay()) {
                 JOptionPane.showMessageDialog(null, msg);
-            }
-
-            else {
+            } else {
                 result = JOptionPane.showConfirmDialog(
                     null,
                     msg + "\nSave frame annotations?",
@@ -248,9 +242,7 @@ class MessageDialogue {
                 if(graphic.height > 300) {
                     height = 300;
                     width = graphic.width + 18;
-                }
-
-                else {
+                } else {
                     height = graphic.height + 3;
                     width = graphic.width + 3;
                 }

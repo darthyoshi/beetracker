@@ -529,8 +529,7 @@ class UIControl {
     void setPlayVisibility(boolean visible) {
         if(visible) {
             playGroup.open();
-        }
-        else {
+        } else {
             playGroup.close();
         }
     }
@@ -574,8 +573,7 @@ class UIControl {
         if(state) {
             i = 1;
 //            j = 2;
-        }
-        else {
+        } else {
             i = 0;
 //            j = isRecord || !recordButton.isVisible() ? 1 : 0;
         }
@@ -595,8 +593,7 @@ class UIControl {
     void setSetupGroupVisibility(boolean visible) {
         if(visible) {
             setupGroup.open();
-        }
-        else {
+        } else {
             setupGroup.close();
         }
     }
@@ -618,8 +615,7 @@ class UIControl {
     void setThresholdVisibility(boolean visible) {
         if(visible) {
             thresholdGroup.open();
-        }
-        else {
+        } else {
             thresholdGroup.close();
         }
     }
@@ -687,9 +683,7 @@ class UIControl {
                 .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
                 .setPaddingX(0)
                 .setPaddingY(5);
-        }
-
-        else {
+        } else {
             tmp = (int)(seekBar.getValue()*100);
 
             seekBar.setValueLabel(String.format(

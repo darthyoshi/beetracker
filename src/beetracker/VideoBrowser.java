@@ -103,10 +103,7 @@ class VideoBrowser {
                     if(fd.getFile() != null) {
                         selectedFile = fd.getFiles()[0];
                     }
-                }
-
-                //Use Swing JFileChooser on Linux/Windows
-                else {
+                } else {    //Use Swing JFileChooser on Linux/Windows
                     JFileChooser chooser = new JFileChooser();
                     chooser.setDialogTitle("Select video");
                     chooser.setCurrentDirectory(currentFile);
@@ -222,10 +219,7 @@ class VideoBrowser {
                     if(fd.getFile() != null) {
                         selectedDir = fd.getFiles()[0];
                     }
-                }
-
-                //Use Swing JFileChooser on Linux/Windows
-                else {
+                } else {    //Use Swing JFileChooser on Linux/Windows
                     JFileChooser chooser = new JFileChooser();
                     chooser.setDialogTitle("Select image directory");
                     chooser.setCurrentDirectory(currentDir);

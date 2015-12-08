@@ -209,10 +209,7 @@ class BlobDetectionUtils {
                         result.get(color).add(point);
 
                         break;
-                    }
-
-                    //case: centroid is not in blob
-                    else {
+                    } else {    //case: centroid is not in blob
                         loop:
                         for(
                             int k = (int)(b.yMin*frame.height);

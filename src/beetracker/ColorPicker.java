@@ -44,9 +44,7 @@ class ColorPicker {
                 if(newColor != null) {
                     result = (newColor.getRed() << 16) +
                         (newColor.getGreen() << 8) + newColor.getBlue();
-                }
-
-                else {
+                } else {
                     result = null;
                 }
 

@@ -193,12 +193,8 @@ class TrackingUtils {
                         if(BeeTracker.debug) {
                             System.out.println("points (" + minI + ", " + minJ + ") paired");
                         }
-                    }
-
-                    //if the closest pair of points is not within the distance
-                    //  threshold, no other points will be, so break loop
-                    else {
-                        break;
+                    } else {    //if the closest pair of points is not within the distance
+                        break;  //  threshold, no other points will be, so break loop
                     }
                 }
             }
@@ -227,10 +223,7 @@ class TrackingUtils {
 
                     i++;
                 }
-            }
-
-            //check all paired points for arrivals/departures
-            else {
+            } else {    //check all paired points for arrivals/departures
                 departures = departureTimes.get(color);
                 arrivals = arrivalTimes.get(color);
 
@@ -262,9 +255,7 @@ class TrackingUtils {
                         if(!isNewPointInExit) {
                             departures.append(time);
                         }
-                    }
-
-                    else if(isNewPointInExit) {
+                    } else if(isNewPointInExit) {
                         arrivals.append(time);
                     }
                 }
@@ -364,9 +355,7 @@ class TrackingUtils {
                     result.put(time, String.format("#%06x,waggle", color));
                 }
             }
-        }
-
-        else {
+        } else {
             for(int color : colors) {
                 for(Float time : arrivalTimes.get(color)) {
                     result.put(time, String.format("#%06x,arrival", color));
@@ -514,9 +503,7 @@ class TrackingUtils {
 
                 if(waggleMode) {
                     img.text("W", 7, yOffset-15);
-                }
-
-                else {
+                } else {
                     img.text("A", 7, yOffset-15);
                     img.text("D", 7, yOffset-5);
                 }
@@ -524,9 +511,7 @@ class TrackingUtils {
                 img.fill(0xff000000 + color);
                 img.text(String.format("%06x", color), 65, yOffset-32);
             }
-        }
-
-        else {
+        } else {
             img.copy(
                 eventTimeline,
                 0, 0,
@@ -571,9 +556,7 @@ class TrackingUtils {
                         yOffset-12.5f
                     );
                 }
-            }
-
-            else {
+            } else {
                 //mark arrivals
                 for(float stamp : arrivalTimes.get(color)) {
                     img.rect(
@@ -663,9 +646,7 @@ class TrackingUtils {
             if(BeeTracker.debug) {
                 System.out.println("done");
             }
-        }
-
-        else {
+        } else {
             result = null;
         }
 

@@ -46,7 +46,7 @@ import processing.video.Movie;
  */
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
-    static final int[] viewBounds = {50, 50, 749, 549};
+    static final int[] viewBounds = {50, 70, 749, 569};
     private static final String months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -116,7 +116,7 @@ public class BeeTracker extends PApplet {
      */
     @Override
     public void settings() {
-        size(800, 600, P2D);
+        size(800, 620, P2D);
     }
 
     @Override
@@ -371,10 +371,16 @@ public class BeeTracker extends PApplet {
         textAlign(CENTER, CENTER);
         textSize(24);
 
+        //menu bar
+        strokeWeight(0);
+        fill(0xffeeeeee);
+        rectMode(CORNERS);
+        rect(-1, -1, width+1, 21);
+
         //main window
+        strokeWeight(1);
         stroke(0xffffffff);
         fill(0xff444444);
-        rectMode(CORNERS);
         rect(viewBounds[0]-1, viewBounds[1]-1, viewBounds[2]+1, viewBounds[3]+1);
 
         //begin critical section
@@ -1573,6 +1579,8 @@ public class BeeTracker extends PApplet {
      */
     @Override
     public void mousePressed() {
+        uic.closeMenus();
+
         if(
             movieDims != null && !isPlaying &&
             mouseX > viewBounds[0] &&
@@ -2277,6 +2285,102 @@ public class BeeTracker extends PApplet {
      */
     public boolean isReplay() {
         return replay;
+    }
+
+    /**
+     * TODO javadoc
+     */
+    public void programMenuButton() {
+        uic.setProgramMenuState(!uic.isProgramMenuOpen());
+    }
+
+    /**
+     * TODO javadoc
+     */
+    public void footageMenuButton() {
+        uic.setFootageMenuOpen(!uic.isFootageMenuOpen());
+    }
+
+    /**
+     * TODO javadoc
+     */
+    public void optionMenuButton() {
+        uic.setOptionMenuOpen(!uic.isOptionMenuOpen());
+    }
+
+    /**
+     * TODO javadoc
+     */
+    public void programMenu() {
+        exit();
+    }
+
+    /**
+     * TODO javadoc
+     * @param index
+     */
+    public void footageMenu(int index) {
+        switch(index) {
+        case 0:
+            openButton();
+
+            break;
+
+        case 1:
+            openButton2();
+
+            break;
+
+        case 3:
+            playButton();
+
+            break;
+
+        case 5:
+            ejectButton();
+
+            break;
+        }
+    }
+
+    /**
+     * TODO javadoc
+     * @param index
+     */
+    public void optionMenu(int index) {
+        switch(index) {
+        case 0:
+            recordButton();
+
+            break;
+
+        case 1:
+            pipToggle();
+
+            break;
+
+        case 3:
+        case 4:
+            uic.toggleEventRadio(index-3);
+
+            break;
+
+        case 6:
+        case 7:
+            uic.toggleSelectRadio(index-6);
+
+            break;
+
+        case 9:
+            addSetting();
+
+            break;
+
+        case 10:
+            removeSetting();
+
+            break;
+        }
     }
 
     /**

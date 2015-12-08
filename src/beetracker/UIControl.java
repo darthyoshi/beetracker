@@ -27,6 +27,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import controlP5.Button;
+import controlP5.CColor;
 import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
 import controlP5.Group;
@@ -60,6 +61,36 @@ class UIControl {
     private final Button statusLabel;
     private final Button[] openButtons;
     private final Textlabel modeLabel, selectLabel;
+
+    private final ScrollableList programMenu, footageMenu, optionMenu;
+    private final Button programButton, footageButton, optionButton;
+    private static final CColor menuColor = new CColor(
+        0xffcccccc,
+        0xffeeeeee,
+        0xffcccccc,
+        0,
+        0
+    );
+    private static final String menuSeparator = "------";
+    private static final String[] playLabels = {"* Play", "  Play"};
+    private static final String[] recordLabels = {"* Record", "  Record"};
+    private static final String[] zoomLabels = {"* Zoom", "  Zoom"};
+    private static final String[] exitEventLabels = {
+        "* Arrival/Departure Events",
+        "  Arrival/Departure Events"
+    };
+    private static final String[] waggleEventLabels = {
+        "* Waggle Dance Events",
+        "  Waggle Dance Events"
+    };
+    private static final String[] insetSelectLabels = {
+        "* Select Inset Frame",
+        "  Select Inset Frame"
+    };
+    private static final String[] exitSelectLabels = {
+        "* Select Exit Circle",
+        "  Select Exit Circle"
+    };
 /*
     private static final java.awt.MenuBar mbar;
     private static final Menu loadMenu, optionMenu;
@@ -138,12 +169,12 @@ class UIControl {
     private static final String listLbl = "New color";
     private static final String[] eventTypes = {"Exit", "Waggle"};
     private static final String[] selectTypes = {"Frame", eventTypes[0]};
-    private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
+/*    private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
     private static final String[] playTips = {
         "Begin playback without tracking",
         "Begin playback with tracking",
         "Pause playback"
-    };
+    };*/
     private static final String[] modes = {
         "Config Mode",
         "Replay Mode",
@@ -441,6 +472,78 @@ class UIControl {
 //TODO use ScrollableList to create menu
 //        java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame();
 //        frame.setMenuBar(mbar);
+
+        programButton = cp5.addButton("programMenuButton")
+            .setPosition(0,0)
+            .setCaptionLabel("Program")
+            .setSize(54,20)
+            .setColor(menuColor);
+        programButton.getCaptionLabel().toUpperCase(false);
+        programMenu = cp5.addScrollableList("programMenu")
+            .setPosition(programButton.getPosition()[0], 20)
+            .setOpen(false)
+            .addItem("  Exit", 0)
+            .setSize(40, 20)
+            .setBarHeight(0)
+            .setBarVisible(false)
+            .setItemHeight(20)
+            .setColor(menuColor);
+        programMenu.getValueLabel().toUpperCase(false);
+
+        String[] footageItems = {
+            "  Load Video",
+            "  Load Image Sequence",
+            menuSeparator,
+            playLabels[1],
+            menuSeparator,
+            "  Close"
+        };
+        footageButton = cp5.addButton("footageMenuButton")
+            .setPosition(programButton.getPosition()[0]+programButton.getWidth(),0)
+            .setCaptionLabel("Footage")
+            .setSize(52,20)
+            .setColor(menuColor);
+        footageButton.getCaptionLabel().toUpperCase(false);
+        footageMenu = cp5.addScrollableList("footageMenu")
+            .setPosition(footageButton.getPosition()[0], 20)
+            .setOpen(false)
+            .addItems(footageItems)
+            .setSize(145, footageItems.length*20)
+            .setBarHeight(0)
+            .setBarVisible(false)
+            .setItemHeight(20)
+            .setColor(menuColor);
+        footageMenu.getValueLabel().toUpperCase(false);
+
+        String[] optionItems = {
+            recordLabels[1],
+            zoomLabels[1],
+            menuSeparator,
+            exitEventLabels[0],
+            waggleEventLabels[1],
+            menuSeparator,
+            insetSelectLabels[0],
+            exitSelectLabels[1],
+            menuSeparator,
+            "  Add new settings to current timestamp",
+            "  Remove current timestamp settings"
+        };
+        optionButton = cp5.addButton("optionMenuButton")
+            .setPosition(footageButton.getPosition()[0]+footageButton.getWidth(),0)
+            .setCaptionLabel("Options")
+            .setSize(50,20)
+            .setColor(menuColor);
+        optionButton.getCaptionLabel().toUpperCase(false);
+        optionMenu = cp5.addScrollableList("optionMenu")
+            .setPosition(optionButton.getPosition()[0], 20)
+            .setOpen(false)
+            .addItems(optionItems)
+            .setSize(225, optionItems.length*20)
+            .setBarHeight(0)
+            .setBarVisible(false)
+            .setItemHeight(20)
+            .setColor(menuColor);
+        optionMenu.getValueLabel().toUpperCase(false);
     }
 
     /**
@@ -569,21 +672,25 @@ class UIControl {
     void setPlayState(boolean state) {
         isPlaying = state;
 
-        int i, j;
+        int i, j, k;
         if(state) {
             i = 1;
 //            j = 2;
+            k = 0;
         } else {
             i = 0;
 //            j = isRecord || !recordButton.isVisible() ? 1 : 0;
+            k = 1;
         }
+
+        footageMenu.getItem(3).put("text", playLabels[k]);
 
         playButton.setImage(playIcons[i]);
 //        toolTip.register(playButton, playTips[j]);
 
 //        playItem.setLabel((state ? "Pause" : "Play"));
 
-        updateEventButtonVisibility();
+        updateTimelineButtonVisibility();
     }
 
     /**
@@ -730,7 +837,9 @@ class UIControl {
 //        recordItem.setState(state);
   //      toolTip.register(recordButton, recordTips[index]);
 
-        updateEventButtonVisibility();
+        updateTimelineButtonVisibility();
+
+        optionMenu.getItem(0).put("text", recordLabels[state ? 0 : 1]);
 
         if(!isPlaying) {
  //          toolTip.register(playButton, playTips[index]);
@@ -789,9 +898,8 @@ class UIControl {
     /**
      * Updates the visibility of the event timeline button.
      */
-    private void updateEventButtonVisibility() {
-        boolean tmp = isPlaying && isRecord;
-        eventLineButton.setVisible(tmp);
+    private void updateTimelineButtonVisibility() {
+        eventLineButton.setVisible(isPlaying && isRecord);
     }
 
     /**
@@ -801,6 +909,8 @@ class UIControl {
     void setZoomState(boolean state) {
         pipToggle.setBroadcast(false).setState(state).setBroadcast(true);
 //        zoomItem.setState(state);
+
+        optionMenu.getItem(1).put("text", zoomLabels[state ? 0 : 1]);
     }
 
     /**
@@ -836,6 +946,7 @@ class UIControl {
     void updateEventType(boolean type) {
 //        waggleEventItem.setState(type);
 //        exitEventItem.setState(!type);
+        updateEventMenuItems(type);
 
         if(type) {
             selectRadios.activate(0);
@@ -854,5 +965,116 @@ class UIControl {
      */
     void updateSelectType(boolean type) {
         selectLabel.setValueLabel(selectTypes[type ? 1 : 0]);
+
+        updateSelectMenuItems(type);
+    }
+
+    /**
+     * TODO javadoc
+     */
+    private void updateSelectMenuItems(boolean type) {
+        int i, j;
+
+        if(type) {
+            i = 0;
+            j = 1;
+        } else {
+            i = 1;
+            j = 0;
+        }
+
+        optionMenu.getItem(6).put("text", insetSelectLabels[j]);
+        optionMenu.getItem(7).put("text", exitSelectLabels[i]);
+    }
+
+    /**
+     * TODO javadoc
+     */
+    private void updateEventMenuItems(boolean type) {
+        int i, j;
+
+        if(type) {
+            i = 0;
+            j = 1;
+        } else {
+            i = 1;
+            j = 0;
+        }
+
+        optionMenu.getItem(3).put("text", exitEventLabels[j]);
+        optionMenu.getItem(4).put("text", waggleEventLabels[i]);
+    }
+
+    /**
+     * TODO javadoc
+     */
+    void setProgramMenuState(boolean state) {
+        programMenu.setOpen(state);
+    }
+
+    /**
+     * TODO javadoc
+     */
+    boolean isProgramMenuOpen() {
+        return programMenu.isOpen();
+    }
+
+    /**
+     * TODO javadoc
+     */
+    void setFootageMenuOpen(boolean state) {
+        footageMenu.setOpen(state);
+    }
+
+    /**
+     * TODO javadoc
+     */
+    boolean isFootageMenuOpen() {
+        return footageMenu.isOpen();
+    }
+
+    /**
+     * TODO javadoc
+     */
+    void setOptionMenuOpen(boolean state) {
+        optionMenu.setOpen(state);
+    }
+
+    /**
+     * TODO javadoc
+     */
+    boolean isOptionMenuOpen() {
+        return optionMenu.isOpen();
+    }
+
+    /**
+     * TODO javadoc
+     */
+    void closeMenus() {
+        if(!programMenu.isInside() && !programButton.isInside()) {
+            programMenu.setOpen(false);
+        }
+
+        if(!footageMenu.isInside() && !footageButton.isInside()) {
+            footageMenu.setOpen(false);
+        }
+
+        if(!optionMenu.isInside() && !optionButton.isInside()) {
+            optionMenu.setOpen(false);
+        }
+    }
+
+    /**
+     * TODO javadoc
+     */
+    void toggleEventRadio(int index) {
+        modeRadios.getItem(index).toggle();
+    }
+
+    /**
+     * TODO javadoc
+     */
+    void toggleSelectRadio(int index) {
+        selectRadios.getItem(index).toggle();
     }
 }

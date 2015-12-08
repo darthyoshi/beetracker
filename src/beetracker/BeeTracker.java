@@ -393,7 +393,7 @@ public class BeeTracker extends PApplet {
 
             if(movieDims != null) {
                 PGraphics viewFrame = createGraphics(
-                    viewBounds[2] - viewBounds[1] + 1,
+                    viewBounds[2] - viewBounds[0] + 1,
                     viewBounds[3] - viewBounds[1] + 1
                 );
                 viewFrame.beginDraw();
@@ -403,8 +403,8 @@ public class BeeTracker extends PApplet {
                     0,
                     curFrame.width,
                     curFrame.height,
-                    (viewFrame.width-movieDims[0])/2,
-                    (viewFrame.height-movieDims[1])/2,
+                    movieOffset[0]-viewBounds[0],
+                    movieOffset[1]-viewBounds[1],
                     movieDims[0],
                     movieDims[1]
                 );
@@ -598,16 +598,16 @@ public class BeeTracker extends PApplet {
                 stroke(0xffffa600);
                 ellipseMode(RADIUS);
                 noFill();
-                rectMode(CORNERS);
+                rectMode(CORNER);
 
                 //unzoomed
                 if(!pip) {
                     //inset box
                     rect(
-                        insetBox[0]*movieDims[0] + movieOffset[0],
-                        insetBox[1]*movieDims[1] + movieOffset[1],
-                        insetBox[2]*movieDims[0] + movieOffset[0] - 1,
-                        insetBox[3]*movieDims[1] + movieOffset[1] - 1
+                        (int)(insetBox[0]*movieDims[0]) + movieOffset[0],
+                        (int)(insetBox[1]*movieDims[1]) + movieOffset[1],
+                        (int)((insetBox[2]-insetBox[0])*movieDims[0]) - 1,
+                        (int)((insetBox[3]-insetBox[1])*movieDims[1]) - 1
                     );
 
                     if(!waggleMode) {
@@ -779,7 +779,11 @@ public class BeeTracker extends PApplet {
                     );
                 }
             } else {
-                text("Loading...", width*.5f, height*.5f);
+                text(
+                    "Loading...",
+                    (viewBounds[0]+viewBounds[2])/2,
+                    (viewBounds[1]+viewBounds[3])/2
+                );
 
                 uic.draw();
 
@@ -793,14 +797,11 @@ public class BeeTracker extends PApplet {
                         curFrame.height
                     );
 
-                    movieOffset[0] = (int)((width-movieDims[0])*.5f);
-                    movieOffset[1] = (int)((height-movieDims[1])*.5f);
+                    movieOffset[0] = (viewBounds[2]-viewBounds[0]-movieDims[0])/2 + viewBounds[0];
+                    movieOffset[1] = (viewBounds[3]-viewBounds[1]-movieDims[1])/2 + viewBounds[1];
 
-                    frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
-                    frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
-
-                    frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
-                    frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+                    frameOffset = unzoomedFrameOffset();
+                    frameDims = unzoomedFrameDims();
 
                     updateExitCenter();
                 }
@@ -1264,17 +1265,14 @@ public class BeeTracker extends PApplet {
 
         if(pip) {
             frameDims = scaledDims(
-                movieDims[0]*(insetBox[2] - insetBox[0]),
-                movieDims[1]*(insetBox[3] - insetBox[1])
+                (float)movieDims[0] * (insetBox[2]-insetBox[0]),
+                (float)movieDims[1] * (insetBox[3]-insetBox[1])
             );
-            frameOffset[0] = (int)((width-frameDims[0])*.5f);
-            frameOffset[1] = (int)((height-frameDims[1])*.5f);
+            frameOffset[0] = (viewBounds[2]-viewBounds[0]-frameDims[0])/2 + viewBounds[0];
+            frameOffset[1] = (viewBounds[3]-viewBounds[1]-frameDims[1])/2 + viewBounds[1];
         } else {
-            frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
-            frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
-
-            frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
-            frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+            frameOffset = unzoomedFrameOffset();
+            frameDims = unzoomedFrameDims();
         }
 
         updateExitCenter();
@@ -1577,33 +1575,35 @@ public class BeeTracker extends PApplet {
     public void mousePressed() {
         if(
             movieDims != null && !isPlaying &&
-            mouseX > (width-movieDims[0])/2 &&
-            mouseX < (width+movieDims[0])/2 &&
-            mouseY > (height-movieDims[1])/2 &&
-            mouseY < (height+movieDims[1])/2
+            mouseX > viewBounds[0] &&
+            mouseX < viewBounds[2] &&
+            mouseY > viewBounds[1] &&
+            mouseY < viewBounds[3]
         ) {
+            int[] mouse = constrainMousePosition(mouseX, mouseY);
+
             if(!selectExit) {
                 if(!pip) {
                     insetBox[0] = insetBox[2] =
-                        1f*(mouseX-movieOffset[0])/movieDims[0];
+                        1f*(mouse[0]-movieOffset[0])/movieDims[0];
                     insetBox[1] = insetBox[3] =
-                        1f*(mouseY-movieOffset[1])/movieDims[1];
+                        1f*(mouse[1]-movieOffset[1])/movieDims[1];
 
                     isDrag = true;
                 }
             } else {
                 if(!pip) {
-                    exitRadial[0] = 1f*(mouseX-movieOffset[0])/movieDims[0];
-                    exitRadial[1] = 1f*(mouseY-movieOffset[1])/movieDims[1];
+                    exitRadial[0] = 1f*(mouse[0]-movieOffset[0])/movieDims[0];
+                    exitRadial[1] = 1f*(mouse[1]-movieOffset[1])/movieDims[1];
                 } else {
                     exitRadial[0] = insetBox[0] + (
                         (insetBox[2]-insetBox[0]) *
-                        (mouseX-frameOffset[0]) /
+                        (mouse[0]-frameOffset[0]) /
                         frameDims[0]
                     );
                     exitRadial[1] = insetBox[1] + (
                         (insetBox[3]-insetBox[1]) *
-                        (mouseY-frameOffset[1]) /
+                        (mouse[1]-frameOffset[1]) /
                         frameDims[1]
                     );
                 }
@@ -1621,13 +1621,13 @@ public class BeeTracker extends PApplet {
     @Override
     public void mouseDragged() {
         if(isDrag) {
-            if(!selectExit) {
-                int[] mouse = constrainMousePosition(mouseX, mouseY);
+            int[] mouse = constrainMousePosition(mouseX, mouseY);
 
+            if(!selectExit) {
                 insetBox[2] = 1f*(mouse[0]-movieOffset[0])/movieDims[0];
                 insetBox[3] = 1f*(mouse[1]-movieOffset[1])/movieDims[1];
             } else {
-                float[] tmp = constrainRadius(mouseX, mouseY);
+                float[] tmp = constrainRadius(mouse[0], mouse[1]);
 
                 exitRadial[2] = tmp[0];
                 exitRadial[3] = tmp[1];
@@ -1642,7 +1642,6 @@ public class BeeTracker extends PApplet {
      * @return a float array containing the normalized circle axes
      */
     private float[] constrainRadius(int mouseX, int mouseY) {
-        int[] mouse = constrainMousePosition(mouseX, mouseY);
         int[] offset, dims;
 
         updateExitCenter();
@@ -1657,9 +1656,9 @@ public class BeeTracker extends PApplet {
 
         float[] result = new float[2];
         //semi-major axis (x)
-        result[0] = exitCenter[0] - mouse[0];
+        result[0] = exitCenter[0] - mouseX;
         //semi-minor axis (y)
-        result[1] = exitCenter[1] - mouse[1];
+        result[1] = exitCenter[1] - mouseY;
 
         result[0] = result[1] = (float)Math.pow((Math.pow(result[0], 2) +
             Math.pow(result[1], 2)), .5);
@@ -1709,18 +1708,26 @@ public class BeeTracker extends PApplet {
      */
     private int[] constrainMousePosition(int mouseX, int mouseY) {
         int[] result = {mouseX, mouseY};
-        int[] offset = (pip ? frameOffset : movieOffset);
+        int[] offset, dims;
+
+        if(pip) {
+            offset = frameOffset;
+            dims = movieDims;
+        } else {
+            offset = movieOffset;
+            dims = movieDims;
+        }
 
         if(mouseX < offset[0]) {
             result[0] = offset[0];
-        } else if (mouseX > width-offset[0]) {
-            result[0] = width-offset[0];
+        } else if (mouseX > offset[0] + dims[0]) {
+            result[0] = offset[0] + dims[0];
         }
 
         if(mouseY < offset[1]) {
             result[1] = offset[1];
-        } else if(mouseY > height-offset[1]) {
-            result[1] = height-offset[1];
+        } else if(mouseY > offset[1] + dims[1]) {
+            result[1] = offset[1] + dims[1];
         }
 
         return result;
@@ -1734,16 +1741,14 @@ public class BeeTracker extends PApplet {
         if(isDrag) {
             if(!selectExit) {
                 //selection box has area of zero
-                if(
-                    (
-                        insetBox[0] - insetBox[2] <= 0.000001f &&
-                        insetBox[0] - insetBox[2] >= -0.000001f
-                    ) ||
-                    (
-                        insetBox[1] - insetBox[3] <= 0.000001f &&
-                        insetBox[1] - insetBox[3] >= -0.000001f
-                    )
-                ) {
+                if((
+                    insetBox[0] - insetBox[2] <= 0.000001f &&
+                    insetBox[0] - insetBox[2] >= -0.000001f
+                ) ||
+                (
+                    insetBox[1] - insetBox[3] <= 0.000001f &&
+                    insetBox[1] - insetBox[3] >= -0.000001f
+                )) {
                     insetBox[0] = insetBox[1] = 0f;
                     insetBox[2] = insetBox[3] = 1f;
                 } else {
@@ -1762,11 +1767,9 @@ public class BeeTracker extends PApplet {
                         insetBox[3] = tmp;
                     }
 
-                    frameOffset[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
-                    frameOffset[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
+                    frameOffset = unzoomedFrameOffset();
 
-                    frameDims[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
-                    frameDims[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+                    frameDims = unzoomedFrameDims();
                 }
             }
 
@@ -1786,6 +1789,32 @@ public class BeeTracker extends PApplet {
     }
 
     /**
+     * Calculates coordinate offsets for the unzoomed inset frame.
+     * @return the an integer array containing the coordinate offsets
+     */
+    private int[] unzoomedFrameOffset() {
+        int[] result = new int[2];
+
+        result[0] = (int)(movieDims[0]*insetBox[0]) + movieOffset[0];
+        result[1] = (int)(movieDims[1]*insetBox[1]) + movieOffset[1];
+
+        return result;
+    }
+
+    /**
+     * Calculates the scaled dimensions of the unzoomed inset frame.
+     * @return an integer array containing the dimensions
+     */
+    private int[] unzoomedFrameDims() {
+        int[] result = new int[2];
+
+        result[0] = (int)(movieDims[0] * (insetBox[2]-insetBox[0]));
+        result[1] = (int)(movieDims[1] * (insetBox[3]-insetBox[1]));
+
+        return result;
+    }
+
+    /**
      * Determines the dimensions of a PImage, scaled to fit within the display
      *   window.
      * @param imgWidth the width to scale
@@ -1798,13 +1827,14 @@ public class BeeTracker extends PApplet {
         float ratio = imgWidth/imgHeight;
 
         //scale by width
-        result[0] = width - 100;
-        result[1] = (int)(result[0]/ratio);
+        result[0] = viewBounds[2] - viewBounds[0] + 1;
+        result[1] = (int)Math.ceil((double)result[0]/ratio);
 
         //scale by height
-        if(result[1] > height - 100) {
-            result[1] = height - 100;
-            result[0] = (int)(result[1]*ratio);
+        int tmp = viewBounds[3] - viewBounds[1] + 1;
+        if(result[1] > tmp) {
+            result[1] = tmp;
+            result[0] = (int)Math.ceil((double)result[1]*ratio);
         }
 
         return result;

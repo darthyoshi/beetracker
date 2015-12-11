@@ -71,6 +71,13 @@ class UIControl {
         0,
         0
     );
+    private static final CColor disabledMenuColor = new CColor(
+        0xffcccccc,
+        0xffaaaaaa,
+        0xffcccccc,
+        0,
+        0
+    );
     private static final String menuSeparator = "------";
     private static final String[] playLabels = {"* Play", "  Play"};
     private static final String[] recordLabels = {"* Record", "  Record"};
@@ -512,8 +519,10 @@ class UIControl {
             .setBarHeight(0)
             .setBarVisible(false)
             .setItemHeight(20)
-            .setColor(menuColor);
+            .setColor(disabledMenuColor);
         footageMenu.getValueLabel().toUpperCase(false);
+        footageMenu.getItem(0).put("color", menuColor);
+        footageMenu.getItem(1).put("color", menuColor);
 
         String[] optionItems = {
             recordLabels[1],
@@ -542,7 +551,7 @@ class UIControl {
             .setBarHeight(0)
             .setBarVisible(false)
             .setItemHeight(20)
-            .setColor(menuColor);
+            .setColor(disabledMenuColor);
         optionMenu.getValueLabel().toUpperCase(false);
     }
 
@@ -916,14 +925,40 @@ class UIControl {
     /**
      * Toggles the activation states of the "Footage" and "Options" menu items.
      */
-/*    void toggleMenuStates() {
-        boolean state = loadMenu.isEnabled();
+    void toggleMenuStates() {
+/*        boolean state = loadMenu.isEnabled();
         loadMenu.setEnabled(!state);
         closeItem.setEnabled(state);
         playItem.setEnabled(state);
         optionMenu.setEnabled(state);
+*/        java.util.Map<String, Object> loadVideoItem = footageMenu.getItem(0);
+        CColor loadItemColor, playItemColor;
+
+        if((CColor)loadVideoItem.get("color") == disabledMenuColor) {
+            loadItemColor = menuColor;
+            playItemColor = disabledMenuColor;
+        } else {
+            loadItemColor = disabledMenuColor;
+            playItemColor = menuColor;
+        }
+
+        //footage menu
+        loadVideoItem.put("color", loadItemColor);    //"load video" item
+        footageMenu.getItem(1).put("color", loadItemColor); //"load image sequence" item
+        footageMenu.getItem(3).put("color", playItemColor); //"play" item
+        footageMenu.getItem(5).put("color", playItemColor); //"close" item
+
+        //option menu
+        optionMenu.getItem(0).put("color", playItemColor);  //"record" item
+        optionMenu.getItem(1).put("color", playItemColor);  //"zoom" item
+        optionMenu.getItem(3).put("color", playItemColor);  //"exit event" item
+        optionMenu.getItem(4).put("color", playItemColor);  //"waggle event" item
+        optionMenu.getItem(6).put("color", playItemColor);  //"select inset" item
+        optionMenu.getItem(7).put("color", playItemColor);  //"select exit" item
+        optionMenu.getItem(9).put("color", playItemColor);  //"add setting" item
+        optionMenu.getItem(10).put("color", playItemColor); //"remove setting" item
     }
-*/
+
     /**
      * Draws the ControlP5 elements.
      */
@@ -970,7 +1005,8 @@ class UIControl {
     }
 
     /**
-     * TODO javadoc
+     * Updates the labels for the boundary selection type menu items.
+     * @param type true for exit selection mode
      */
     private void updateSelectMenuItems(boolean type) {
         int i, j;
@@ -988,67 +1024,76 @@ class UIControl {
     }
 
     /**
-     * TODO javadoc
+     * Updates the labels for the event type menu items.
+     * @param type true for waggle dance mode
      */
     private void updateEventMenuItems(boolean type) {
         int i, j;
+        CColor cc;
 
         if(type) {
             i = 0;
             j = 1;
+            cc = disabledMenuColor;
         } else {
             i = 1;
             j = 0;
+            cc = menuColor;
         }
 
         optionMenu.getItem(3).put("text", exitEventLabels[j]);
         optionMenu.getItem(4).put("text", waggleEventLabels[i]);
+
+        optionMenu.getItem(7).put("color", cc);
     }
 
     /**
-     * TODO javadoc
+     * Opens or closes the program menu.
+     * @param the new menu state
      */
     void setProgramMenuState(boolean state) {
         programMenu.setOpen(state);
     }
 
     /**
-     * TODO javadoc
+     * @return true if the program menu is open
      */
     boolean isProgramMenuOpen() {
         return programMenu.isOpen();
     }
 
     /**
-     * TODO javadoc
+     * Opens or closes the footage menu.
+     * @param the new menu state
      */
     void setFootageMenuOpen(boolean state) {
         footageMenu.setOpen(state);
     }
 
     /**
-     * TODO javadoc
+     * @return true if the footage menu is open
      */
     boolean isFootageMenuOpen() {
         return footageMenu.isOpen();
     }
 
     /**
-     * TODO javadoc
+     * Opens or closes the option menu.
+     * @param the new menu state
      */
     void setOptionMenuOpen(boolean state) {
         optionMenu.setOpen(state);
     }
 
     /**
-     * TODO javadoc
+     * @return true if the option menu is open
      */
     boolean isOptionMenuOpen() {
         return optionMenu.isOpen();
     }
 
     /**
-     * TODO javadoc
+     * Closes all menus.
      */
     void closeMenus() {
         if(!programMenu.isInside() && !programButton.isInside()) {
@@ -1065,16 +1110,45 @@ class UIControl {
     }
 
     /**
-     * TODO javadoc
+     * Forces the selection of am event type radio button.
+     * @param index the index of the button to activate
      */
     void toggleEventRadio(int index) {
         modeRadios.getItem(index).toggle();
     }
 
     /**
-     * TODO javadoc
+     * Forces the selection of a boundary selection type radio button.
+     * @param index the index of the button to activate
      */
     void toggleSelectRadio(int index) {
         selectRadios.getItem(index).toggle();
+    }
+
+    /**
+     * Checks if a menu item is currently enabled.
+     * @param menuType the containing menu of the item to check
+     * @param index the index of the item to check
+     * @return true if the menu item is activated
+     */
+    boolean checkMenuItemState(String menuType, int index) {
+        boolean result = false;
+
+        if(menuType.equals("footage")) {
+            result = (CColor)footageMenu.getItem(index).get("color") == menuColor;
+        } else if(menuType.equals("option")) {
+            result = (CColor)optionMenu.getItem(index).get("color") == menuColor;
+        }
+
+        return result;
+    }
+
+    /**
+     * @return true if the mouse is currently inside any open menu
+     */
+    boolean mouseOverMenus() {
+        return (programMenu.isOpen() && programMenu.isInside()) ||
+            (footageMenu.isOpen() && footageMenu.isInside()) ||
+            (optionMenu.isOpen() && optionMenu.isInside());
     }
 }

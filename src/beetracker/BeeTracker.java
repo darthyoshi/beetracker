@@ -1445,7 +1445,7 @@ public class BeeTracker extends PApplet {
         isPlaying = false;
         uic.setPlayState(false);
 
-//        uic.toggleMenuStates();
+        uic.toggleMenuStates();
         uic.setSetupGroupVisibility(false);
         uic.setOpenButtonVisibility(true);
         uic.setPlayVisibility(false);
@@ -1582,6 +1582,7 @@ public class BeeTracker extends PApplet {
         uic.closeMenus();
 
         if(
+            !uic.mouseOverMenus() &&
             movieDims != null && !isPlaying &&
             mouseX > viewBounds[0] &&
             mouseX < viewBounds[2] &&
@@ -2075,7 +2076,7 @@ public class BeeTracker extends PApplet {
         uic.setRecordVisibility(!replay);
         uic.setRecordState(replay);
         uic.setPlayState(false);
-//        uic.toggleMenuStates();
+        uic.toggleMenuStates();
 
         System.out.append(replay ? "success" : "failure").append('\n').flush();
     }
@@ -2288,98 +2289,102 @@ public class BeeTracker extends PApplet {
     }
 
     /**
-     * TODO javadoc
+     * ControlP5 callback method.
      */
     public void programMenuButton() {
         uic.setProgramMenuState(!uic.isProgramMenuOpen());
     }
 
     /**
-     * TODO javadoc
+     * ControlP5 callback method.
      */
     public void footageMenuButton() {
         uic.setFootageMenuOpen(!uic.isFootageMenuOpen());
     }
 
     /**
-     * TODO javadoc
+     * ControlP5 callback method.
      */
     public void optionMenuButton() {
         uic.setOptionMenuOpen(!uic.isOptionMenuOpen());
     }
 
     /**
-     * TODO javadoc
+     * ControlP5 callback method.
      */
     public void programMenu() {
         exit();
     }
 
     /**
-     * TODO javadoc
+     * ControlP5 callback method.
      * @param index
      */
     public void footageMenu(int index) {
-        switch(index) {
-        case 0:
-            openButton();
+        if(uic.checkMenuItemState("footage", index)) {
+            switch(index) {
+            case 0:
+                openButton();
 
-            break;
+                break;
 
-        case 1:
-            openButton2();
+            case 1:
+                openButton2();
 
-            break;
+                break;
 
-        case 3:
-            playButton();
+            case 3:
+                playButton();
 
-            break;
+                break;
 
-        case 5:
-            ejectButton();
+            case 5:
+                ejectButton();
 
-            break;
+                break;
+            }
         }
     }
 
     /**
-     * TODO javadoc
+     * ControlP5 callback method.
      * @param index
      */
     public void optionMenu(int index) {
-        switch(index) {
-        case 0:
-            recordButton();
+        if(uic.checkMenuItemState("option", index)) {
+            switch(index) {
+            case 0:
+                recordButton();
 
-            break;
+                break;
 
-        case 1:
-            pipToggle();
+            case 1:
+                pipToggle();
 
-            break;
+                break;
 
-        case 3:
-        case 4:
-            uic.toggleEventRadio(index-3);
+            case 3:
+            case 4:
+                uic.toggleEventRadio(index-3);
 
-            break;
+                break;
 
-        case 6:
-        case 7:
-            uic.toggleSelectRadio(index-6);
+            case 6:
+            case 7:
+                uic.toggleSelectRadio(index-6);
 
-            break;
+                break;
 
-        case 9:
-            addSetting();
+            case 9:
+                addSetting();
 
-            break;
+                break;
 
-        case 10:
-            removeSetting();
+            case 10:
+                removeSetting();
 
-            break;
+                break;
+            }
         }
     }
 

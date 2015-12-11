@@ -51,6 +51,7 @@ class TrackingUtils {
    */
   TrackingUtils(BeeTracker parent) {
     rec = new ShapeRecognizer(parent);
+    rec.loadTemplates(parent);
 
     init();
   }

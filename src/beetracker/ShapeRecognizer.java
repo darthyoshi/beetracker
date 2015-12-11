@@ -42,17 +42,26 @@ public class ShapeRecognizer {
    * @param root the BeeTracker object
    */
   ShapeRecognizer(BeeTracker root) {
-/*    //$N
-    nDollar = new $N.NDollarRecognizer();
-    nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
-    nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
-/*/
+    //$N
+//    nDollar = new $N.NDollarRecognizer();
+
     //$1
     oneDollar = new de.voidplus.dollar.OneDollar(root)
       .setMinSimilarity(shapeScore)
       .enableMinSimilarity()
       .setVerbose(BeeTracker.debug)
       .setFragmentationRate(rate);
+  }
+
+  /**
+   * Loads the template gestures into the recognizer.
+   * @param root the BeeTracker object
+   */
+  void loadTemplates(BeeTracker root) {
+    //$N
+/*    nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
+    nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
+*/
     readOneDollarTemplate(root, "waggle");
     oneDollar.bind("waggle", this, "oneDollarCallback");
 

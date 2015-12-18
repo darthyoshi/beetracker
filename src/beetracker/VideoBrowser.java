@@ -129,7 +129,7 @@ class VideoBrowser {
         parent.loadVideo(selectedFile);
 
         if(selectedFile != null) {
-          System.out.append("selected directory: \"")
+          System.out.append("selected file: \"")
             .append(selectedFile.getAbsolutePath())
             .append("\"\nsetting time stamp\n")
             .flush();

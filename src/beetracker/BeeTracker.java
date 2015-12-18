@@ -1584,6 +1584,10 @@ public class BeeTracker extends PApplet {
    */
   @Override
   public void mousePressed() {
+    if(debug) {
+      println("mousePressed: (" + mouseX + ", " + mouseY + ")");
+    }
+
     uic.closeMenus();
 
     if(
@@ -1752,6 +1756,10 @@ public class BeeTracker extends PApplet {
    */
   @Override
   public void mouseReleased() {
+    if(debug) {
+      println("mouseReleased: (" + mouseX + ", " + mouseY + ")");
+    }
+
     if(isDrag) {
       if(!selectExit) {
         //selection box has area of zero

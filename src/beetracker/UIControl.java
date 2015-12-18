@@ -652,6 +652,10 @@ class UIControl {
    */
   void addListItem(String label) {
     colorList.addItem(label, colorList.getItems().size()-1);
+
+    CColor color = new CColor();
+    color.setBackground(0xff000000 + Integer.parseInt(label, 16));
+    colorList.getItem(label).put("color", color);
   }
 
   /**
@@ -670,7 +674,15 @@ class UIControl {
    * @param index the index of the item
    */
   void setListItem(String newLbl, int index) {
-    colorList.getItem(index+1).put("name", newLbl);
+    java.util.Map<String, Object> item = colorList.getItem(index+1);
+
+    CColor color = new CColor();
+    color.setBackground(0xff000000 + Integer.parseInt(newLbl, 16));
+
+    item.put("color", color);
+    item.put("name", newLbl);
+    item.put("text", newLbl);
+
     colorList.setCaptionLabel(newLbl);
   }
 

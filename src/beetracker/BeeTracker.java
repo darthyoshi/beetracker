@@ -20,6 +20,7 @@ package beetracker;
 
 import com.jogamp.newt.event.WindowEvent;
 
+import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -911,73 +912,77 @@ public class BeeTracker extends PApplet {
    * Loads a sequence of images.
    * @param dir a File object representing the parent directory of the images
    */
-  public void loadImgSequence(File dir) {
+  public void loadImgSequence(final File dir) {
     if(dir != null) {
-      imgSequenceMode = true;
+      EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          imgSequenceMode = true;
 
-      preLoad(dir);
+          preLoad(dir);
 
-      java.util.LinkedList<String> list = new java.util.LinkedList<>();
-      videoName = dir.getName();
+          java.util.LinkedList<String> list = new java.util.LinkedList<>();
+          videoName = dir.getName();
 
-      loadSettings(
-        System.getProperty("user.dir") + File.separatorChar +
-        "output" + File.separatorChar +
-        videoName + File.separatorChar +
-        "settings.json"
-      );
+          loadSettings(
+            System.getProperty("user.dir") + File.separatorChar +
+            "output" + File.separatorChar +
+            videoName + File.separatorChar +
+            "settings.json"
+          );
 
-      String name;
-      for(File file : dir.listFiles()) {
-        if(file.isFile()) {
-          name = file.getName();
+          String name;
+          for(File file : dir.listFiles()) {
+            if(file.isFile()) {
+              name = file.getName();
 
-          //only add images
-          for(String ext : imgTypes) {
-            if(name.toLowerCase(java.util.Locale.ROOT).endsWith(ext)) {
-              list.add(file.getAbsolutePath());
+              //only add images
+              for(String ext : imgTypes) {
+                if(name.toLowerCase(java.util.Locale.ROOT).endsWith(ext)) {
+                  list.add(file.getAbsolutePath());
 
-              break;
+                  break;
+                }
+              }
             }
           }
+
+          //begin critical section
+          try {
+            sem.acquire();
+          } catch (InterruptedException e) {
+            e.printStackTrace(System.err);
+
+            Thread.currentThread().interrupt();
+          }
+
+          imgNames = new String[list.size()];
+          list.toArray(imgNames);
+          java.util.Arrays.sort(imgNames);
+
+          imgSequence = new PImage[list.size()];
+          for(imgIndex = 0; imgIndex < imgSequence.length; imgIndex++) {
+            imgSequence[imgIndex] = null;
+          }
+
+          if(debug) {
+            for(String fileName : imgNames) {
+              println(fileName);
+            }
+          }
+
+          imgIndex = 0;
+          updateImgSequence(imgIndex);
+
+          //end critical section
+          sem.release();
+
+          System.out.append("images loaded\n").flush();
+
+          postLoad();
         }
-      }
-
-      //begin critical section
-      try {
-        sem.acquire();
-      } catch (InterruptedException e) {
-        e.printStackTrace(System.err);
-
-        Thread.currentThread().interrupt();
-      }
-
-      imgNames = new String[list.size()];
-      list.toArray(imgNames);
-      java.util.Arrays.sort(imgNames);
-
-      imgSequence = new PImage[list.size()];
-      for(imgIndex = 0; imgIndex < imgSequence.length; imgIndex++) {
-        imgSequence[imgIndex] = null;
-      }
-
-      if(debug) {
-        for(String fileName : imgNames) {
-          println(fileName);
-        }
-      }
-
-      imgIndex = 0;
-      updateImgSequence(imgIndex);
-
-      //end critical section
-      sem.release();
-
-      System.out.append("images loaded\n").flush();
-
-      postLoad();
+      });
     } else {
-      System.out.append("file selection canceled\n").flush();
+      System.out.append("image selection canceled\n").flush();
     }
   }
 
@@ -2030,34 +2035,40 @@ public class BeeTracker extends PApplet {
    * Loads the selected video file.
    * @param file a File object representing the video to load
    */
-  public void loadVideo(File file) {
+  public void loadVideo(final File file) {
     if(file != null) {
-      imgSequenceMode = false;
+      final PApplet self = this;
 
-      preLoad(file);
+      EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          imgSequenceMode = false;
 
-      String[] nameParts = file.getName().split("\\.");
-      StringBuilder builder = new StringBuilder(nameParts[0]);
-      for(int i = 1; i < nameParts.length - 1; i++) {
-        builder.append('.').append(nameParts[i]);
-      }
-      videoName = builder.toString();
+          preLoad(file);
 
-      loadSettings(
-        System.getProperty("user.dir") + File.separatorChar +
-        "output" + File.separatorChar +
-        videoName + File.separatorChar +
-        "settings.json"
-      );
+          String[] nameParts = file.getName().split("\\.");
+          StringBuilder builder = new StringBuilder(nameParts[0]);
+          for(int i = 1; i < nameParts.length - 1; i++) {
+            builder.append('.').append(nameParts[i]);
+          }
+          videoName = builder.toString();
 
-      movie = new Movie(this, file.getAbsolutePath());
+          loadSettings(
+            System.getProperty("user.dir") + File.separatorChar +
+            "output" + File.separatorChar +
+            videoName + File.separatorChar +
+            "settings.json"
+          );
 
-      System.out.append("video loaded\n").flush();
+          movie = new Movie(self, file.getAbsolutePath());
 
-      movie.play();
-      movie.volume(0f);
+          System.out.append("video loaded\n").flush();
 
-      postLoad();
+          movie.play();
+          movie.volume(0f);
+
+          postLoad();
+        }
+      });
     } else {
       System.out.append("file selection canceled\n").flush();
     }

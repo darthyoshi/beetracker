@@ -18,6 +18,7 @@
 
 package beetracker;
 
+import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.io.File;
 import java.util.Calendar;
@@ -57,7 +58,7 @@ class VideoBrowser {
     final BeeTracker parent,
     final File currentFile
   ) {
-    Thread thread = new Thread(new Runnable() {
+    EventQueue.invokeLater(new Runnable() {
       @Override
       public void run() {
         File selectedFile = null;
@@ -125,6 +126,8 @@ class VideoBrowser {
           }
         }
 
+        parent.loadVideo(selectedFile);
+
         if(selectedFile != null) {
           System.out.append("selected directory: \"")
             .append(selectedFile.getAbsolutePath())
@@ -133,12 +136,8 @@ class VideoBrowser {
 
           setDateTime(parent);
         }
-
-        parent.loadVideo(selectedFile);
       }
     });
-
-    thread.start();
   }
 
   /**
@@ -146,40 +145,35 @@ class VideoBrowser {
    * @param parent the invoking BeeTracker
    */
   private static void setDateTime(final BeeTracker parent) {
-    java.awt.EventQueue.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Calendar calendar = Calendar.getInstance();
-        Date now = calendar.getTime();
-        calendar.add(Calendar.YEAR, -100);
-        Date start = calendar.getTime();
-        calendar.add(Calendar.YEAR, 200);
-        Date stop = calendar.getTime();
+    Calendar calendar = Calendar.getInstance();
+    Date now = calendar.getTime();
+    calendar.add(Calendar.YEAR, -100);
+    Date start = calendar.getTime();
+    calendar.add(Calendar.YEAR, 200);
+    Date stop = calendar.getTime();
 
-        javax.swing.JSpinner dateTimeSpinner = new javax.swing.JSpinner(
-          new javax.swing.SpinnerDateModel(
-            now,
-            start,
-            stop,
-            Calendar.DATE
-          )
-        );
+    javax.swing.JSpinner dateTimeSpinner = new javax.swing.JSpinner(
+      new javax.swing.SpinnerDateModel(
+        now,
+        start,
+        stop,
+        Calendar.DATE
+      )
+    );
 
-        javax.swing.JPanel panel = new javax.swing.JPanel();
-        panel.add(dateTimeSpinner);
+    javax.swing.JPanel panel = new javax.swing.JPanel();
+    panel.add(dateTimeSpinner);
 
-        javax.swing.JOptionPane.showMessageDialog(
-          null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
-          panel,
-          "Set the video time stamp",
-          javax.swing.JOptionPane.PLAIN_MESSAGE
-        );
+    javax.swing.JOptionPane.showMessageDialog(
+      null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+      panel,
+      "Set the video time stamp",
+      javax.swing.JOptionPane.PLAIN_MESSAGE
+    );
 
-        calendar.setTime((Date)dateTimeSpinner.getValue());
+    calendar.setTime((Date)dateTimeSpinner.getValue());
 
-        parent.setTime(calendar);
-      }
-    });
+    parent.setTime(calendar);
   }
 
   /**
@@ -191,7 +185,7 @@ class VideoBrowser {
     final BeeTracker parent,
     final File currentDir
   ) {
-    Thread thread = new Thread(new Runnable() {
+    EventQueue.invokeLater(new Runnable() {
       @Override
       public void run() {
         File selectedDir = null;
@@ -234,6 +228,8 @@ class VideoBrowser {
           }
         }
 
+        parent.loadImgSequence(selectedDir);
+
         if(selectedDir != null) {
           System.out.append("selected directory: \"")
             .append(selectedDir.getAbsolutePath())
@@ -242,11 +238,7 @@ class VideoBrowser {
 
           setDateTime(parent);
         }
-
-        parent.loadImgSequence(selectedDir);
       }
     });
-
-    thread.start();
   }
 }

@@ -732,7 +732,7 @@ class UIControl {
    */
   void setOpenButtonVisibility(boolean visible) {
     for(Button button : openButtons) {
-      button.setVisible(visible).setBroadcast(visible);
+      button.setVisible(visible);
     }
   }
 

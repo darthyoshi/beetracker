@@ -429,14 +429,12 @@ class TrackingUtils {
   /**
    * Draws the recorded paths.
    * @param buf the buffer image to draw to
-   * @param bufOffset the xy coordinates of the buffer image
    * @param frameDims the dimensions of the image frame for which blob
    *   detection is being performed, in pixels
    * @param frameOffset the xy coordinates of the inset frame origin, in pixels
    */
   void drawPaths(
     PGraphics buf,
-    int[] bufOffset,
     int[] frameDims,
     int[] frameOffset
   ) {
@@ -453,10 +451,10 @@ class TrackingUtils {
           point2 = path.get(i+1);
 
           buf.line(
-            point[0]*frameDims[0]+frameOffset[0]-bufOffset[0],
-            point[1]*frameDims[1]+frameOffset[1]-bufOffset[0],
-            point2[0]*frameDims[0]+frameOffset[0]-bufOffset[0],
-            point2[1]*frameDims[1]+frameOffset[1]-bufOffset[1]
+            point[0]*frameDims[0]+frameOffset[0]-BeeTracker.viewBounds[0],
+            point[1]*frameDims[1]+frameOffset[1]-BeeTracker.viewBounds[1],
+            point2[0]*frameDims[0]+frameOffset[0]-BeeTracker.viewBounds[0],
+            point2[1]*frameDims[1]+frameOffset[1]-BeeTracker.viewBounds[1]
           );
         }
       }

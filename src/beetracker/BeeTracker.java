@@ -588,7 +588,7 @@ public class BeeTracker extends PApplet {
           }
 
           //draw recorded paths
-          tu.drawPaths(viewFrame, viewBounds, frameDims, frameOffset);
+          tu.drawPaths(viewFrame, frameDims, frameOffset);
         }
 
         viewFrame.endDraw();

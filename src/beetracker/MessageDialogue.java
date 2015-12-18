@@ -73,19 +73,6 @@ class MessageDialogue {
   }
 
   /**
-   * Displays an error message if the selected file is not a video file.
-   * @param parent the invoking BeeTracker
-   */
-  static void wrongFileTypeMessage(BeeTracker parent) {
-    JOptionPane.showMessageDialog(
-      null,
-      "Please select a video file!",
-      "Error",
-      JOptionPane.ERROR_MESSAGE
-    );
-  }
-
-  /**
    * Displays a dialogue to confirm whether or not to prematurely end playback.
    * @param parent the invoking BeeTracker
    */

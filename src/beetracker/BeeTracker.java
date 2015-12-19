@@ -92,7 +92,7 @@ public class BeeTracker extends PApplet {
 
   private PImage titleImg;
 
-  static final boolean debug = false;
+  static final boolean debug = true;
 
   private HashMap<Float, HashMap<Integer, List<float[]>>> allFramePoints = null;
   private HashMap<Integer, List<float[]>> centroids;
@@ -170,17 +170,7 @@ public class BeeTracker extends PApplet {
         }
       }
     );
-/*
-    java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)surface.getNative()).getFrame();
-    frame.setIconImage((java.awt.Image)loadImage("img/icon.png").getNative());
-    frame.setTitle("BeeTracker");
-    frame.addWindowListener(new java.awt.event.WindowAdapter() {
-      @Override
-      public void windowClosing(java.awt.event.WindowEvent arg0) {
-        exit();
-      }
-    });
-*/
+
     bdu = new BlobDetectionUtils(this, width, height);
 
     tu = new TrackingUtils(this);

@@ -18,14 +18,6 @@
 
 package beetracker;
 
-/*import java.awt.CheckboxMenuItem;
-import java.awt.Menu;
-import java.awt.MenuItem;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;*/
-
 import controlP5.Button;
 import controlP5.CColor;
 import controlP5.ControlP5;
@@ -103,81 +95,7 @@ class UIControl {
     "* Select Exit Circle",
     "  Select Exit Circle"
   };
-/*
-  private static final java.awt.MenuBar mbar;
-  private static final Menu loadMenu, optionMenu;
-  private static final MenuItem loadVideo, loadImages;
-  private static final MenuItem closeItem;
-  private static final MenuItem exitItem;
-  private static final MenuItem addSettingItem, removeSettingItem;
-  private static final CheckboxMenuItem exitEventItem, waggleEventItem;
-  private static final MenuItem playItem;
-  private static final CheckboxMenuItem recordItem, zoomItem;
-  static {
-    mbar = new java.awt.MenuBar();
 
-    final Menu programMenu = new Menu("Program");
-
-    exitItem = new MenuItem("Exit");
-
-    programMenu.add(exitItem);
-
-    final Menu footageMenu = new Menu("Footage");
-
-    loadMenu = new Menu("Load...");
-    loadVideo = new MenuItem("Video");
-    loadImages = new MenuItem("Image Sequence");
-
-    loadMenu.add(loadVideo);
-    loadMenu.add(loadImages);
-
-    footageMenu.add(loadMenu);
-    footageMenu.addSeparator();
-
-    playItem = new MenuItem("Play");
-    playItem.setEnabled(false);
-
-    footageMenu.add(playItem);
-
-    closeItem = new MenuItem("Close");
-    closeItem.setEnabled(false);
-
-    footageMenu.addSeparator();
-    footageMenu.add(closeItem);
-
-    optionMenu = new Menu("Options");
-    optionMenu.setEnabled(false);
-    recordItem = new CheckboxMenuItem("Record");
-    zoomItem = new CheckboxMenuItem("Zoom");
-
-    optionMenu.add(recordItem);
-    optionMenu.add(zoomItem);
-    optionMenu.addSeparator();
-
-    final Menu eventMenu = new Menu("Events");
-    exitEventItem = new CheckboxMenuItem("Arrivals/Departures", true);
-    waggleEventItem = new CheckboxMenuItem("Waggle Dances");
-
-    eventMenu.add(exitEventItem);
-    eventMenu.add(waggleEventItem);
-
-    optionMenu.add(eventMenu);
-    optionMenu.addSeparator();
-
-    final Menu settingsMenu = new Menu("Settings");
-    addSettingItem = new MenuItem("Add to current timestamp");
-    removeSettingItem = new MenuItem("Remove current settings");
-
-    settingsMenu.add(addSettingItem);
-    settingsMenu.add(removeSettingItem);
-
-    optionMenu.add(settingsMenu);
-
-    mbar.add(programMenu);
-    mbar.add(footageMenu);
-    mbar.add(optionMenu);
-  }
-*/
   private static final String listLbl = "New color";
   private static final String[] eventTypes = {"Exit", "Waggle"};
   private static final String[] selectTypes = {"Frame", eventTypes[0]};
@@ -209,8 +127,7 @@ class UIControl {
 
     cp5.disableShortcuts();
     cp5.setAutoDraw(false);
-
-/*  TODO tooltips broken in ControlP5 2.2.5
+/* 	TODO tooltips broken in ControlP5 2.2.5
     toolTip = cp5.getTooltip().setPositionOffset(0f, -15f).setAlpha(0);
     toolTip.setDelay(100)
       .getLabel()
@@ -391,12 +308,12 @@ class UIControl {
       .toggle()
       .setCaptionLabel("Select");
     selectFrame.getCaptionLabel().setPaddingX(-9);
-   //   toolTip.register(selectFrame, "Inset Frame");
+//    toolTip.register(selectFrame, "Inset Frame");
 
     Toggle selectExit = cp5.addToggle("Ex")
       .setBroadcast(false)
       .setLabelVisible(false);
-  //  toolTip.register(selectExit, "Exit Circle");
+//    toolTip.register(selectExit, "Exit Circle");
 
     selectRadios = cp5.addRadioButton("selectRadios")
       .setPosition(
@@ -443,19 +360,19 @@ class UIControl {
     hue.getCaptionLabel()
       .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
       .setPaddingX(5);
-  //    toolTip.register(hue, "Set hue tolerance threshold");
+//    toolTip.register(hue, "Set hue tolerance threshold");
 
     Toggle sat = cp5.addToggle("S").setBroadcast(false);
     sat.getCaptionLabel()
       .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
       .setPaddingX(5);
-  //    toolTip.register(sat, "Set minimum saturation threshold");
+//    toolTip.register(sat, "Set minimum saturation threshold");
 
     Toggle val = cp5.addToggle("V").setBroadcast(false);
     val.getCaptionLabel()
       .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
       .setPaddingX(5);
-  //    toolTip.register(val, "Set minimum value threshold");
+//    toolTip.register(val, "Set minimum value threshold");
 
     thresholdRadios = cp5.addRadioButton("thresholdRadios")
       .setPosition(
@@ -469,7 +386,7 @@ class UIControl {
       .setSize(15, 15)
       .setNoneSelectedAllowed(false)
       .setGroup(thresholdGroup);
-  //  toolTip.register(thresholdSlider, "Adjust the selected threshold");
+//    toolTip.register(thresholdSlider, "Adjust the selected threshold");
 
     statusLabel = cp5.addButton("status")
       .setLock(true)
@@ -577,85 +494,6 @@ class UIControl {
   }
 
   /**
-   * Initializes the menu bar item listeners.
-   */
-/*  void initListeners(final BeeTracker parent) {
-    loadVideo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        parent.openButton();
-      }
-    });
-    loadImages.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        parent.openButton2();
-      }
-    });
-    closeItem.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        parent.ejectButton();
-      }
-    });
-    exitItem.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent arg0) {
-        parent.exit();
-      }
-    });
-    recordItem.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent arg0) {
-        parent.recordButton();
-      }
-    });
-    zoomItem.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent arg0) {
-        parent.pipToggle();
-      }
-    });
-    playItem.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent arg0) {
-        parent.playButton();
-      }
-    });
-    addSettingItem.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        parent.addSetting();
-      }
-    });
-    removeSettingItem.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        parent.removeSetting();
-      }
-    });
-
-    ItemListener listener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent arg0) {
-        String lbl = ((String)arg0.getItem());
-
-        if(BeeTracker.debug) {
-          BeeTracker.println(lbl);
-        }
-
-        modeRadios.getItem(
-          lbl.equals(waggleEventItem.getLabel()) ?
-          1 :
-          0
-        ).toggle();
-      }
-    };
-    exitEventItem.addItemListener(listener);
-    waggleEventItem.addItemListener(listener);
-  }
-*/
-  /**
    * Toggles the visibility of the playback controls.
    * @param visible the visibility state
    */
@@ -729,8 +567,6 @@ class UIControl {
 
     playButton.setImage(playIcons[i]);
 //    toolTip.register(playButton, playTips[j]);
-
-//    playItem.setLabel((state ? "Pause" : "Play"));
 
     updateTimelineButtonVisibility();
   }
@@ -876,17 +712,16 @@ class UIControl {
     isRecord = state;
     int index = (state ? 1 : 0);
     recordButton.setImage(recordIcons[index]);
-//    recordItem.setState(state);
-  //    toolTip.register(recordButton, recordTips[index]);
+//    toolTip.register(recordButton, recordTips[index]);
 
     updateTimelineButtonVisibility();
 
     optionMenu.getItem(0).put("text", recordLabels[state ? 0 : 1]);
-
+/*
     if(!isPlaying) {
- //      toolTip.register(playButton, playTips[index]);
+       toolTip.register(playButton, playTips[index]);
     }
-  }
+*/  }
 
   /**
    * @return the current values of the threshold slider
@@ -959,12 +794,7 @@ class UIControl {
    * Toggles the activation states of the "Footage" and "Options" menu items.
    */
   void toggleMenuStates() {
-/*    boolean state = loadMenu.isEnabled();
-    loadMenu.setEnabled(!state);
-    closeItem.setEnabled(state);
-    playItem.setEnabled(state);
-    optionMenu.setEnabled(state);
-*/    java.util.Map<String, Object> loadVideoItem = footageMenu.getItem(0);
+    java.util.Map<String, Object> loadVideoItem = footageMenu.getItem(0);
     CColor loadItemColor, playItemColor;
 
     if((CColor)loadVideoItem.get("color") == disabledMenuColor) {
@@ -1058,8 +888,6 @@ class UIControl {
    * @param type true for waggle dance detection
    */
   void updateEventType(boolean type) {
-//    waggleEventItem.setState(type);
-//    exitEventItem.setState(!type);
     updateEventMenuItems(type);
 
     if(type) {

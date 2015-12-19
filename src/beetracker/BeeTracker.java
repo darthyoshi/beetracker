@@ -771,20 +771,7 @@ public class BeeTracker extends PApplet {
             (events == null ? events : events.get()), path);
         }
 
-        uic.draw();
-
-        //mark settings time stamps
-        textAlign(LEFT, TOP);
-        textSize(10);
-        fill(0xffffffff);
-        float[] pos = uic.getSeekBarPosition();
-        for(float stamp : settingsTimeStamps) {
-          text(
-            "l",
-            stamp/duration*(uic.getSeekBarWidth()-5) + (pos[0]+2),
-            pos[1] + 5
-          );
-        }
+        uic.draw(this, settingsTimeStamps);
       } else {
         text(
           "Loading...",
@@ -792,7 +779,7 @@ public class BeeTracker extends PApplet {
           (viewBounds[1]+viewBounds[3])/2
         );
 
-        uic.draw();
+        uic.draw(this, settingsTimeStamps);
 
         if(curFrame.height > 0) {
           duration = imgSequenceMode ? imgSequence.length-1 : movie.duration();
@@ -821,7 +808,7 @@ public class BeeTracker extends PApplet {
         (viewBounds[1]+viewBounds[3])/2-50
       );
 
-      uic.draw();
+      uic.draw(this, settingsTimeStamps);
     }
 
     //end critical section

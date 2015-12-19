@@ -18,18 +18,19 @@
 
 package beetracker;
 
-import java.awt.CheckboxMenuItem;
+/*import java.awt.CheckboxMenuItem;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.ItemListener;*/
 
 import controlP5.Button;
 import controlP5.CColor;
 import controlP5.ControlP5;
 import controlP5.ControlP5Constants;
+import controlP5.ControllerInterface;
 import controlP5.Group;
 import controlP5.RadioButton;
 import controlP5.ScrollableList;
@@ -51,9 +52,11 @@ class UIControl {
 
   private final Group setupGroup, playGroup, thresholdGroup;
   private final ScrollableList colorList;
+  private final Toggle[] allToggles;
   private final Toggle pipToggle;
   private final Button playButton, recordButton;
   private final PImage[] playIcons, recordIcons;
+  private final PImage checkmark;
   private final Slider thresholdSlider, seekBar;
   private final Button eventLineButton;
   private final RadioButton thresholdRadios, selectRadios, modeRadios;
@@ -61,6 +64,8 @@ class UIControl {
   private final Button statusLabel;
   private final Button[] openButtons;
   private final Textlabel modeLabel, selectLabel;
+
+  private final processing.core.PGraphics buf;
 
   private final ScrollableList programMenu, footageMenu, optionMenu;
   private final Button programButton, footageButton, optionButton;
@@ -204,8 +209,8 @@ class UIControl {
 
     cp5.disableShortcuts();
     cp5.setAutoDraw(false);
-//TODO tooltips broken in ControlP5 2.2.5
-/*
+
+/*  TODO tooltips broken in ControlP5 2.2.5
     toolTip = cp5.getTooltip().setPositionOffset(0f, -15f).setAlpha(0);
     toolTip.setDelay(100)
       .getLabel()
@@ -347,6 +352,8 @@ class UIControl {
       .setCaptionLabel("Show Event Timeline");
     eventLineButton.getCaptionLabel().alignX(ControlP5Constants.CENTER);
 
+    checkmark = parent.requestImage("img/checkmark.png");
+
     Toggle normalMode = cp5.addToggle("N")
       .setBroadcast(false)
       .toggle()
@@ -475,11 +482,6 @@ class UIControl {
       .alignX(ControlP5Constants.CENTER)
       .set(modes[0]);
 
-    cp5.setBroadcast(true);
-//TODO use ScrollableList to create menu
-//    java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame();
-//    frame.setMenuBar(mbar);
-
     programButton = cp5.addButton("programMenuButton")
       .setPosition(0,0)
       .setCaptionLabel("Program")
@@ -553,6 +555,25 @@ class UIControl {
       .setItemHeight(20)
       .setColor(disabledMenuColor);
     optionMenu.getValueLabel().toUpperCase(false);
+
+    buf = parent.createGraphics(parent.width, parent.height, BeeTracker.JAVA2D);
+    buf.beginDraw();
+    buf.textAlign(buf.LEFT, buf.TOP);
+    buf.textSize(10);
+    buf.fill(0xffffffff);
+    buf.endDraw();
+
+    allToggles = new Toggle[]{
+      pipToggle,
+      hue, sat, val,
+      selectFrame, selectExit,
+      normalMode, waggleMode
+    };
+
+    cp5.setBroadcast(true);
+
+//    java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame();
+//    frame.setMenuBar(mbar);
   }
 
   /**
@@ -973,9 +994,55 @@ class UIControl {
 
   /**
    * Draws the ControlP5 elements.
+   * @param parent the instantiating BeeTracker
+   * @param settingsTimeStamps a FloatList containing the settings time stamps
    */
-  void draw() {
+  void draw(BeeTracker parent, processing.data.FloatList settingsTimeStamps) {
     cp5.draw();
+
+    //mark settings time stamps
+    buf.beginDraw();
+    buf.clear();
+
+    float[] pos;
+
+    if(settingsTimeStamps != null) {
+      pos = seekBar.getPosition();
+      for(float stamp : settingsTimeStamps) {
+        buf.text(
+          "l",
+          stamp/seekBar.getMax()*(seekBar.getWidth()-5) + (pos[0]+2),
+          pos[1] + 5
+        );
+      }
+    }
+
+    //draw checkbox overlays
+    ControllerInterface<?> group, parentController;
+    float[] parentPos;
+    for(Toggle toggle : allToggles) {
+      parentController = group = toggle.getParent();
+
+      while(!group.getClass().getName().equals("controlP5.Group")) {
+        group = group.getParent();
+      }
+
+      if(((Group)group).isOpen() && parentController.isVisible() && toggle.getState()) {
+        pos = toggle.getPosition();
+        parentPos = parentController.getPosition();
+
+        buf.copy(
+          checkmark,
+          0, 0,
+          checkmark.width, checkmark.height,
+          (int)(pos[0]+parentPos[0]), (int)(pos[1]+parentPos[1]),
+          checkmark.width, checkmark.height
+        );
+      }
+    }
+
+    buf.endDraw();
+    parent.image(buf, 0, 0);
   }
 
   /**

@@ -877,7 +877,8 @@ class UIControl {
     }
 
     buf.endDraw();
-    parent.image(buf, 0, 0);
+    parent.imageMode(BeeTracker.CENTER);
+    parent.image(buf, parent.width*.5f, parent.height*.5f);
   }
 
   /**

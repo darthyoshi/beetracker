@@ -1,2 +1,6 @@
 # beetracker
-A tool for tracking the movement of bees to and from a hive entrance.
+A tool for tracking the movement of bees. Two detection modes are supported:
+<ol>
+<li>hive entrance ingress/egress</li>
+<li>waggle dancing</li>
+</ol>

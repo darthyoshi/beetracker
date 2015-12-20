@@ -143,7 +143,6 @@ public class BeeTracker extends PApplet {
     final processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
 
     uic = new UIControl(this, font);
-//    uic.initListeners(this);
 
     frameRate(60);
     strokeWeight(1);
@@ -223,6 +222,8 @@ public class BeeTracker extends PApplet {
           settingsErrors[1] = true;
 
           e1.printStackTrace(System.err);
+        } finally {
+          uic.updateColorLabel(UIControl.listLbl);
         }
 
         thresholds = new HashMap<>();
@@ -1214,17 +1215,18 @@ public class BeeTracker extends PApplet {
    * @param index
    */
   public void colorList(int index) {
-    listVal = index-1;
+    listVal = index - 1;
+
+    String label = listVal > -1 ?
+      String.format("%06x",colors.get(listVal)) :
+      UIControl.listLbl
+    ;
 
     if(debug) {
-      println(listVal + " " +
-        (
-          listVal > -1 ?
-          String.format("%06x",colors.get(listVal)) :
-          "new color"
-        )
-      );
+      println(listVal + " " + label);
     }
+
+    uic.updateColorLabel(label);
   }
 
   /**

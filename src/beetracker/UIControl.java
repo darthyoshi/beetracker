@@ -29,7 +29,7 @@ import controlP5.ScrollableList;
 import controlP5.Slider;
 import controlP5.Textlabel;
 import controlP5.Toggle;
-import controlP5.Tooltip;
+//import controlP5.Tooltip;
 
 import processing.core.PImage;
 
@@ -58,6 +58,9 @@ class UIControl {
   private final Textlabel modeLabel, selectLabel;
 
   private final processing.core.PGraphics buf;
+
+  private int color = 0;
+  private final float[] colorBoxPos;
 
   private final ScrollableList programMenu, footageMenu, optionMenu;
   private final Button programButton, footageButton, optionButton;
@@ -96,7 +99,7 @@ class UIControl {
     "  Select Exit Circle"
   };
 
-  private static final String listLbl = "New color";
+  static final String listLbl = "New color";
   private static final String[] eventTypes = {"Exit", "Waggle"};
   private static final String[] selectTypes = {"Frame", eventTypes[0]};
 /*  private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
@@ -127,7 +130,7 @@ class UIControl {
 
     cp5.disableShortcuts();
     cp5.setAutoDraw(false);
-/* 	TODO tooltips broken in ControlP5 2.2.5
+/*  TODO tooltips broken in ControlP5 2.2.5
     toolTip = cp5.getTooltip().setPositionOffset(0f, -15f).setAlpha(0);
     toolTip.setDelay(100)
       .getLabel()
@@ -149,26 +152,25 @@ class UIControl {
       .getCaptionLabel()
       .alignX(ControlP5Constants.CENTER);
 
+    float[] editColorPos = editColor.getPosition();
     Button removeColor = cp5.addButton("removeColor").setSize(120, 20);
-    removeColor.setPosition(
-        editColor.getPosition()[0] + 95,
-        editColor.getPosition()[1]
-      ).setCaptionLabel("Remove color")
+    removeColor.setPosition(editColorPos[0] + 95, editColorPos[1])
+      .setCaptionLabel("Remove color")
       .setGroup(setupGroup)
       .getCaptionLabel()
       .alignX(ControlP5Constants.CENTER);
 
     colorList = cp5.addScrollableList("colorList").setSize(215, 560);
-    colorList.setPosition(
-        editColor.getPosition()[0],
-        editColor.getPosition()[1] - editColor.getHeight() - 3
-      ).setCaptionLabel(listLbl)
+    colorList.setPosition(editColorPos[0], editColorPos[1] - editColor.getHeight() - 3)
+      .setCaptionLabel(listLbl)
       .setType(ControlP5Constants.DROPDOWN)
       .setGroup(setupGroup)
       .setBarHeight(20)
       .setItemHeight(20)
       .setOpen(false)
       .addItem(listLbl, -1);
+
+    colorBoxPos = new float[]{editColorPos[0] - 45, BeeTracker.viewBounds[1] - 45};
 
     openButtons = new Button[2];
     openButtons[0] = cp5.addButton("openButton").setSize(120, 50);
@@ -473,24 +475,20 @@ class UIControl {
       .setColor(disabledMenuColor);
     optionMenu.getValueLabel().toUpperCase(false);
 
-    buf = parent.createGraphics(parent.width, parent.height, BeeTracker.JAVA2D);
+    buf = parent.createGraphics(parent.width, parent.height);
     buf.beginDraw();
-    buf.textAlign(buf.LEFT, buf.TOP);
+    buf.textAlign(BeeTracker.LEFT, BeeTracker.TOP);
     buf.textSize(10);
-    buf.fill(0xffffffff);
+    buf.noStroke();
     buf.endDraw();
 
     allToggles = new Toggle[]{
-      pipToggle,
       hue, sat, val,
       selectFrame, selectExit,
       normalMode, waggleMode
     };
 
     cp5.setBroadcast(true);
-
-//    java.awt.Frame frame = ((processing.awt.PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame();
-//    frame.setMenuBar(mbar);
   }
 
   /**
@@ -512,9 +510,7 @@ class UIControl {
   void addListItem(String label) {
     colorList.addItem(label, colorList.getItems().size()-1);
 
-    CColor color = new CColor();
-    color.setBackground(0xff000000 + Integer.parseInt(label, 16));
-    colorList.getItem(label).put("color", color);
+    updateColorLabel(label);
   }
 
   /**
@@ -524,7 +520,7 @@ class UIControl {
   void removeListItem(String lbl) {
     colorList.removeItem(lbl);
 
-    colorList.setCaptionLabel(listLbl);
+    updateColorLabel(listLbl);
   }
 
   /**
@@ -535,14 +531,10 @@ class UIControl {
   void setListItem(String newLbl, int index) {
     java.util.Map<String, Object> item = colorList.getItem(index+1);
 
-    CColor color = new CColor();
-    color.setBackground(0xff000000 + Integer.parseInt(newLbl, 16));
-
-    item.put("color", color);
     item.put("name", newLbl);
     item.put("text", newLbl);
 
-    colorList.setCaptionLabel(newLbl);
+    updateColorLabel(newLbl);
   }
 
   /**
@@ -785,7 +777,6 @@ class UIControl {
    */
   void setZoomState(boolean state) {
     pipToggle.setBroadcast(false).setState(state).setBroadcast(true);
-//    zoomItem.setState(state);
 
     optionMenu.getItem(1).put("text", zoomLabels[state ? 0 : 1]);
   }
@@ -830,13 +821,14 @@ class UIControl {
   void draw(BeeTracker parent, processing.data.FloatList settingsTimeStamps) {
     cp5.draw();
 
-    //mark settings time stamps
     buf.beginDraw();
     buf.clear();
 
     float[] pos;
 
+    //mark settings time stamps
     if(settingsTimeStamps != null) {
+      buf.fill(0xffffffff);
       pos = seekBar.getPosition();
       for(float stamp : settingsTimeStamps) {
         buf.text(
@@ -847,28 +839,41 @@ class UIControl {
       }
     }
 
-    //draw checkbox overlays
-    ControllerInterface<?> group, parentController;
     float[] parentPos;
-    for(Toggle toggle : allToggles) {
-      parentController = group = toggle.getParent();
+    if(setupGroup.isOpen()) {
+      //draw checkbox overlays
+      ControllerInterface<?> parentController;
+      for(Toggle toggle : allToggles) {
+        parentController = toggle.getParent();
+        if(parentController.isVisible() && toggle.getState()) {
+          pos = toggle.getPosition();
+          parentPos = parentController.getPosition();
 
-      while(!group.getClass().getName().equals("controlP5.Group")) {
-        group = group.getParent();
+          buf.copy(
+            checkmark,
+            0, 0,
+            checkmark.width, checkmark.height,
+            (int)(pos[0]+parentPos[0]), (int)(pos[1]+parentPos[1]),
+            checkmark.width, checkmark.height
+          );
+        }
       }
 
-      if(((Group)group).isOpen() && parentController.isVisible() && toggle.getState()) {
-        pos = toggle.getPosition();
-        parentPos = parentController.getPosition();
+      //color preview box
+      buf.fill(color);
+      buf.rect(colorBoxPos[0], colorBoxPos[1], 40, 40);
+    }
+    if(playGroup.isOpen() && pipToggle.getState()) {
+      pos = pipToggle.getPosition();
+      parentPos = pipToggle.getParent().getPosition();
 
-        buf.copy(
-          checkmark,
-          0, 0,
-          checkmark.width, checkmark.height,
-          (int)(pos[0]+parentPos[0]), (int)(pos[1]+parentPos[1]),
-          checkmark.width, checkmark.height
-        );
-      }
+      buf.copy(
+        checkmark,
+        0, 0,
+        checkmark.width, checkmark.height,
+        (int)(pos[0]+parentPos[0]), (int)(pos[1]+parentPos[1]),
+        checkmark.width, checkmark.height
+      );
     }
 
     buf.endDraw();
@@ -1060,5 +1065,15 @@ class UIControl {
       (footageMenu.isOpen() && footageMenu.isInside()) ||
       (optionMenu.isOpen() && optionMenu.isInside()) ||
       (colorList.isOpen() && colorList.isInside());
+  }
+
+  /**
+   * Updates the color list caption and color preview box.
+   * @param label the new label text
+   */
+  void updateColorLabel(String label) {
+    colorList.setCaptionLabel(label);
+
+    color = 0xff000000 + (label.equals(listLbl) ? 0 : Integer.parseInt(label, 16));
   }
 }

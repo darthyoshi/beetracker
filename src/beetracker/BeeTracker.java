@@ -120,6 +120,9 @@ public class BeeTracker extends PApplet {
     size(800, 620, P2D);
   }
 
+  /**
+   * Overrides from PApplet.
+   */
   @Override
   public void setup() {
     titleImg = loadImage("img/title.png");
@@ -759,15 +762,15 @@ public class BeeTracker extends PApplet {
           }
 
           MessageDialogue.endVideoMessage(this, msg.toString(),
-            (events == null ? events : events.get()), path);
+            (events == null ? null : events.get()), path);
         }
 
         uic.draw(this, settingsTimeStamps);
       } else {
         text(
           "Loading...",
-          (viewBounds[0]+viewBounds[2])/2,
-          (viewBounds[1]+viewBounds[3])/2
+          (viewBounds[0]+viewBounds[2])*.5f,
+          (viewBounds[1]+viewBounds[3])*.5f
         );
 
         uic.draw(this, settingsTimeStamps);
@@ -795,8 +798,8 @@ public class BeeTracker extends PApplet {
       imageMode(CENTER);
       image(
         titleImg,
-        (viewBounds[0]+viewBounds[2])/2,
-        (viewBounds[1]+viewBounds[3])/2-50
+        (viewBounds[0]+viewBounds[2])*.5f,
+        (viewBounds[1]+viewBounds[3])*.5f-50
       );
 
       uic.draw(this, settingsTimeStamps);
@@ -893,6 +896,7 @@ public class BeeTracker extends PApplet {
   public void loadImgSequence(final File dir) {
     if(dir != null) {
       EventQueue.invokeLater(new Runnable() {
+        @Override
         public void run() {
           imgSequenceMode = true;
 
@@ -2027,6 +2031,7 @@ public class BeeTracker extends PApplet {
       final PApplet self = this;
 
       EventQueue.invokeLater(new Runnable() {
+        @Override
         public void run() {
           imgSequenceMode = false;
 
@@ -2323,23 +2328,22 @@ public class BeeTracker extends PApplet {
       switch(index) {
       case 0:
         openButton();
-
         break;
 
       case 1:
         openButton2();
-
         break;
 
       case 3:
         playButton();
-
         break;
 
       case 5:
         ejectButton();
-
         break;
+
+      default:
+        //do nothing
       }
     }
   }
@@ -2353,35 +2357,32 @@ public class BeeTracker extends PApplet {
       switch(index) {
       case 0:
         recordButton();
-
         break;
 
       case 1:
         pipToggle();
-
         break;
 
       case 3:
       case 4:
         uic.toggleEventRadio(index-3);
-
         break;
 
       case 6:
       case 7:
         uic.toggleSelectRadio(index-6);
-
         break;
 
       case 9:
         addSetting();
-
         break;
 
       case 10:
         removeSetting();
-
         break;
+
+      default:
+        //do nothing
       }
     }
   }

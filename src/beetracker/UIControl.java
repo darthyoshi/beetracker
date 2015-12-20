@@ -175,8 +175,8 @@ class UIControl {
     openButtons = new Button[2];
     openButtons[0] = cp5.addButton("openButton").setSize(120, 50);
     openButtons[0].setPosition(
-        (BeeTracker.viewBounds[0] + BeeTracker.viewBounds[2] - openButtons[0].getWidth())/2,
-        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3])/2 + 100
+        (BeeTracker.viewBounds[0] + BeeTracker.viewBounds[2] - openButtons[0].getWidth())*.5f,
+        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3])*.5f + 100
       ).setCaptionLabel("Load video")
       .getCaptionLabel()
       .alignX(ControlP5Constants.CENTER);
@@ -288,7 +288,7 @@ class UIControl {
     modeRadios = cp5.addRadioButton("modeRadios")
       .setPosition(
         BeeTracker.viewBounds[0] - 41,
-        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 190)/2
+        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 190)*.5f
       ).setItemsPerRow(2)
       .addItem(normalMode, 0)
       .addItem(waggleMode, 1)
@@ -353,7 +353,7 @@ class UIControl {
       .changeValue(40f)
       .setPosition(
         BeeTracker.viewBounds[2] + 9,
-        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 307)/2
+        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 307)*.5f
       ).setCaptionLabel("")
       .setGroup(thresholdGroup);
     valueLabelToInt(thresholdSlider);
@@ -1049,10 +1049,17 @@ class UIControl {
   boolean checkMenuItemState(String menuType, int index) {
     boolean result = false;
 
-    if(menuType.equals("footage")) {
+    switch (menuType) {
+    case "footage":
       result = (CColor)footageMenu.getItem(index).get("color") == menuColor;
-    } else if(menuType.equals("option")) {
+      break;
+
+    case "option":
       result = (CColor)optionMenu.getItem(index).get("color") == menuColor;
+      break;
+
+    default:
+      //do nothing
     }
 
     return result;

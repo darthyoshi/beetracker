@@ -304,7 +304,7 @@ class TrackingUtils {
       for(i = timeOuts.size() - j; i >= 0; i--) {
         timeOuts.increment(i);
 
-        waggle = waggleIter.next();
+        waggleIter.next();
 
         //remove points that have been missing for too long
         if(timeOuts.get(i) > timeOutCount) {

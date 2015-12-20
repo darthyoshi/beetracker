@@ -97,7 +97,6 @@ class TrackingUtils {
     int i, j, k, numPairs, minI, minJ;
     int[][] validPairs = null;
     boolean isOldPointInExit, isNewPointInExit;
-    Boolean waggle;
 
     float[] exitCenterXY = new float[2];
     exitCenterXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
@@ -214,9 +213,8 @@ class TrackingUtils {
           if(!waggleIter.next()) {
             rec.recognize(oldPaths.get(i), frameDims);
 
-            waggle = rec.isCandidateRecognized();
-            if(waggle) {
-              waggleIter.set(waggle);
+            if(rec.isCandidateRecognized()) {
+              waggleIter.set(true);
 
               waggles.append(time);
             }
@@ -299,12 +297,13 @@ class TrackingUtils {
         }
       }
 
-      waggleIter = waggleStates.listIterator();
+      int tmpIndex = timeOuts.size() - j;
+      waggleIter = waggleStates.listIterator(tmpIndex + 1);
       //update timeout values for old missing points
-      for(i = timeOuts.size() - j; i >= 0; i--) {
+      for(i = tmpIndex; i >= 0; i--) {
         timeOuts.increment(i);
 
-        waggleIter.next();
+        waggleIter.previous();
 
         //remove points that have been missing for too long
         if(timeOuts.get(i) > timeOutCount) {

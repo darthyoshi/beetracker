@@ -18,8 +18,6 @@
 
 package beetracker;
 
-import $N.PointR;
-
 import java.util.LinkedList;
 
 /**
@@ -29,8 +27,6 @@ import java.util.LinkedList;
  * @description Provides shape recognition for waggle dance detection.
  */
 public class ShapeRecognizer {
-  $N.NDollarRecognizer nDollar;
-//  private static final float shapeScore = 0.75f;
   private static final int shapeScore = 60;
   private boolean status = false;
   private static final int rate = 32;
@@ -42,10 +38,6 @@ public class ShapeRecognizer {
    * @param root the BeeTracker object
    */
   ShapeRecognizer(BeeTracker root) {
-    //$N
-//    nDollar = new $N.NDollarRecognizer();
-
-    //$1
     oneDollar = new de.voidplus.dollar.OneDollar(root)
       .setMinSimilarity(shapeScore)
       .enableMinSimilarity()
@@ -58,10 +50,6 @@ public class ShapeRecognizer {
    * @param root the BeeTracker object
    */
   void loadTemplates(BeeTracker root) {
-    //$N
-/*    nDollar.LoadGesture(root.createInputRaw("paths/waggle.xml"));
-    nDollar.LoadGesture(root.createInputRaw("paths/waggle-vert.xml"));
-*/
     readOneDollarTemplate(root, "waggle");
     oneDollar.bind("waggle", this, "oneDollarCallback");
 
@@ -132,10 +120,6 @@ public class ShapeRecognizer {
     float dx, dy;
     int i;
 
-    //$N
-//    java.util.Vector<PointR> candidateVec = new java.util.Vector<>();
-
-    //$1
     LinkedList<float[]> candidateList = new LinkedList<>();
     int[] candidateArray;
 
@@ -151,25 +135,11 @@ public class ShapeRecognizer {
         dy = (prevCandPoint[1]-point[1])/rate;
 
         for(i = 1; i < rate; i++) {
-          //$N
-//          candidateVec.add(new PointR((point[0]+i*dx)*frameDims[0],
-//            (point[1]+i*dy)*frameDims[1]));
-
-          //$1
           candidateList.add(new float[] {(point[0]+i*dx)*frameDims[0],
             (point[1]+i*dy)*frameDims[1]});
         }
       }
-/*
-      //$N
-      candidateVec.add(new PointR(point[0]*frameDims[0], point[1]*frameDims[1]));
-      if(candidateVec.size() > 1) {
-        if(nDollar.Recognize(candidateVec, 1).getScore() >= shapeScore) {
-          status = true;
-        }
-      }
-/*/
-      //$1
+
       candidateList.add(new float[] {point[0]*frameDims[0],
         point[1]*frameDims[1]});
       candidateArray = new int[candidateList.size()*2];
@@ -181,7 +151,7 @@ public class ShapeRecognizer {
         i++;
       }
       oneDollar.check(candidateArray);
-//*/
+
       //current path contains recognized gesture, no need to continue
       if(status) {
         break;

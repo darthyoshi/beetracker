@@ -297,10 +297,10 @@ class TrackingUtils {
         }
       }
 
-      int tmpIndex = timeOuts.size() - j;
-      waggleIter = waggleStates.listIterator(tmpIndex + 1);
+      int numOldPoints = timeOuts.size() - j;
+      waggleIter = waggleStates.listIterator(numOldPoints + 1);
       //update timeout values for old missing points
-      for(i = tmpIndex; i >= 0; i--) {
+      for(i = numOldPoints; i >= 0; i--) {
         timeOuts.increment(i);
 
         waggleIter.previous();

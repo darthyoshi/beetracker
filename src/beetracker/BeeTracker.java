@@ -1568,7 +1568,7 @@ public class BeeTracker extends PApplet {
     uic.closeMenus();
 
     if(
-      !uic.mouseOverMenus() &&
+      !uic.mouseInsideLists() &&
       movieDims != null && !isPlaying &&
       mouseX > viewBounds[0] &&
       mouseX < viewBounds[2] &&

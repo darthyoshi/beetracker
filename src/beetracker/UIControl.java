@@ -1053,11 +1053,12 @@ class UIControl {
   }
 
   /**
-   * @return true if the mouse is currently inside any open menu
+   * @return true if the mouse is currently inside any open ScrollableList
    */
-  boolean mouseOverMenus() {
+  boolean mouseInsideLists() {
     return (programMenu.isOpen() && programMenu.isInside()) ||
       (footageMenu.isOpen() && footageMenu.isInside()) ||
-      (optionMenu.isOpen() && optionMenu.isInside());
+      (optionMenu.isOpen() && optionMenu.isInside()) ||
+      (colorList.isOpen() && colorList.isInside());
   }
 }

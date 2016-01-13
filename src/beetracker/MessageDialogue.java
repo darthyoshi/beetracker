@@ -250,6 +250,8 @@ class MessageDialogue {
         dialog.setModalityType(java.awt.Dialog.ModalityType.MODELESS);
         dialog.pack();
         dialog.setVisible(true);
+        dialog.toFront();
+        dialog.requestFocus();
 
         parent.setEventDialog(dialog);
       }

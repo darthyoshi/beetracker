@@ -167,7 +167,7 @@ class VideoBrowser {
     javax.swing.JOptionPane.showMessageDialog(
       null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
       panel,
-      "Set the video time stamp",
+      "Enter the time for this video",
       javax.swing.JOptionPane.PLAIN_MESSAGE
     );
 

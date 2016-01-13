@@ -100,8 +100,6 @@ class UIControl {
   };
 
   static final String listLbl = "New color";
-  private static final String[] eventTypes = {"Exit", "Waggle"};
-  private static final String[] selectTypes = {"Frame", eventTypes[0]};
 /*  private static final String[] recordTips = {"Enable tracking", "Disable tracking"};
   private static final String[] playTips = {
     "Begin playback without tracking",
@@ -276,65 +274,75 @@ class UIControl {
     Toggle normalMode = cp5.addToggle("N")
       .setBroadcast(false)
       .toggle()
-      .setCaptionLabel("Event:");
-    normalMode.getCaptionLabel().setPaddingX(-7);
+      .setCaptionLabel("Exit");
+    normalMode.getCaptionLabel()
+      .alignX(ControlP5Constants.CENTER)
+      .toUpperCase(false);
 //    toolTip.register(normalMode, "Track Arrivals/Departures");
 
     Toggle waggleMode = cp5.addToggle("W")
       .setBroadcast(false)
-      .setLabelVisible(false);
-   //   toolTip.register(waggleMode, "Track Waggle Dances");
+      .setCaptionLabel("Waggle");
+    waggleMode.getCaptionLabel()
+      .alignX(ControlP5Constants.CENTER)
+      .toUpperCase(false);
+//    toolTip.register(waggleMode, "Track Waggle Dances");
 
     modeRadios = cp5.addRadioButton("modeRadios")
       .setPosition(
-        BeeTracker.viewBounds[0] - 41,
-        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 190)*.5f
-      ).setItemsPerRow(2)
+        (BeeTracker.viewBounds[0] - 15)*.5f,
+        (BeeTracker.viewBounds[1] + BeeTracker.viewBounds[3] - 250)*.5f
+      ).setItemsPerRow(1)
       .addItem(normalMode, 0)
       .addItem(waggleMode, 1)
       .setSize(15, 15)
-      .setSpacingColumn(0)
+      .setSpacingRow(25)
       .setNoneSelectedAllowed(false)
       .setGroup(setupGroup);
 
     modeLabel = cp5.addLabel("eventType")
       .setSize(49, 20)
       .setPosition(
-        BeeTracker.viewBounds[0] - 50,
-        modeRadios.getPosition()[1] + 40
+        BeeTracker.viewBounds[0] - 50 - 5,
+        modeRadios.getPosition()[1] - 20
       ).setGroup(setupGroup)
-      .setValueLabel(eventTypes[0]);
+      .setValueLabel("EVENTS");
 
     Toggle selectFrame = cp5.addToggle("F")
       .setBroadcast(false)
       .toggle()
-      .setCaptionLabel("Select");
-    selectFrame.getCaptionLabel().setPaddingX(-9);
+      .setCaptionLabel("Frame");
+    selectFrame.getCaptionLabel()
+      .alignX(ControlP5Constants.CENTER)
+      .toUpperCase(false);
 //    toolTip.register(selectFrame, "Inset Frame");
 
     Toggle selectExit = cp5.addToggle("Ex")
       .setBroadcast(false)
-      .setLabelVisible(false);
+      .setCaptionLabel("Exit");
+    selectExit.getCaptionLabel()
+      .alignX(ControlP5Constants.CENTER)
+      .toUpperCase(false);
 //    toolTip.register(selectExit, "Exit Circle");
 
     selectRadios = cp5.addRadioButton("selectRadios")
       .setPosition(
         modeRadios.getPosition()[0],
-        modeRadios.getPosition()[1] + 80
-      ).setItemsPerRow(2)
+        modeRadios.getPosition()[1] + 130
+      ).setItemsPerRow(1)
       .addItem(selectFrame, 0)
       .addItem(selectExit, 1)
       .setSize(15, 15)
-      .setSpacingColumn(0)
+      .setSpacingRow(25)
       .setNoneSelectedAllowed(false)
       .setGroup(setupGroup);
 
     selectLabel = cp5.addTextlabel("selectType")
-      .setValueLabel(selectTypes[0])
+      .setValueLabel("SELECT")
       .setSize(49,20)
       .setPosition(
-        modeLabel.getPosition()[0],
-        selectRadios.getPosition()[1] + 40
+        modeLabel.getPosition()[0] + 1,
+        selectRadios.getPosition()[1] - 20
       ).setGroup(setupGroup);
 
     pipToggle = cp5.addToggle("pipToggle")
@@ -342,8 +350,8 @@ class UIControl {
       .setCaptionLabel("Zoom")
       .setGroup(playGroup)
       .setPosition(
-        15,
-        selectRadios.getPosition()[1] + 80
+        selectRadios.getPosition()[0],
+        selectRadios.getPosition()[1] + 110
       );
     pipToggle.getCaptionLabel().alignX(ControlP5Constants.CENTER);
 
@@ -898,13 +906,10 @@ class UIControl {
 
     if(type) {
       selectRadios.activate(0);
-      selectLabel.setValueLabel(selectTypes[0]);
     }
 
     selectRadios.setVisible(!type);
     selectLabel.setVisible(!type);
-
-    modeLabel.setValueLabel(eventTypes[type ? 1 : 0]);
   }
 
   /**
@@ -912,8 +917,6 @@ class UIControl {
    * @param type true for exit circle selection
    */
   void updateSelectType(boolean type) {
-    selectLabel.setValueLabel(selectTypes[type ? 1 : 0]);
-
     updateSelectMenuItems(type);
   }
 

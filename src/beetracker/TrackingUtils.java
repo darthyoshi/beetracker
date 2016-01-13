@@ -204,7 +204,7 @@ class TrackingUtils {
         System.out.println(k + " point(s) paired");
       }
 
-      //TODO (needs testing) check for waggle dances
+      //check for waggle dances
       if(waggleMode) {
         waggles = waggleTimes.get(color);
 

@@ -21,6 +21,7 @@ package beetracker;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 
 import processing.core.PConstants;
 import processing.core.PGraphics;
@@ -38,9 +39,9 @@ class TrackingUtils {
   private HashMap<Integer, List<Boolean>> allWaggleStatus;
   private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
   private HashMap<Integer, IntList> allTimeOuts;
+  private HashMap<Integer, Stack<float[]>> allIntervals;
   private IntList colors;
   private static final float distThreshold = 0.25f;
-  private processing.core.PImage eventTimeline;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
   private static final int timeOutCount = 5;
@@ -314,7 +315,7 @@ class TrackingUtils {
       }
     }
 
-    updateEventTimeline(parent, time, duration);
+    updateEventTimeline(time, duration);
   }
 
   /**
@@ -327,6 +328,10 @@ class TrackingUtils {
         colors.append(color);
 
         allPaths.put(color, new ArrayList<List<float[]>>());
+
+        Stack<float[]> tmp = new Stack<>();
+        tmp.add(new float[]{Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY});
+        allIntervals.put(color, tmp);
 
         //waggle dance events
         allWaggleStatus.put(color, new java.util.LinkedList<Boolean>());
@@ -398,7 +403,7 @@ class TrackingUtils {
     waggleTimes = new HashMap<>();
     colors = new IntList();
     allTimeOuts = new HashMap<>();
-    eventTimeline = null;
+    allIntervals = new HashMap<>();
   }
 
   /**
@@ -461,18 +466,19 @@ class TrackingUtils {
   }
 
   /**
-   * Generates a visual summary of the currently recorded events.
+   * Retrieves the visual summary of the currently recorded events.
    * @param parent the invoking BeeTracker
    * @param time the current playback time in seconds
    * @param duration the video duration in seconds
+   * @return a PGraphics image of the event timeline
    */
-  private void updateEventTimeline(
+  PGraphics getEventTimeline(
     BeeTracker parent,
     float time,
     float duration
   ) {
     if(BeeTracker.debug) {
-      BeeTracker.print("updating event timeline... ");
+      System.out.append("retrieving event timeline... ");
     }
 
     int color, yOffset;
@@ -481,66 +487,61 @@ class TrackingUtils {
     PGraphics img = parent.createGraphics(400, colors.size() * 50);
     img.beginDraw();
 
-    if(eventTimeline == null) {
-      img.background(0xffeeeeee);
+    img.background(0xffeeeeee);
 
-      img.textAlign(PConstants.LEFT);
+    img.textAlign(PConstants.LEFT);
 
-      for(int i = 1; i <= colors.size(); i++) {
-        color = colors.get(i-1);
-        yOffset = 50*i;
+    //timeline backgrounds
+    for(int i = 1; i <= colors.size(); i++) {
+      color = colors.get(i-1);
+      yOffset = 50*i;
 
-        img.strokeWeight(1);
-        img.stroke(0xff000000);
-        img.fill(0xffcccccc);
-        img.rectMode(PConstants.CORNER);
-        img.rect(25, yOffset-25, 370, 20);
+      img.strokeWeight(1);
+      img.stroke(0xff000000);
+      img.fill(0xffcccccc);
+      img.rectMode(PConstants.CORNER);
+      img.rect(25, yOffset-25, 370, 20);
 
-        img.fill(0xff000000);
-        img.text("color:", 25, yOffset-32);
+      img.fill(0xff000000);
+      img.text("color:", 25, yOffset-32);
 
-        if(waggleMode) {
-          img.text("W", 7, yOffset-15);
-        } else {
-          img.text("A", 7, yOffset-15);
-          img.text("D", 7, yOffset-5);
-        }
-
-        img.fill(0xff000000 + color);
-        img.text(String.format("%06x", color), 65, yOffset-32);
+      if(waggleMode) {
+        img.text("W", 7, yOffset-15);
+      } else {
+        img.text("A", 7, yOffset-15);
+        img.text("D", 7, yOffset-5);
       }
-    } else {
-      img.copy(
-        eventTimeline,
-        0, 0,
-        eventTimeline.width, eventTimeline.height,
-        0, 0,
-        img.width, img.height
-      );
-      img.beginDraw();
+
+      img.fill(0xff000000 + color);
+      img.text(String.format("%06x", color), 65, yOffset-32);
     }
 
     img.ellipseMode(PConstants.CENTER);
-    img.rectMode(PConstants.CENTER);
-    img.stroke(0xff000000);
+    img.rectMode(PConstants.CORNERS);
+    img.noStroke();
+
+    Stack<float[]> intervals;
 
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
       yOffset = 50*i;
 
       //mark intervals with detected bees
-      if(!allPaths.get(color).isEmpty()) {
-        img.stroke(0xff000000 + color);
-        img.line(
-          xOffset,
+      intervals = allIntervals.get(color);
+      for(float[] xBounds : intervals) {
+        img.fill(0xff000000 + color);
+        img.rect(
+          xBounds[0],
           yOffset-20,
-          xOffset,
+          xBounds[1],
           yOffset-10
         );
-        img.stroke(0xff000000);
       }
 
+      img.strokeWeight(1);
+      img.stroke(0xff000000);
       img.fill(0xff000000 + color);
+      img.rectMode(PConstants.CENTER);
 
       if(waggleMode) {
         //mark waggle dance detections
@@ -578,77 +579,63 @@ class TrackingUtils {
 
       img.stroke(0xff000000);
       img.line(25, yOffset-15, 395, yOffset-15);
+
+      //mark current timestamp
+      img.line(
+        xOffset,
+        yOffset-24,
+        xOffset,
+        yOffset-6
+      );
+      img.line(0, yOffset, 400, yOffset);
     }
 
     img.endDraw();
 
-    eventTimeline = img.get();
+    if(BeeTracker.debug) {
+      System.out.append("done\n").flush();
+    }
+
+    return img;
+  }
+
+  /**
+   * Generates a visual summary of the currently recorded events.
+   * @param time the current playback time in seconds
+   * @param duration the video duration in seconds
+   */
+  private void updateEventTimeline(float time, float duration) {
+    if(BeeTracker.debug) {
+      System.out.print("updating event timeline... ");
+    }
+
+    int color;
+    Stack<float[]> intervals;
+    float[] intervalXBounds;
+
+    for(int i = 1; i <= colors.size(); i++) {
+      color = colors.get(i-1);
+
+      intervals = allIntervals.get(color);
+
+      intervalXBounds = intervals.peek();
+
+      if(allPaths.get(color).isEmpty()) {
+        if(intervalXBounds[1] != Float.NEGATIVE_INFINITY) {
+          intervals.push(new float[]{Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY});
+        }
+      } else {
+        intervalXBounds[1] = time/duration*369f + 26f;
+
+        if(intervalXBounds[0] == Float.NEGATIVE_INFINITY) {
+          intervalXBounds[0] = intervalXBounds[1];
+        }
+      }
+    }
 
     if(BeeTracker.debug) {
       System.out.println("done");
     }
-  }
-
-  /**
-   * Retrieves the visual summary of the currently recorded events.
-   * @param parent the invoking BeeTracker
-   * @param time the current playback time in seconds
-   * @param duration the video duration in seconds
-   * @return a PGraphics image of the event timeline
-   */
-  PGraphics getEventTimeline(
-    BeeTracker parent,
-    float time,
-    float duration
-  ) {
-    if(BeeTracker.debug) {
-      BeeTracker.print("retrieving event timeline... ");
-    }
-
-    PGraphics result;
-
-    if(eventTimeline != null) {
-      result = parent.createGraphics(eventTimeline.width,
-        eventTimeline.height);
-
-      result.beginDraw();
-
-      result.copy(
-        eventTimeline,
-        0, 0,
-        eventTimeline.width, eventTimeline.height,
-        0, 0,
-        result.width, result.height
-      );
-
-      result.stroke(0xff555555);
-
-      float xOffset = time/duration*369 + 26;
-      int yOffset;
-
-      //mark current timestamp
-      for(int i = 1; i <= colors.size(); i++) {
-        yOffset = 50*i;
-
-        result.line(
-          xOffset,
-          yOffset-24,
-          xOffset,
-          yOffset-6
-        );
-        result.line(0, yOffset, 400, yOffset);
-      }
-
-      result.endDraw();
-
-      if(BeeTracker.debug) {
-        System.out.println("done");
-      }
-    } else {
-      result = null;
-    }
-
-    return result;
   }
 
   /**

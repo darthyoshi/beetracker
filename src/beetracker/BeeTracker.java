@@ -749,7 +749,7 @@ public class BeeTracker extends PApplet {
 
           PGraphics events;
           if((record || replay) && path != null) {
-            events = tu.getEventTimeline(this, time, duration);
+            events = tu.getEventTimeline(this, duration, duration);
 
             char[] tmp = path.toCharArray();
             tmp[tmp.length - 3] = 'p';

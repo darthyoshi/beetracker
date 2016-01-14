@@ -301,12 +301,12 @@ class UIControl {
       .setGroup(setupGroup);
 
     modeLabel = cp5.addLabel("eventType")
-      .setSize(49, 20)
       .setPosition(
-        BeeTracker.viewBounds[0] - 50 - 5,
+        BeeTracker.viewBounds[0] - 125,
         modeRadios.getPosition()[1] - 20
       ).setGroup(setupGroup)
-      .setValueLabel("EVENTS");
+      .setValueLabel("EVENT");
+    modeLabel.getValueLabel().alignX(ControlP5.CENTER);
 
     Toggle selectFrame = cp5.addToggle("F")
       .setBroadcast(false)
@@ -339,11 +339,11 @@ class UIControl {
 
     selectLabel = cp5.addTextlabel("selectType")
       .setValueLabel("SELECT")
-      .setSize(49,20)
       .setPosition(
-        modeLabel.getPosition()[0] + 1,
+        modeLabel.getPosition()[0],
         selectRadios.getPosition()[1] - 20
       ).setGroup(setupGroup);
+    selectLabel.getValueLabel().alignX(ControlP5.CENTER).setFixedSize(true).setPaddingX(0).setWidth(50);
 
     pipToggle = cp5.addToggle("pipToggle")
       .setSize(15, 15)

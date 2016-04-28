@@ -410,9 +410,7 @@ public class BeeTracker extends PApplet {
           movieDims[1]
         );
 
-        //BlobDetection expects certain image size
-        PImage insetFrame = copyInsetFrame(curFrame,
-          bdu.getImageWidth(), bdu.getImageHeight());
+        PImage insetFrame = copyInsetFrame(curFrame);
 
         if(insetFrame != null) {
           float timeStamp;
@@ -468,6 +466,9 @@ public class BeeTracker extends PApplet {
             }
           } else {
             bdu.filterImg(insetFrame, colors, threshold);
+
+            //BlobDetection expects certain image size
+            insetFrame.resize(bdu.getImageWidth(), bdu.getImageHeight());
 
             centroids = bdu.getCentroids(insetFrame, colors);
           }
@@ -1054,47 +1055,34 @@ public class BeeTracker extends PApplet {
 
   /**
    * Copies the inset frame for image processing and blob detection.
-   * @param frame the src frame to process
-   * @param width the width of the copy
-   * @param height the height of the copy
-   * @return a copy of the frame
+   * @param src the source frame to process
+   * @return a copy of the inset frame, or null if the inset has not been defined
    */
-  private PImage copyInsetFrame(PImage src, int width, int height) {
+  private PImage copyInsetFrame(PImage src) {
     PImage result;
 
     //don't do anything until inset dimensions have stabilized
     if(isDrag && !selectExit) {
       result = null;
     } else {
-      result = createImage(width, height, ARGB);
+      int insetWidth = (int)(src.width*(insetBox[2] - insetBox[0]));
+      int insetHeight = (int)(src.height*(insetBox[3] - insetBox[1]));
 
+      result = createImage(insetWidth, insetHeight, ARGB);
       result.copy(
         src,
         (int)(src.width*insetBox[0]),
         (int)(src.height*insetBox[1]),
-        (int)(src.width*(insetBox[2] - insetBox[0])),
-        (int)(src.height*(insetBox[3] - insetBox[1])),
+        insetWidth,
+        insetHeight,
         0,
         0,
-        width,
-        height
+        insetWidth,
+        insetHeight
       );
     }
 
     return result;
-  }
-
-  /**
-   * Copies the inset frame for image processing and blob detection.
-   * @param src the PImage frame to process
-   * @return a copy of the frame
-   */
-  private PImage copyInsetFrame(PImage src) {
-    return copyInsetFrame(
-      src,
-      (int)(src.width*(insetBox[2] - insetBox[0])),
-      (int)(src.height*(insetBox[3] - insetBox[1]))
-    );
   }
 
   /**

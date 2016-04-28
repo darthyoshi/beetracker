@@ -43,7 +43,6 @@ class BlobDetectionUtils {
   private static final float filterRadius = 6f;
   private final BlobDetection bd;
   private final PShader thresholdShader, morphoShader, alphaShader;
-  private final PGraphics buf;
 
   /**
    * Class constructor.
@@ -65,11 +64,6 @@ class BlobDetectionUtils {
     morphoShader = parent.loadShader("shaders/morphoshader.glsl");
     morphoShader.set("filterRadius", filterRadius);
     alphaShader = parent.loadShader("shaders/alphashader.glsl");
-
-    buf = parent.createGraphics(width, height, BeeTracker.P2D);
-    buf.beginDraw();
-    buf.colorMode(BeeTracker.HSB, 1);
-    buf.endDraw();
   }
 
   /**
@@ -89,6 +83,11 @@ class BlobDetectionUtils {
       ((float)threshold[2])/255f
     );
 
+    PGraphics buf = parent.createGraphics(img.width, img.height, BeeTracker.P2D);
+    buf.beginDraw();
+    buf.colorMode(BeeTracker.HSB, 1);
+    buf.endDraw();
+
     buf.copy(img, 0, 0, img.width, img.height, 0, 0, buf.width, buf.height);
 
     alphaShader.set("init", true);
@@ -103,12 +102,12 @@ class BlobDetectionUtils {
     buf.filter(alphaShader);
 
     //fill blob holes
-    morphImage(true);
-    morphImage(false);
+    morphImage(buf, true);
+    morphImage(buf, false);
 
     //remove noise
-    morphImage(false);
-    morphImage(true);
+    morphImage(buf, false);
+    morphImage(buf, true);
 
     img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
   }
@@ -123,7 +122,7 @@ class BlobDetectionUtils {
    * @param exitXY the xy coordinates of the exit center, in pixels
    */
   void drawBlobs(
-    processing.core.PGraphics buf,
+    PGraphics buf,
     int[] bufOffset,
     int[] frameDims,
     int[] frameOffset,
@@ -258,9 +257,10 @@ class BlobDetectionUtils {
   /**
    * Performs a morphological operation. Any non-transparent blobs in the
    *   the buffer will either grow or shrink.
+   * @param buf the operand image
    * @param dilateMode true for dilation, false for erosion
    */
-  private void morphImage(boolean dilateMode) {
+  private void morphImage(PGraphics buf, boolean dilateMode) {
     morphoShader.set("dilateMode", dilateMode);
     buf.filter(morphoShader);
   }

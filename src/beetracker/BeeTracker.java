@@ -789,7 +789,7 @@ public class BeeTracker extends PApplet {
           movieOffset[0] = (viewBounds[2]-viewBounds[0]-movieDims[0])/2 + viewBounds[0];
           movieOffset[1] = (viewBounds[3]-viewBounds[1]-movieDims[1])/2 + viewBounds[1];
 
-          updateFrameParams();
+          updateSettings(0f);
 
           updateExitCenter();
         }
@@ -2063,8 +2063,6 @@ public class BeeTracker extends PApplet {
    */
   private void postLoad() {
     isPlaying = false;
-
-    updateSettings(0f);
 
     System.out.append("reading frame annotations... ").flush();
 

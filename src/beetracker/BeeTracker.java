@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 13 Nov 15
+ * @date 1 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -789,8 +789,7 @@ public class BeeTracker extends PApplet {
           movieOffset[0] = (viewBounds[2]-viewBounds[0]-movieDims[0])/2 + viewBounds[0];
           movieOffset[1] = (viewBounds[3]-viewBounds[1]-movieDims[1])/2 + viewBounds[1];
 
-          frameOffset = unzoomedFrameOffset();
-          frameDims = unzoomedFrameDims();
+          updateFrameParams();
 
           updateExitCenter();
         }
@@ -1245,6 +1244,15 @@ public class BeeTracker extends PApplet {
 
     uic.setZoomState(pip);
 
+    updateFrameParams();
+
+    updateExitCenter();
+  }
+
+  /**
+   * Updates the frame offset and dimensions.
+   */
+  private void updateFrameParams() {
     if(pip) {
       frameDims = scaledDims(
         (float)movieDims[0] * (insetBox[2]-insetBox[0]),
@@ -1256,8 +1264,6 @@ public class BeeTracker extends PApplet {
       frameOffset = unzoomedFrameOffset();
       frameDims = unzoomedFrameDims();
     }
-
-    updateExitCenter();
   }
 
   /**
@@ -1760,9 +1766,7 @@ public class BeeTracker extends PApplet {
             insetBox[3] = tmp;
           }
 
-          frameOffset = unzoomedFrameOffset();
-
-          frameDims = unzoomedFrameDims();
+          updateFrameParams();
         }
       }
 
@@ -2060,6 +2064,8 @@ public class BeeTracker extends PApplet {
   private void postLoad() {
     isPlaying = false;
 
+    updateSettings(0f);
+
     System.out.append("reading frame annotations... ").flush();
 
     replay = readFramePointsFromJSON();
@@ -2173,6 +2179,7 @@ public class BeeTracker extends PApplet {
     int i = 0, start = 0, stop = settingsTimeStamps.size() - 1;
     float time;
 
+    //binary search to find current timestamp setting
     while(start <= stop) {
       i = (stop+start)/2;
       time = settingsTimeStamps.get(i);
@@ -2201,6 +2208,10 @@ public class BeeTracker extends PApplet {
 
     exitRadial = radials.get(settingsStamp);
     insetBox = insets.get(settingsStamp);
+
+    updateFrameParams();
+
+    updateExitCenter();
   }
 
   /**

@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 1 Jun 16
+ * @date 2 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -118,6 +118,8 @@ public class BeeTracker extends PApplet {
   @Override
   public void settings() {
     size(800, 620, P2D);
+
+    ((processing.opengl.PJOGL)surface).setIcon("img/icon.png");
   }
 
   /**
@@ -156,7 +158,6 @@ public class BeeTracker extends PApplet {
 
     textFont(font);
 
-    surface.setIcon(loadImage("img/icon.png"));
     surface.setTitle("BeeTracker");
 
     ((com.jogamp.newt.opengl.GLWindow)surface.getNative()).addWindowListener(

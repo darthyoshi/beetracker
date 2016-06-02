@@ -31,7 +31,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 13 Nov 15
+ * @date 2 Jun 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -484,36 +484,48 @@ class TrackingUtils {
     int color, yOffset;
     float xOffset = time/duration*369f + 26f;
 
-    PGraphics img = parent.createGraphics(400, colors.size() * 50);
+    PGraphics img = parent.createGraphics(400, colors.size() * 75);
     img.beginDraw();
 
     img.background(0xffeeeeee);
 
-    img.textAlign(PConstants.LEFT);
-
     //timeline backgrounds
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
-      yOffset = 50*i;
+      yOffset = 75*i;
+
+      img.fill(0xff000000);
+
+      int halfDuration = (int)(duration*.5f);
+      img.textAlign(PConstants.CENTER);
+      img.text(String.format("%02d:%02d", halfDuration/60, halfDuration%60), 210, yOffset-10);
+      img.line(210, yOffset-30, 210, yOffset-25);
+
+      img.textAlign(PConstants.RIGHT);
+      img.text(String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60), 395, yOffset-10);
+      img.line(25, yOffset-30, 25, yOffset-25);
+
+      img.textAlign(PConstants.LEFT);
+      img.text("00:00", 25, yOffset-10);
+      img.line(395, yOffset-30, 395, yOffset-25);
+
+      img.text("color:", 25, yOffset-57);
 
       img.strokeWeight(1);
       img.stroke(0xff000000);
       img.fill(0xffcccccc);
       img.rectMode(PConstants.CORNER);
-      img.rect(25, yOffset-25, 370, 20);
-
-      img.fill(0xff000000);
-      img.text("color:", 25, yOffset-32);
+      img.rect(25, yOffset-50, 370, 20);
 
       if(waggleMode) {
-        img.text("W", 7, yOffset-15);
+        img.text("W", 7, yOffset-40);
       } else {
-        img.text("A", 7, yOffset-15);
-        img.text("D", 7, yOffset-5);
+        img.text("A", 7, yOffset-40);
+        img.text("D", 7, yOffset-30);
       }
 
       img.fill(0xff000000 + color);
-      img.text(String.format("%06x", color), 65, yOffset-32);
+      img.text(String.format("%06x", color), 65, yOffset-57);
     }
 
     img.ellipseMode(PConstants.CENTER);
@@ -524,7 +536,7 @@ class TrackingUtils {
 
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
-      yOffset = 50*i;
+      yOffset = 75*i;
 
       //mark intervals with detected bees
       intervals = allIntervals.get(color);
@@ -532,9 +544,9 @@ class TrackingUtils {
         img.fill(0xff000000 + color);
         img.rect(
           xBounds[0],
-          yOffset-20,
+          yOffset-45,
           xBounds[1],
-          yOffset-10
+          yOffset-35
         );
       }
 
@@ -548,11 +560,11 @@ class TrackingUtils {
         for(float stamp : waggleTimes.get(color)) {
           img.triangle(
             stamp/duration*369 + 26,
-            yOffset-17.5f,
+            yOffset-42.5f,
             stamp/duration*369 + 23.5f,
-            yOffset-12.5f,
+            yOffset-37.5f,
             stamp/duration*369 + 28.5f,
-            yOffset-12.5f
+            yOffset-37.5f
           );
         }
       } else {
@@ -560,7 +572,7 @@ class TrackingUtils {
         for(float stamp : arrivalTimes.get(color)) {
           img.rect(
             stamp/duration*369 + 26,
-            yOffset-20,
+            yOffset-45,
             5,
             5
           );
@@ -570,7 +582,7 @@ class TrackingUtils {
         for(float stamp : departureTimes.get(color)) {
           img.ellipse(
             stamp/duration*369 + 26,
-            yOffset-10,
+            yOffset-35,
             5,
             5
           );
@@ -578,14 +590,14 @@ class TrackingUtils {
       }
 
       img.stroke(0xff000000);
-      img.line(25, yOffset-15, 395, yOffset-15);
+      img.line(25, yOffset-40, 395, yOffset-40);
 
       //mark current timestamp
       img.line(
         xOffset,
-        yOffset-24,
+        yOffset-49,
         xOffset,
-        yOffset-6
+        yOffset-31
       );
       img.line(0, yOffset, 400, yOffset);
     }
@@ -600,7 +612,7 @@ class TrackingUtils {
   }
 
   /**
-   * Generates a visual summary of the currently recorded events.
+   * Performs update operations for the visual summary of events.
    * @param time the current playback time in seconds
    * @param duration the video duration in seconds
    */

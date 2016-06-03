@@ -2193,7 +2193,7 @@ public class BeeTracker extends PApplet {
     }
 
     //if no match found, get next smallest setting time
-    if(start > stop && settingsTimeStamps.get(i) - seek > 0.000001f) {
+    if(i > 0 && start > stop && settingsTimeStamps.get(i) - seek > 0.000001f) {
       i--;
     }
 

@@ -23,11 +23,11 @@ import java.util.LinkedList;
 /**
  * @class ShapeRecognizer
  * @author Kay Choi
- * @date 13 Nov 15
+ * @date 2 Jun 16
  * @description Provides shape recognition for waggle dance detection.
  */
 public class ShapeRecognizer {
-  private static final int shapeScore = 60;
+  private static final int shapeScore = 70;
   private boolean status = false;
   private static final int rate = 32;
 
@@ -58,10 +58,10 @@ public class ShapeRecognizer {
 
     readOneDollarTemplate(root, "waggle2");
     oneDollar.bind("waggle2", this, "oneDollarCallback");
-/*/
+
 //    oneDollar.setMinSimilarity(30);
-    readOneDollarTemplate(root, "circle");
-    oneDollar.on("circle", this, "oneDollarCallback");//*/
+//    readOneDollarTemplate(root, "circle");
+//    oneDollar.on("circle", this, "oneDollarCallback");
   }
 
   /**

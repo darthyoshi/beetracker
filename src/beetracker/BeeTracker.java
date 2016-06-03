@@ -110,6 +110,8 @@ public class BeeTracker extends PApplet {
   private int settingIndex = 0;
   private int[] threshold;
 
+  private PGraphics viewFrame; 
+
   private JDialog eventDialog = null;
 
   /**
@@ -183,6 +185,11 @@ public class BeeTracker extends PApplet {
     frameOffset = new int[2];
 
     exitCenter = new float[2];
+
+    viewFrame = createGraphics(
+      viewBounds[2] - viewBounds[0] + 1,
+      viewBounds[3] - viewBounds[1] + 1
+    );
   }
 
   /**
@@ -394,11 +401,8 @@ public class BeeTracker extends PApplet {
       float time = imgSequenceMode ? imgIndex : movie.time();
 
       if(movieDims != null) {
-        PGraphics viewFrame = createGraphics(
-          viewBounds[2] - viewBounds[0] + 1,
-          viewBounds[3] - viewBounds[1] + 1
-        );
         viewFrame.beginDraw();
+        viewFrame.clear();
         viewFrame.copy(
           curFrame,
           0,

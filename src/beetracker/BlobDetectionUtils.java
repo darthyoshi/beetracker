@@ -42,6 +42,7 @@ class BlobDetectionUtils {
   private static final float filterRadius = 6f;
   private final BlobDetection bd;
   private final PShader thresholdShader, morphoShader, alphaShader;
+  private final PGraphics buf;
 
   /**
    * Class constructor.
@@ -63,6 +64,8 @@ class BlobDetectionUtils {
     morphoShader = parent.loadShader("shaders/morphoshader.glsl");
     morphoShader.set("filterRadius", filterRadius);
     alphaShader = parent.loadShader("shaders/alphashader.glsl");
+
+    buf = parent.createGraphics(width, height, BeeTracker.P2D);
   }
 
   /**
@@ -82,8 +85,8 @@ class BlobDetectionUtils {
       ((float)threshold[2])/255f
     );
 
-    PGraphics buf = parent.createGraphics(img.width, img.height, BeeTracker.P2D);
     buf.beginDraw();
+    buf.clear();
     buf.colorMode(BeeTracker.HSB, 1);
     buf.endDraw();
 

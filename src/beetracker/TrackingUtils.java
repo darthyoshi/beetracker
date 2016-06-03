@@ -511,18 +511,18 @@ class TrackingUtils {
 
       img.text("color:", 25, yOffset-57);
 
-      img.strokeWeight(1);
-      img.stroke(0xff000000);
-      img.fill(0xffcccccc);
-      img.rectMode(PConstants.CORNER);
-      img.rect(25, yOffset-50, 370, 20);
-
       if(waggleMode) {
         img.text("W", 7, yOffset-40);
       } else {
         img.text("A", 7, yOffset-40);
         img.text("D", 7, yOffset-30);
       }
+
+      img.strokeWeight(1);
+      img.stroke(0xff000000);
+      img.fill(0xffcccccc);
+      img.rectMode(PConstants.CORNER);
+      img.rect(25, yOffset-50, 370, 20);
 
       img.fill(0xff000000 + color);
       img.text(String.format("%06x", color), 65, yOffset-57);

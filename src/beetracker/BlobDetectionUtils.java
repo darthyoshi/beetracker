@@ -26,7 +26,6 @@ import blobDetection.Blob;
 import blobDetection.BlobDetection;
 import blobDetection.EdgeVertex;
 
-import processing.core.PConstants;
 import processing.core.PImage;
 import processing.core.PGraphics;
 import processing.data.IntList;
@@ -153,7 +152,7 @@ class BlobDetectionUtils {
         }
 
         //bounding boxes
-        buf.rectMode(PConstants.CORNER);
+        buf.rectMode(BeeTracker.CORNER);
         buf.rect(
           b.xMin*frameDims[0] + frameOffset[0] - bufOffset[0],
           b.yMin*frameDims[1] + frameOffset[1] - bufOffset[1],

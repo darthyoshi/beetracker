@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
-import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.data.FloatList;
 import processing.data.IntList;
@@ -497,15 +496,15 @@ class TrackingUtils {
       img.fill(0xff000000);
 
       int halfDuration = (int)(duration*.5f);
-      img.textAlign(PConstants.CENTER);
+      img.textAlign(BeeTracker.CENTER);
       img.text(String.format("%02d:%02d", halfDuration/60, halfDuration%60), 210, yOffset-10);
       img.line(210, yOffset-30, 210, yOffset-25);
 
-      img.textAlign(PConstants.RIGHT);
+      img.textAlign(BeeTracker.RIGHT);
       img.text(String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60), 395, yOffset-10);
       img.line(25, yOffset-30, 25, yOffset-25);
 
-      img.textAlign(PConstants.LEFT);
+      img.textAlign(BeeTracker.LEFT);
       img.text("00:00", 25, yOffset-10);
       img.line(395, yOffset-30, 395, yOffset-25);
 
@@ -521,15 +520,15 @@ class TrackingUtils {
       img.strokeWeight(1);
       img.stroke(0xff000000);
       img.fill(0xffcccccc);
-      img.rectMode(PConstants.CORNER);
+      img.rectMode(BeeTracker.CORNER);
       img.rect(25, yOffset-50, 370, 20);
 
       img.fill(0xff000000 + color);
       img.text(String.format("%06x", color), 65, yOffset-57);
     }
 
-    img.ellipseMode(PConstants.CENTER);
-    img.rectMode(PConstants.CORNERS);
+    img.ellipseMode(BeeTracker.CENTER);
+    img.rectMode(BeeTracker.CORNERS);
     img.noStroke();
 
     Stack<float[]> intervals;
@@ -553,7 +552,7 @@ class TrackingUtils {
       img.strokeWeight(1);
       img.stroke(0xff000000);
       img.fill(0xff000000 + color);
-      img.rectMode(PConstants.CENTER);
+      img.rectMode(BeeTracker.CENTER);
 
       if(waggleMode) {
         //mark waggle dance detections

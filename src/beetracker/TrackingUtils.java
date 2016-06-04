@@ -488,6 +488,19 @@ class TrackingUtils {
 
     img.background(0xffeeeeee);
 
+    String begin, middle, end;
+    int halfDuration = (int)(duration*.5f);
+
+    if(parent.imgSequenceMode) {
+      begin = "0";
+      middle = Integer.toString(halfDuration);
+      end = Integer.toString((int)duration);
+    } else {
+      begin = "00:00";
+      middle = String.format("%02d:%02d", halfDuration/60, halfDuration%60);
+      end = String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60);
+    }
+
     //timeline backgrounds
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
@@ -495,17 +508,16 @@ class TrackingUtils {
 
       img.fill(0xff000000);
 
-      int halfDuration = (int)(duration*.5f);
-      img.textAlign(BeeTracker.CENTER);
-      img.text(String.format("%02d:%02d", halfDuration/60, halfDuration%60), 210, yOffset-10);
-      img.line(210, yOffset-30, 210, yOffset-25);
-
       img.textAlign(BeeTracker.RIGHT);
-      img.text(String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60), 395, yOffset-10);
+      img.text(end, 395, yOffset-10);
       img.line(25, yOffset-30, 25, yOffset-25);
 
+      img.textAlign(BeeTracker.CENTER);
+      img.text(middle, 210, yOffset-10);
+      img.line(210, yOffset-30, 210, yOffset-25);
+
       img.textAlign(BeeTracker.LEFT);
-      img.text("00:00", 25, yOffset-10);
+      img.text(begin, 25, yOffset-10);
       img.line(395, yOffset-30, 395, yOffset-25);
 
       img.text("color:", 25, yOffset-57);

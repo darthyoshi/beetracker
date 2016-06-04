@@ -67,7 +67,7 @@ public class BeeTracker extends PApplet {
   private boolean pip = false, selectExit = false;
   private int listVal = -1;
 
-  private boolean imgSequenceMode = false;
+  boolean imgSequenceMode = false;
   private boolean waggleMode = false;
 
   private File currentFile = null;

@@ -54,7 +54,7 @@ class UIControl {
   private final RadioButton thresholdRadios, selectRadios, modeRadios;
  // private final Tooltip toolTip;
   private final Button statusLabel;
-  private final Button[] openButtons;
+//  private final Button[] openButtons;
   private final Textlabel modeLabel, selectLabel;
 
   private final processing.core.PGraphics buf;
@@ -169,7 +169,7 @@ class UIControl {
       .addItem(listLbl, -1);
 
     colorBoxPos = new float[]{editColorPos[0] - 45, BeeTracker.viewBounds[1] - 45};
-
+/*
     openButtons = new Button[2];
     openButtons[0] = cp5.addButton("openButton").setSize(120, 50);
     openButtons[0].setPosition(
@@ -186,7 +186,7 @@ class UIControl {
       ).setCaptionLabel("Load images")
       .getCaptionLabel()
       .alignX(ControlP5Constants.CENTER);
-
+*/
     recordIcons = new PImage[2];
     recordIcons[0] = parent.loadImage("img/recordbutton1.png");
     recordIcons[1] = parent.requestImage("img/recordbutton2.png");
@@ -588,10 +588,10 @@ class UIControl {
    * @param visible the visibility state
    */
   void setOpenButtonVisibility(boolean visible) {
-    for(Button button : openButtons) {
+/*    for(Button button : openButtons) {
       button.setVisible(visible);
     }
-  }
+*/  }
 
   /**
    * Toggles the visibility of the "threshold" slider.

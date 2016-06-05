@@ -502,8 +502,12 @@ public class BeeTracker extends PApplet {
               if(debug) {
                 println(
                   "---------BEGIN FRAME (" +
-                  String.format("%.2f", time) +
-                  "s)---------\npip: " + pip
+                  (
+                    imgSequenceMode ?
+                    Integer.toString((int)time) :
+                    String.format("%.2fs", time)
+                  ) +
+                  ")---------\npip: " + pip
                 );
               }
 
@@ -1443,7 +1447,7 @@ public class BeeTracker extends PApplet {
     uic.setSeekTime(0f, imgSequenceMode);
     thresholdRadios(0);
 
-    System.out.append("video closed\n------\n").flush();
+    System.out.append("footage closed\n------\n").flush();
 
     tu.init();
   }

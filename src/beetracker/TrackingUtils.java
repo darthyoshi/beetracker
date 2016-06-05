@@ -30,7 +30,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 2 Jun 16
+ * @date 3 Jun 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -43,7 +43,7 @@ class TrackingUtils {
   private static final float distThreshold = 0.25f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
-  private static final int timeOutCount = 5;
+  private static final int[] timeOutCount = {5, 15};
 
   /**
    * Class constructor.
@@ -97,6 +97,7 @@ class TrackingUtils {
     int i, j, k, numPairs, minI, minJ;
     int[][] validPairs = null;
     boolean isOldPointInExit, isNewPointInExit;
+    int timeOutIndex = parent.imgSequenceMode ? 1 : 0;
 
     float[] exitCenterXY = new float[2];
     exitCenterXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
@@ -306,7 +307,7 @@ class TrackingUtils {
         waggleIter.previous();
 
         //remove points that have been missing for too long
-        if(timeOuts.get(i) > timeOutCount) {
+        if(timeOuts.get(i) > timeOutCount[timeOutIndex]) {
           timeOuts.remove(i);
           oldPaths.remove(i);
           waggleIter.remove();

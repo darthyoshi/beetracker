@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 2 Jun 16
+ * @date 3 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -432,6 +432,9 @@ public class BeeTracker extends PApplet {
               exitRadial = radials.get(timeStamp);
               insetBox = insets.get(timeStamp);
               settingIndex++;
+
+              updateFrameParams();
+              updateExitCenter();
             }
           }
 
@@ -1250,7 +1253,6 @@ public class BeeTracker extends PApplet {
     uic.setZoomState(pip);
 
     updateFrameParams();
-
     updateExitCenter();
   }
 
@@ -2213,7 +2215,6 @@ public class BeeTracker extends PApplet {
     insetBox = insets.get(settingsStamp);
 
     updateFrameParams();
-
     updateExitCenter();
   }
 

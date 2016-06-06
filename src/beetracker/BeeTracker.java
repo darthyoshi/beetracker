@@ -814,7 +814,7 @@ public class BeeTracker extends PApplet {
       image(
         titleImg,
         (viewBounds[0]+viewBounds[2])*.5f,
-        (viewBounds[1]+viewBounds[3])*.5f-50
+        (viewBounds[1]+viewBounds[3])*.5f
       );
 
       uic.draw(this, settingsTimeStamps);
@@ -945,46 +945,56 @@ public class BeeTracker extends PApplet {
             }
           }
 
-          //begin critical section
-          try {
-            sem.acquire();
-          } catch (InterruptedException e) {
-            e.printStackTrace(System.err);
+          if(list.size() > 0) {
+            //begin critical section
+            try {
+              sem.acquire();
+            } catch (InterruptedException e) {
+              e.printStackTrace(System.err);
 
-            Thread.currentThread().interrupt();
-          }
-
-          imgNames = new String[list.size()];
-          list.toArray(imgNames);
-          java.util.Arrays.sort(imgNames);
-
-          imgSequence = new PImage[list.size()];
-          for(imgIndex = 0; imgIndex < imgSequence.length; imgIndex++) {
-            imgSequence[imgIndex] = null;
-          }
-
-          if(debug) {
-            for(String fileName : imgNames) {
-              println(fileName);
+              Thread.currentThread().interrupt();
             }
-          }
 
-          imgIndex = 0;
-          updateImgSequence(imgIndex);
+            imgNames = new String[list.size()];
+            list.toArray(imgNames);
+            java.util.Arrays.sort(imgNames);
 
-          //end critical section
-          sem.release();
-
-          System.out.append("images loaded\n").flush();
-
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              VideoBrowser.setFrameRate(self);
+            imgSequence = new PImage[list.size()];
+            for(imgIndex = 0; imgIndex < imgSequence.length; imgIndex++) {
+              imgSequence[imgIndex] = null;
             }
-          });
 
-          postLoad();
+            if(debug) {
+              for(String fileName : imgNames) {
+                println(fileName);
+              }
+            }
+
+            imgIndex = 0;
+            updateImgSequence(imgIndex);
+
+            //end critical section
+            sem.release();
+
+            System.out.append("images loaded\n").flush();
+
+            EventQueue.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                VideoBrowser.setFrameRate(self);
+              }
+            });
+
+            postLoad();
+          } else {
+            uic.setSetupGroupVisibility(false);
+            uic.setOpenButtonVisibility(true);
+            uic.setPlayVisibility(false);
+            uic.setThresholdVisibility(false);
+
+            System.out.append("directory contains no images, cancelling\n").flush();
+            MessageDialogue.showEmptyDirectoryMessage();
+          }
         }
       });
     } else {

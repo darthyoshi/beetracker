@@ -257,4 +257,21 @@ class MessageDialogue {
       }
     });
   }
+
+  /**
+   * Displays a message that the selected directory contains no images.
+   */
+  static void showEmptyDirectoryMessage() {
+    EventQueue.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        JOptionPane.showMessageDialog(
+          null,
+          "Selected directory contains no images!",
+          "Empty directory!",
+          JOptionPane.ERROR_MESSAGE
+        );
+      }
+    });
+  }
 }

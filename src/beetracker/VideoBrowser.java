@@ -144,7 +144,7 @@ class VideoBrowser {
    * Prompts the user to set a time stamp.
    * @param parent the invoking BeeTracker
    */
-  private static void setDateTime(final BeeTracker parent) {
+  static void setDateTime(final BeeTracker parent) {
     Calendar calendar = Calendar.getInstance();
     Date now = calendar.getTime();
     calendar.add(Calendar.YEAR, -100);
@@ -174,6 +174,37 @@ class VideoBrowser {
     calendar.setTime((Date)dateTimeSpinner.getValue());
 
     parent.setTime(calendar);
+  }
+
+  /**
+   * Prompts the user to set the image sequence frame rate.
+   * @param parent the invoking BeeTracker
+   */
+  static void setFrameRate(final BeeTracker parent) {
+    javax.swing.SpinnerNumberModel numModel = new javax.swing.SpinnerNumberModel();
+    numModel.setMinimum(0);
+    numModel.setStepSize(1);
+    numModel.setValue(10);
+    javax.swing.JSpinner getFPS = new javax.swing.JSpinner(numModel);
+
+    java.awt.Dimension dim = getFPS.getPreferredSize();
+    dim.width = 50;
+    getFPS.setPreferredSize(dim);
+
+    javax.swing.JPanel panel = new javax.swing.JPanel();
+    panel.add(getFPS);
+    panel.add(new javax.swing.JLabel("fps"));
+
+    javax.swing.JOptionPane.showMessageDialog(
+      null/*((PSurfaceAWT.SmoothCanvas)parent.getSurface().getNative()).getFrame()*/,
+      panel,
+      "Enter the frame rate for this image sequence",
+      javax.swing.JOptionPane.PLAIN_MESSAGE
+    );
+
+    parent.setFPS((Integer)getFPS.getValue());
+
+    setDateTime(parent);
   }
 
   /**
@@ -228,16 +259,14 @@ class VideoBrowser {
           }
         }
 
-        parent.loadImgSequence(selectedDir);
-
         if(selectedDir != null) {
           System.out.append("selected directory: \"")
             .append(selectedDir.getAbsolutePath())
-            .append("\"\nsetting time stamp\n")
+            .append('\"')
             .flush();
-
-          setDateTime(parent);
         }
+
+        parent.loadImgSequence(selectedDir);
       }
     });
   }

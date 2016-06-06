@@ -81,6 +81,7 @@ public class BeeTracker extends PApplet {
   private PImage stillFrame = null;
   private int imgIndex = -1;
   private float duration;
+  private int fps = 0;
 
   private UIControl uic;
   private BlobDetectionUtils bdu;
@@ -398,7 +399,7 @@ public class BeeTracker extends PApplet {
     PImage curFrame = updateFrame();
 
     if(curFrame != null) {
-      float time = imgSequenceMode ? imgIndex : movie.time();
+      float time = imgSequenceMode ? ((float)imgIndex)/fps : movie.time();
 
       if(movieDims != null) {
         viewFrame.beginDraw();
@@ -789,9 +790,11 @@ public class BeeTracker extends PApplet {
         uic.draw(this, settingsTimeStamps);
 
         if(curFrame.height > 0) {
-          duration = imgSequenceMode ? imgSequence.length-1 : movie.duration();
+          if(!imgSequenceMode) {
+            duration = movie.duration();
 
-          uic.setSeekRange(duration, imgSequenceMode);
+            uic.setSeekRange(duration);
+          }
 
           movieDims = scaledDims(
             curFrame.width,
@@ -837,7 +840,7 @@ public class BeeTracker extends PApplet {
             imgIndex++;
           }
 
-          uic.setSeekTime(imgIndex, imgSequenceMode);
+          uic.setSeekTime(((float)imgIndex)/fps);
         }
 
         while(stillFrame == null && imgIndex < imgSequence.length) {
@@ -866,7 +869,7 @@ public class BeeTracker extends PApplet {
           movie.jump(uic.getSeekTime());
           movie.pause();
         } else {
-          uic.setSeekTime(movie.time(), imgSequenceMode);
+          uic.setSeekTime(movie.time());
         }
       }
 
@@ -907,6 +910,8 @@ public class BeeTracker extends PApplet {
    */
   public void loadImgSequence(final File dir) {
     if(dir != null) {
+      final BeeTracker self = this;
+
       EventQueue.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -971,6 +976,13 @@ public class BeeTracker extends PApplet {
           sem.release();
 
           System.out.append("images loaded\n").flush();
+
+          EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              VideoBrowser.setFrameRate(self);
+            }
+          });
 
           postLoad();
         }
@@ -1321,12 +1333,12 @@ public class BeeTracker extends PApplet {
       }
 
       movie.jump(value);
-      uic.setSeekTime(value, imgSequenceMode);
     } else {
-      imgIndex = (int)value;
-      uic.setSeekTime(imgIndex, imgSequenceMode);
+      imgIndex = (int)(10f*value);
       stillFrame = null;
     }
+
+    uic.setSeekTime(value);
 
     if(debug) {
       println("seek to: " + value + 's');
@@ -1444,7 +1456,7 @@ public class BeeTracker extends PApplet {
     uic.setPlayVisibility(false);
     uic.setThresholdVisibility(false);
     uic.setThresholdType(0);
-    uic.setSeekTime(0f, imgSequenceMode);
+    uic.setSeekTime(0f);
     thresholdRadios(0);
 
     System.out.append("footage closed\n------\n").flush();
@@ -2400,5 +2412,16 @@ public class BeeTracker extends PApplet {
    */
   public static void main(String[] args) {
     PApplet.main(new String[] { beetracker.BeeTracker.class.getName() });
+  }
+
+  /**
+   * Specifies the expected frame rate for image sequence mode.
+   * @param fps the frame rate
+   */
+  void setFPS(int fps) {
+    duration = ((float)imgSequence.length-1)/fps;
+    this.fps = fps;
+
+    uic.setSeekRange(duration);
   }
 }

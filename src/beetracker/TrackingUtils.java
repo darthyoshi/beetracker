@@ -489,18 +489,11 @@ class TrackingUtils {
 
     img.background(0xffeeeeee);
 
-    String begin, middle, end;
     int halfDuration = (int)(duration*.5f);
 
-    if(parent.imgSequenceMode) {
-      begin = "0";
-      middle = Integer.toString(halfDuration);
-      end = Integer.toString((int)duration);
-    } else {
-      begin = "00:00";
-      middle = String.format("%02d:%02d", halfDuration/60, halfDuration%60);
-      end = String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60);
-    }
+    String begin = "00:00";
+    String middle = String.format("%02d:%02d", halfDuration/60, halfDuration%60);
+    String end = String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60);
 
     //timeline backgrounds
     for(int i = 1; i <= colors.size(); i++) {

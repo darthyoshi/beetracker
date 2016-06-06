@@ -628,12 +628,10 @@ class UIControl {
   /**
    * Changes the value of the seek bar.
    * @param time the new time in seconds
-   * @param imgSequenceMode whether the footage is a sequence of images or a
-   *   video
    */
-  void setSeekTime(float time, boolean imgSequenceMode) {
+  void setSeekTime(float time) {
     seekBar.changeValue(time);
-    formatSeekLabel(imgSequenceMode);
+    formatSeekLabel();
   }
 
   /**
@@ -658,30 +656,19 @@ class UIControl {
    * @param imgSequenceMode whether the footage is a sequence of images or a
    *   video
    */
-  private void formatSeekLabel(boolean imgSequenceMode) {
-    int tmp;
+  private void formatSeekLabel() {
+    int tmp = (int)(seekBar.getValue()*100);
 
-    if(imgSequenceMode) {
-      tmp = (int)seekBar.getValue();
-      seekBar.setValueLabel((tmp+1) + " of " + ((int)seekBar.getMax()+1))
-        .getValueLabel()
-        .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
-        .setPaddingX(0)
-        .setPaddingY(5);
-    } else {
-      tmp = (int)(seekBar.getValue()*100);
-
-      seekBar.setValueLabel(String.format(
-          "%02d:%02d:%02d.%02d",
-          (tmp/6000)/60,
-          tmp/6000,
-          (tmp/100)%60,
-          tmp%100
-        )).getValueLabel()
-        .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
-        .setPaddingX(0)
-        .setPaddingY(5);
-    }
+    seekBar.setValueLabel(String.format(
+        "%02d:%02d:%02d.%02d",
+        (tmp/6000)/60,
+        tmp/6000,
+        (tmp/100)%60,
+        tmp%100
+      )).getValueLabel()
+      .align(ControlP5Constants.LEFT, ControlP5Constants.BOTTOM_OUTSIDE)
+      .setPaddingX(0)
+      .setPaddingY(5);
   }
 
   /**
@@ -697,11 +684,11 @@ class UIControl {
    * @param imgSequenceMode whether the footage is a sequence of images or a
    *   video
    */
-  void setSeekRange(float duration, boolean imgSequenceMode) {
+  void setSeekRange(float duration) {
     seekBar.setBroadcast(false)
       .setRange(0f, duration)
       .setBroadcast(true);
-    formatSeekLabel(imgSequenceMode);
+    formatSeekLabel();
   }
 
   /**

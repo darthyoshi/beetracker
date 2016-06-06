@@ -31,7 +31,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  * @class VideoBrowser
  * @author Kay Choi
- * @date 13 Nov 15
+ * @date 6 Jun 16
  * @description Uses a Java Swing file selector to retrieve a video file.
  */
 class VideoBrowser {

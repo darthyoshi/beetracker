@@ -36,7 +36,7 @@ import processing.core.PImage;
 /**
  * @class UIControl
  * @author Kay Choi
- * @date 13 Nov 15
+ * @date 6 Jun 16
  * @description Manages the UI elements for BeeTracker.
  */
 class UIControl {

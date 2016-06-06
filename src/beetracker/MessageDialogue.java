@@ -26,7 +26,7 @@ import javax.swing.JScrollPane;
 /**
  * @class MessageDialogue
  * @author Kay Choi
- * @date 13 Nov 15
+ * @date 6 Jun 16
  * @description Displays Java Swing message dialogues.
  */
 class MessageDialogue {

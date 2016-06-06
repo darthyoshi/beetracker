@@ -34,7 +34,7 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 13 Nov 15
+ * @date 5 Jun 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {
@@ -42,7 +42,7 @@ class BlobDetectionUtils {
   private static final float filterRadius = 6f;
   private final BlobDetection bd;
   private final PShader thresholdShader, morphoShader, alphaShader;
-  private final PGraphics buf;
+  private PGraphics buf = null;
 
   /**
    * Class constructor.
@@ -64,8 +64,6 @@ class BlobDetectionUtils {
     morphoShader = parent.loadShader("shaders/morphoshader.glsl");
     morphoShader.set("filterRadius", filterRadius);
     alphaShader = parent.loadShader("shaders/alphashader.glsl");
-
-    buf = parent.createGraphics(width, height, BeeTracker.P2D);
   }
 
   /**
@@ -85,8 +83,11 @@ class BlobDetectionUtils {
       ((float)threshold[2])/255f
     );
 
+    if(buf == null || buf.width != img.width || buf.height != img.height) {
+      buf = parent.createGraphics(img.width, img.height, BeeTracker.P2D);
+    }
+
     buf.beginDraw();
-    buf.clear();
     buf.colorMode(BeeTracker.HSB, 1);
     buf.endDraw();
 
@@ -173,9 +174,7 @@ class BlobDetectionUtils {
    * @return a HashMap mapping RGB integer values to Lists of normalized xy
    *   coordinates of the detected blob centroids
    */
-  HashMap<Integer, List<float[]>> getCentroids(PImage frame,
-    IntList colors)
-  {
+  HashMap<Integer, List<float[]>> getCentroids(PImage frame, IntList colors) {
     HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
     float[] point;
     Blob b;

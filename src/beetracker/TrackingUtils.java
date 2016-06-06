@@ -97,7 +97,7 @@ class TrackingUtils {
     int i, j, k, numPairs, minI, minJ;
     int[][] validPairs = null;
     boolean isOldPointInExit, isNewPointInExit;
-    int timeOutIndex = parent.imgSequenceMode ? 1 : 0;
+    int timeOutIndex = parent.isImgSequenceMode() ? 1 : 0;
 
     float[] exitCenterXY = new float[2];
     exitCenterXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];

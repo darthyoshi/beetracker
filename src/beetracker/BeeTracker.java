@@ -67,7 +67,7 @@ public class BeeTracker extends PApplet {
   private boolean pip = false, selectExit = false;
   private int listVal = -1;
 
-  boolean imgSequenceMode = false;
+  private boolean imgSequenceMode = false;
   private boolean waggleMode = false;
 
   private File currentFile = null;
@@ -2433,5 +2433,12 @@ public class BeeTracker extends PApplet {
     this.fps = fps;
 
     uic.setSeekRange(duration);
+  }
+
+  /**
+   * @return true if currently in image sequence mode
+  */
+  public boolean isImgSequenceMode() {
+    return imgSequenceMode;
   }
 }

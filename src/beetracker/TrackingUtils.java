@@ -112,7 +112,11 @@ class TrackingUtils {
       newPoints = new ArrayList<>(newPointMap.get(color));
       timeOuts = allTimeOuts.get(color);
 
-      waggleStates = allWaggleStatus.get(color);
+      if(waggleMode) {
+        waggleStates = allWaggleStatus.get(color);
+      } else {
+        waggleStates = null;
+      }
 
       checkedIndicesOld = new IntList();
       checkedIndicesNew = new IntList();
@@ -279,8 +283,11 @@ class TrackingUtils {
           path = new ArrayList<>();
           path.add(newPoint);
           oldPaths.add(path);
-          waggleStates.add(false);
           timeOuts.append(time);
+
+          if(waggleMode) {
+            waggleStates.add(false);
+          }
 
           j++;  //index offset for updating timeout values later
         }
@@ -299,15 +306,24 @@ class TrackingUtils {
       }
 
       int numOldPoints = timeOuts.size() - j;
-      waggleIter = waggleStates.listIterator(numOldPoints + 1);
+      if(waggleMode) {
+        waggleIter = waggleStates.listIterator(numOldPoints + 1);
+      } else {
+        waggleIter = null;
+      }
       for(i = numOldPoints; i >= 0; i--) {
-        waggleIter.previous();
+        if(waggleIter != null) {
+          waggleIter.previous();
+        }
 
         //remove points that have been missing for too long
         if(time - timeOuts.get(i) > timeOutThreshold) {
           timeOuts.remove(i);
           oldPaths.remove(i);
-          waggleIter.remove();
+
+          if(waggleIter != null) {
+            waggleIter.remove();
+          }
         }
       }
     }

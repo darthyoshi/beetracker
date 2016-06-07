@@ -82,6 +82,7 @@ public class BeeTracker extends PApplet {
   private PImage stillFrame = null;
   private int imgIndex = -1;
   private float duration;
+  private float time = -1f;
   private int fps = 0;
 
   private UIControl uic;
@@ -112,7 +113,7 @@ public class BeeTracker extends PApplet {
   private int settingIndex = 0;
   private int[] threshold;
 
-  private PGraphics viewFrame; 
+  private PGraphics viewFrame;
 
   private JDialog eventDialog = null;
 
@@ -400,7 +401,7 @@ public class BeeTracker extends PApplet {
     PImage curFrame = updateFrame();
 
     if(curFrame != null) {
-      float time = imgSequenceMode ? ((float)imgIndex)/fps : movie.time();
+      time = imgSequenceMode ? ((float)imgIndex)/fps : movie.time();
 
       if(movieDims != null) {
         viewFrame.beginDraw();
@@ -1359,16 +1360,16 @@ public class BeeTracker extends PApplet {
 
     //update playback mode timestamp
     if(replay) {
-      float time;
+      float tmpTime;
       int i = 0, start = 0, stop = allFrameTimes.size() - 1;
 
       while(start <= stop) {
         i = (stop+start)/2;
-        time = allFrameTimes.get(i);
+        tmpTime = allFrameTimes.get(i);
 
-        if(time - value > 0.000001f) {
+        if(tmpTime - value > 0.000001f) {
           stop = i - 1;
-        } else if(value - time > 0.000001f) {
+        } else if(value - tmpTime > 0.000001f) {
           start = i + 1;
         } else {
           break;
@@ -1440,6 +1441,8 @@ public class BeeTracker extends PApplet {
       movie.stop();
       movie = null;
     }
+
+    time = -1f;
 
     movieDims = null;
     videoName = null;
@@ -2172,10 +2175,10 @@ public class BeeTracker extends PApplet {
    * ControlP5 callback method.
    */
   public void addSetting() {
-    float time = imgSequenceMode ? imgIndex : movie.time();
+    float settingTime = imgSequenceMode ? imgIndex : movie.time();
 
     //current timestamp doesn't already have settings
-    if(!settingsTimeStamps.hasValue(time)) {
+    if(!settingsTimeStamps.hasValue(settingTime)) {
       //duplicate current settings
       float[] newExit = new float[4], newBox = new float[4];
       int[] newThreshold = new int[3];
@@ -2191,14 +2194,14 @@ public class BeeTracker extends PApplet {
       }
 
       //add new settings to appropriate data structures
-      insets.put(time, newBox);
-      radials.put(time, newExit);
-      thresholds.put(time, newThreshold);
+      insets.put(settingTime, newBox);
+      radials.put(settingTime, newExit);
+      thresholds.put(settingTime, newThreshold);
 
-      settingsTimeStamps.append(time);
+      settingsTimeStamps.append(settingTime);
       settingsTimeStamps.sort();
 
-      updateSettings(time);
+      updateSettings(settingTime);
     }
   }
 
@@ -2209,16 +2212,16 @@ public class BeeTracker extends PApplet {
    */
   private void updateSettings(float seek) {
     int i = 0, start = 0, stop = settingsTimeStamps.size() - 1;
-    float time;
+    float settingTime;
 
     //binary search to find current timestamp setting
     while(start <= stop) {
       i = (stop+start)/2;
-      time = settingsTimeStamps.get(i);
+      settingTime = settingsTimeStamps.get(i);
 
-      if(time - seek > 0.000001f) {
+      if(settingTime - seek > 0.000001f) {
         stop = i - 1;
-      } else if(seek - time > 0.000001f) {
+      } else if(seek - settingTime > 0.000001f) {
         start = i + 1;
       } else {
         break;
@@ -2287,8 +2290,6 @@ public class BeeTracker extends PApplet {
       eventDialog = null;
     }
 
-    int time = imgSequenceMode ? (int)imgIndex : (int)movie.time();
-
     PGraphics graphic = tu.getEventTimeline(this, time, duration);
     if(graphic != null) {
       graphic.beginDraw();
@@ -2296,9 +2297,9 @@ public class BeeTracker extends PApplet {
       graphic.textAlign(RIGHT);
       graphic.text(String.format(
           "current time: %02d:%02d:%02d",
-          time/3600,
-          time/60,
-          time%60
+          ((int)time)/3600,
+          ((int)time)/60,
+          ((int)time)%60
         ), 395, 18);
       graphic.endDraw();
 

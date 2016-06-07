@@ -124,7 +124,7 @@ public class BeeTracker extends PApplet {
   public void settings() {
     size(800, 620, P2D);
 
-    ((processing.opengl.PJOGL)surface).setIcon("img/icon.png");
+    processing.opengl.PJOGL.setIcon("img/icon.png");
   }
 
   /**

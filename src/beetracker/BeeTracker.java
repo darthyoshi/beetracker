@@ -48,6 +48,7 @@ import processing.video.Movie;
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
   static final int[] viewBounds = {50, 70, 749, 569};
+  private static final int[] defaultThresholds = {40, 75, 75};
   private static final String months[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -310,9 +311,9 @@ public class BeeTracker extends PApplet {
                 threshold[tmp] = setting.getInt(thresholdKeys[tmp]);
               }
             } catch(Exception e4) {
-              threshold[0] = 40;
-              threshold[1] = 90;
-              threshold[2] = 20;
+              threshold[0] = defaultThresholds[0];
+              threshold[1] = defaultThresholds[1];
+              threshold[2] = defaultThresholds[2];
 
               e4.printStackTrace(System.err);
             } finally {
@@ -343,9 +344,9 @@ public class BeeTracker extends PApplet {
 
       thresholds = new HashMap<>();
       threshold = new int[3];
-      threshold[0] = 40;
-      threshold[1] = 90;
-      threshold[2] = 20;
+      threshold[0] = defaultThresholds[0];
+      threshold[1] = defaultThresholds[1];
+      threshold[2] = defaultThresholds[2];
       thresholds.put(0f, threshold);
 
       radials = new HashMap<>();

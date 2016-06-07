@@ -37,13 +37,13 @@ class TrackingUtils {
   private HashMap<Integer, List<List<float[]>>> allPaths;
   private HashMap<Integer, List<Boolean>> allWaggleStatus;
   private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
-  private HashMap<Integer, IntList> allTimeOuts;
+  private HashMap<Integer, FloatList> allTimeOuts;
   private HashMap<Integer, Stack<float[]>> allIntervals;
   private IntList colors;
   private static final float distThreshold = 0.25f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
-  private static final int[] timeOutCount = {5, 15};
+  private static final float timeOutThreshold = 1f;
 
   /**
    * Class constructor.
@@ -89,8 +89,8 @@ class TrackingUtils {
     List<List<float[]>> oldPaths;
     List<Boolean> waggleStates;
     java.util.ListIterator<Boolean> waggleIter;
-    FloatList departures, arrivals, waggles;
-    IntList checkedIndicesOld, checkedIndicesNew, timeOuts;
+    FloatList departures, arrivals, waggles, timeOuts;
+    IntList checkedIndicesOld, checkedIndicesNew;
     float oldX, oldY, newX, newY, minDist;
     float[] point;
     float[][] distances;
@@ -269,7 +269,7 @@ class TrackingUtils {
           path.add(point);
         }
         newPoints.set(validPairs[i][1], null);
-        timeOuts.set(validPairs[i][0], -1);
+        timeOuts.set(validPairs[i][0], time);
       }
 
       //add new points for next frame
@@ -280,7 +280,7 @@ class TrackingUtils {
           path.add(newPoint);
           oldPaths.add(path);
           waggleStates.add(false);
-          timeOuts.append(0);
+          timeOuts.append(time);
 
           j++;  //index offset for updating timeout values later
         }
@@ -300,14 +300,11 @@ class TrackingUtils {
 
       int numOldPoints = timeOuts.size() - j;
       waggleIter = waggleStates.listIterator(numOldPoints + 1);
-      //update timeout values for old missing points
       for(i = numOldPoints; i >= 0; i--) {
-        timeOuts.increment(i);
-
         waggleIter.previous();
 
         //remove points that have been missing for too long
-        if(timeOuts.get(i) > timeOutCount[timeOutIndex]) {
+        if(time - timeOuts.get(i) > timeOutThreshold) {
           timeOuts.remove(i);
           oldPaths.remove(i);
           waggleIter.remove();
@@ -341,7 +338,7 @@ class TrackingUtils {
         departureTimes.put(color, new FloatList());
         arrivalTimes.put(color, new FloatList());
 
-        allTimeOuts.put(color, new IntList());
+        allTimeOuts.put(color, new FloatList());
       }
     }
   }

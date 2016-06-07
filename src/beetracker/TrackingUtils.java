@@ -209,7 +209,7 @@ class TrackingUtils {
       }
 
       //check for waggle dances
-      if(waggleMode) {
+      if(waggleStates != null) {
         waggles = waggleTimes.get(color);
 
         waggleIter = waggleStates.listIterator();
@@ -285,7 +285,7 @@ class TrackingUtils {
           oldPaths.add(path);
           timeOuts.append(time);
 
-          if(waggleMode) {
+          if(waggleStates != null) {
             waggleStates.add(false);
           }
 
@@ -306,7 +306,7 @@ class TrackingUtils {
       }
 
       int numOldPoints = timeOuts.size() - j;
-      if(waggleMode) {
+      if(waggleStates != null) {
         waggleIter = waggleStates.listIterator(numOldPoints + 1);
       } else {
         waggleIter = null;

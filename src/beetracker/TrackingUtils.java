@@ -547,14 +547,15 @@ class TrackingUtils {
     }
 
     img.ellipseMode(BeeTracker.CENTER);
-    img.rectMode(BeeTracker.CORNERS);
-    img.noStroke();
 
     Stack<float[]> intervals;
 
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
       yOffset = 75*i;
+
+      img.rectMode(BeeTracker.CORNERS);
+      img.noStroke();
 
       //mark intervals with detected bees
       intervals = allIntervals.get(color);

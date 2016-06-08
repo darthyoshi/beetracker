@@ -40,7 +40,7 @@ class TrackingUtils {
   private HashMap<Integer, FloatList> allTimeOuts;
   private HashMap<Integer, Stack<float[]>> allIntervals;
   private IntList colors;
-  private static final float distThreshold = 0.25f;
+  private static final float distThreshold = 0.1f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
   private static final float timeOutThreshold = 1f;
@@ -144,8 +144,8 @@ class TrackingUtils {
           j = 0;
           for(float[] newPoint : newPoints) {
             point = path.get(path.size() - 1);
-            oldX = point[0] - newPoint[0];
-            oldY = point[1] - newPoint[1];
+            oldX = (point[0] - newPoint[0])*movieDims[0];
+            oldY = (point[1] - newPoint[1])*movieDims[1];
 
             distances[i][j] = (float)Math.pow(oldX*oldX + oldY*oldY,
               0.5);
@@ -189,7 +189,7 @@ class TrackingUtils {
           checkedIndicesNew.append(minJ);
 
           //mark pairs with valid distance
-          if(minDist < distThreshold) {
+          if(minDist < distThreshold*0.5f*(movieDims[0]+movieDims[1])) {
             validPairs[k][0] = minI;
             validPairs[k][1] = minJ;
 

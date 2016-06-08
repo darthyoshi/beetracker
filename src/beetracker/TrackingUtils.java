@@ -294,7 +294,7 @@ class TrackingUtils {
       }
 
       if(BeeTracker.debug) {
-        System.out.println("all paths:");
+        System.out.println(String.format("all paths for %06x:",color));
         for(i = 0; i < oldPaths.size(); i++) {
           System.out.println(i + ":");
           path = oldPaths.get(i);

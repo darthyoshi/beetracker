@@ -707,9 +707,21 @@ public class BeeTracker extends PApplet {
         ) {
           isPlaying = false;
 
-          StringBuilder msg = new StringBuilder("End of video reached.\n\n");
+          StringBuilder msg = new StringBuilder("End of video reached.\n");
+          msg.append("video date: ")
+            .append(months[videoDate.get(Calendar.MONTH)])
+            .append(' ')
+            .append(Integer.toString(videoDate.get(Calendar.DATE)))
+            .append(' ')
+            .append(Integer.toString(videoDate.get(Calendar.YEAR)))
+            .append(',')
+            .append(String.format(
+              "%02d:%02d:%02d\n\n",
+              videoDate.get(Calendar.HOUR_OF_DAY),
+              videoDate.get(Calendar.MINUTE),
+              videoDate.get(Calendar.SECOND)
+            ));
 
-          Calendar date = Calendar.getInstance();
           HashMap<Float, String> formattedTime = new HashMap<>();
           HashMap<Float, String> summary = tu.getSummary();
           FloatList timeStamps = new FloatList(summary.size());
@@ -726,31 +738,23 @@ public class BeeTracker extends PApplet {
             timeStamps.sort();
 
             StringBuilder builder;
-
-            int sec;
+            int tmp;
             for(float timeStamp : timeStamps) {
-              sec = (int)timeStamp;
-              date.setTime(videoDate.getTime());
-              date.add(Calendar.SECOND, sec);
+              tmp = (int)(timeStamp*100f);
 
               builder = new StringBuilder();
-              builder.append(months[date.get(Calendar.MONTH)])
-                .append(' ')
-                .append(Integer.toString(date.get(Calendar.DATE)))
-                .append(' ')
-                .append(Integer.toString(date.get(Calendar.YEAR)))
-                .append(',')
-                .append(String.format(
-                  "%02d:%02d:%08.5f",
-                  date.get(Calendar.HOUR_OF_DAY),
-                  date.get(Calendar.MINUTE),
-                  (date.get(Calendar.SECOND)-sec)+timeStamp
-                ));
+              builder.append(String.format(
+                "%02d:%02d:%02d.%02d",
+                (tmp/6000)/60,
+                tmp/6000,
+                (tmp/100)%60,
+                tmp%100
+              ));
 
               formattedTime.put(timeStamp, builder.toString());
 
-              msg.append(timeStamp)
-                .append(": ")
+              msg.append(builder.toString())
+                .append(" - ")
                 .append(summary.get(timeStamp))
                 .append('\n');
             }
@@ -760,8 +764,7 @@ public class BeeTracker extends PApplet {
             println('\n' + msg.toString());
           }
 
-          String path = saveSummaryResults(date, timeStamps,
-            formattedTime, summary);
+          String path = saveSummaryResults(timeStamps, formattedTime, summary);
 
           PGraphics events;
           if((record || replay) && path != null) {
@@ -1021,7 +1024,6 @@ public class BeeTracker extends PApplet {
 
   /**
    * Saves the statistics of the current video to file.
-   * @param date a Calendar object
    * @param timeStamps a sorted FloatList of time stamps
    * @param formattedTime a HashMap mapping float time stamps to formatted
    *   time stamp strings
@@ -1033,7 +1035,6 @@ public class BeeTracker extends PApplet {
    *   null if no points were recorded
    */
   private String saveSummaryResults(
-    Calendar date,
     FloatList timeStamps,
     HashMap<Float, String> formattedTime,
     HashMap<Float, String> summary
@@ -1041,7 +1042,7 @@ public class BeeTracker extends PApplet {
     String fileName = null;
 
     if(!allFramePoints.isEmpty()) {
-      date.setTimeInMillis(System.currentTimeMillis());
+      Calendar date = Calendar.getInstance();
 
       File dir = new File(System.getProperty("user.dir") +
         File.separatorChar + "output" + File.separatorChar + videoName);
@@ -1064,9 +1065,25 @@ public class BeeTracker extends PApplet {
           new java.io.FileOutputStream(fileName), "UTF-8")
         );
 
-        writer.append("date,time,color,type\n").flush();
+        StringBuilder dateString = new StringBuilder();
+        dateString.append('"')
+          .append(months[videoDate.get(Calendar.MONTH)])
+          .append(' ')
+          .append(Integer.toString(videoDate.get(Calendar.DATE)))
+          .append(' ')
+          .append(Integer.toString(videoDate.get(Calendar.YEAR)))
+          .append(',')
+          .append(String.format(
+            "%02d:%02d:%02d\",",
+            videoDate.get(Calendar.HOUR_OF_DAY),
+            videoDate.get(Calendar.MINUTE),
+            videoDate.get(Calendar.SECOND)
+          ));
+
+        writer.append("\"video date\",\"seek time\",color,type\n").flush();
         for(float timeStamp : timeStamps) {
-          writer.append(formattedTime.get(timeStamp))
+          writer.append(dateString.toString())
+            .append(formattedTime.get(timeStamp))
             .append(',')
             .append(summary.get(timeStamp))
             .append('\n')

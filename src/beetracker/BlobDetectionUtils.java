@@ -189,27 +189,38 @@ class BlobDetectionUtils {
 
     parent.colorMode(BeeTracker.HSB, 255);
 
-    //iterate through blobs
+    //index of unchecked blobs
+    IntList indices = new IntList(bd.getBlobNb());
     for(i = 0; i < bd.getBlobNb(); i++) {
-      if((b = bd.getBlob(i)) != null) {
-        point = new float[2];
-        point[0] = b.x;
-        point[1] = b.y;
+      indices.append(i);
+    }
 
-        for(j = 0; j < colors.size(); j++) {
-          color = colors.get(j);
-          hue = (int)parent.hue(color);
+    //iterate through colors
+    for(j = 0; j < colors.size(); j++) {
+      color = colors.get(j);
+      hue = (int)parent.hue(color);
+
+      //iterate through remaining blobs
+      for(i = 0; i < indices.size(); i++) {
+        if((b = bd.getBlob(indices.get(i))) != null) {
+          point = new float[2];
+          point[0] = b.x;
+          point[1] = b.y;
           pixel = frame.pixels[
-             (int)(b.y*frame.height)*frame.width +
-             (int)(b.x*frame.width)
+           (int)(b.y*frame.height)*frame.width +
+           (int)(b.x*frame.width)
           ];
 
           //case: centroid is in blob
-          if(parent.brightness(pixel) > 0f && 
-            ((int)parent.hue(pixel) <= hue+5 && (int)parent.hue(pixel) >= hue-5)) {
-            result.get(color).add(point);
+          if(parent.brightness(pixel) > 0f) {
+            if((int)parent.hue(pixel) <= hue+5 && (int)parent.hue(pixel) >= hue-5) {
+              result.get(color).add(point);
 
-            break;
+              //remove blob from consideration
+              indices.remove(i);
+
+              break;
+            }
           } else {  //case: centroid is not in blob
             loop:
             for(

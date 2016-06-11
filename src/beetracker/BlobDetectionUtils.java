@@ -34,7 +34,7 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 6 Jun 16
+ * @date 11 Jun 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {
@@ -175,8 +175,8 @@ class BlobDetectionUtils {
   HashMap<Integer, List<float[]>> getCentroids(PImage frame, IntList colors) {
     HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
     float[] point;
-    Blob b;
-    int i, j, color, pixel, hue;
+    Blob b, b2;
+    int i, j, k, color, pixel, hue;
 
     frame.loadPixels();
     bd.computeBlobs(frame.pixels);
@@ -201,6 +201,21 @@ class BlobDetectionUtils {
       //iterate through remaining blobs
       for(i = 0; i < indices.size(); i++) {
         if((b = bd.getBlob(indices.get(i))) != null) {
+/*          //TODO discard small blobs
+          if(blob is too small) {
+            continue;
+          }
+*/
+          //skip blobs that are too close to each other
+          for(k = 1; k < indices.size(); k++) {
+            if((b2 = bd.getBlob(indices.get(k))) != null) {
+              if(Math.pow(Math.pow(b2.x - b.x, 2.) + Math.pow(b2.y - b.y, 2.), 0.5) <
+                0.5*(Math.pow(Math.pow(b.w, 2.) + Math.pow(b.h, 2.), 0.5) + Math.pow(Math.pow(b2.w, 2.) + Math.pow(b2.h, 2.), 0.5))) {
+                continue;
+              }
+            }
+          }
+
           point = new float[2];
           point[0] = b.x;
           point[1] = b.y;
@@ -222,7 +237,7 @@ class BlobDetectionUtils {
           } else {  //case: centroid is not in blob
             loop:
             for(
-              int k = (int)(b.yMin*frame.height);
+              k = (int)(b.yMin*frame.height);
               k < (int)(b.yMax*frame.height);
               k++
             ) {

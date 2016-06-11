@@ -936,13 +936,6 @@ public class BeeTracker extends PApplet {
           java.util.LinkedList<String> list = new java.util.LinkedList<>();
           videoName = dir.getName();
 
-          loadSettings(
-            System.getProperty("user.dir") + File.separatorChar +
-            "output" + File.separatorChar +
-            videoName + File.separatorChar +
-            "settings.json"
-          );
-
           String name;
           for(File file : dir.listFiles()) {
             if(file.isFile()) {
@@ -987,10 +980,17 @@ public class BeeTracker extends PApplet {
             imgIndex = 0;
             updateImgSequence(imgIndex);
 
+            System.out.append("images loaded\n").flush();
+
+            loadSettings(
+              System.getProperty("user.dir") + File.separatorChar +
+              "output" + File.separatorChar +
+              videoName + File.separatorChar +
+              "settings.json"
+            );
+
             //end critical section
             sem.release();
-
-            System.out.append("images loaded\n").flush();
 
             EventQueue.invokeLater(new Runnable() {
               @Override

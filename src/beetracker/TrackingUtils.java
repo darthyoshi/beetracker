@@ -30,7 +30,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 6 Jun 16
+ * @date 11 Jun 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -39,6 +39,8 @@ class TrackingUtils {
   private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
   private HashMap<Integer, FloatList> allTimeOuts;
   private HashMap<Integer, Stack<float[]>> allIntervals;
+  private HashMap<Integer, IntList> pathIDs;
+  private int currentID = 0;
   private IntList colors;
   private static final float distThreshold = 0.1f;
   private boolean waggleMode = false;
@@ -63,12 +65,8 @@ class TrackingUtils {
    *   to Lists of normalized xy coordinates
    * @param frameDims the dimensions of the inset frame
    * @param frameOffset the offset of the inset frame
-   * @param exitRadial a float array containing the following (normalized
-   *   within the view window):
-   *   x coordinate of the exit center,
-   *   y coordinate of the exit center,
-   *   horizontal semi-major axis of the exit,
-   *   vertical semi-major axis of the exit
+   * @param exitCenterXY the exit center coordinates, referenced to the inset frame
+   * @param exitAxes the exit semi-major axes, referenced to the inset frame
    * @param movieDims the dimensions of the video
    * @param movieOffset the offset of the video
    * @param time timestamp of the current frame in seconds
@@ -79,7 +77,8 @@ class TrackingUtils {
     HashMap<Integer, List<float[]>> newPointMap,
     int[] frameDims,
     int[] frameOffset,
-    float[] exitRadial,
+    float[] exitCenterXY,
+    float[] exitAxes,
     int[] movieDims,
     int[] movieOffset,
     float time,
@@ -91,6 +90,7 @@ class TrackingUtils {
     java.util.ListIterator<Boolean> waggleIter;
     FloatList departures, arrivals, waggles, timeOuts;
     IntList checkedIndicesOld, checkedIndicesNew;
+    IntList ids;
     float oldX, oldY, newX, newY, minDist;
     float[] point;
     float[][] distances;
@@ -99,18 +99,12 @@ class TrackingUtils {
     boolean isOldPointInExit, isNewPointInExit;
     int timeOutIndex = parent.isImgSequenceMode() ? 1 : 0;
 
-    float[] exitCenterXY = new float[2];
-    exitCenterXY[0] = exitRadial[0]*movieDims[0]+movieOffset[0];
-    exitCenterXY[1] = exitRadial[1]*movieDims[1]+movieOffset[1];
-
-    float[] exitAxes = new float[2];
-    exitAxes[0] = exitRadial[2]*movieDims[0];
-    exitAxes[1] = exitRadial[3]*movieDims[1];
-
     for(int color : colors) {
       oldPaths = allPaths.get(color);
       newPoints = new ArrayList<>(newPointMap.get(color));
       timeOuts = allTimeOuts.get(color);
+
+      ids = pathIDs.get(color);
 
       if(waggleMode) {
         waggleStates = allWaggleStatus.get(color);
@@ -285,6 +279,8 @@ class TrackingUtils {
           oldPaths.add(path);
           timeOuts.append(time);
 
+          ids.append(currentID++);
+
           if(waggleStates != null) {
             waggleStates.add(false);
           }
@@ -321,6 +317,8 @@ class TrackingUtils {
           timeOuts.remove(i);
           oldPaths.remove(i);
 
+          ids.remove(i);
+
           if(waggleIter != null) {
             waggleIter.remove();
           }
@@ -355,6 +353,8 @@ class TrackingUtils {
         arrivalTimes.put(color, new FloatList());
 
         allTimeOuts.put(color, new FloatList());
+
+        pathIDs.put(color, new IntList());
       }
     }
   }
@@ -366,7 +366,7 @@ class TrackingUtils {
    */
   HashMap<Float, String> getSummary() {
     HashMap<Float, String> result = new HashMap<>();
-
+//TODO add path IDs to summary
     if(waggleMode) {
       for(int color : colors) {
         for(Float time : waggleTimes.get(color)) {
@@ -417,6 +417,7 @@ class TrackingUtils {
     colors = new IntList();
     allTimeOuts = new HashMap<>();
     allIntervals = new HashMap<>();
+    pathIDs = new HashMap<>();
   }
 
   /**

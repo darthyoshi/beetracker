@@ -420,6 +420,15 @@ public class BeeTracker extends PApplet {
 
         PImage insetFrame = copyInsetFrame(curFrame);
 
+        float[] exitAxes = new float[2];
+        if(pip) {
+          exitAxes[0] = exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]);
+          exitAxes[1] = exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1]);
+        } else {
+          exitAxes[0] = exitRadial[2]*movieDims[0];
+          exitAxes[1] = exitRadial[3]*movieDims[1];
+        }
+
         if(insetFrame != null) {
           float timeStamp;
 
@@ -518,7 +527,7 @@ public class BeeTracker extends PApplet {
                 this,
                 centroids,
                 frameDims, frameOffset,
-                exitRadial,
+                exitCenter, exitAxes,
                 movieDims, movieOffset,
                 time,
                 duration
@@ -632,8 +641,8 @@ public class BeeTracker extends PApplet {
             ellipse(
               exitRadial[0]*movieDims[0] + movieOffset[0],
               exitRadial[1]*movieDims[1] + movieOffset[1],
-              exitRadial[2]*movieDims[0],
-              exitRadial[3]*movieDims[1]
+              exitAxes[0],
+              exitAxes[1]
             );
           }
         } else {  //zoomed
@@ -650,8 +659,8 @@ public class BeeTracker extends PApplet {
             ellipse(
               exitCenter[0],
               exitCenter[1],
-              exitRadial[2]*frameDims[0]/(insetBox[2]-insetBox[0]),
-              exitRadial[3]*frameDims[1]/(insetBox[3]-insetBox[1])
+              exitAxes[0],
+              exitAxes[1]
             );
           }
         }
@@ -2452,5 +2461,12 @@ public class BeeTracker extends PApplet {
   */
   public boolean isImgSequenceMode() {
     return imgSequenceMode;
+  }
+
+  /**
+   * @return true if zoom is active
+   */
+  public boolean isZoomed() {
+    return pip;
   }
 }

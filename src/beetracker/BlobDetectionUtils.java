@@ -122,14 +122,12 @@ class BlobDetectionUtils {
    * @param frameDims the dimensions of the image frame for which blob
    *   detection is being performed, in pixels
    * @param frameOffset the xy coordinates of the inset frame origin, in pixels
-   * @param exitXY the xy coordinates of the exit center, in pixels
    */
   void drawBlobs(
     PGraphics buf,
     int[] bufOffset,
     int[] frameDims,
-    int[] frameOffset,
-    float[] exitXY
+    int[] frameOffset
   ) {
     EdgeVertex eA,eB;
     Blob b;

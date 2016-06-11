@@ -572,7 +572,7 @@ public class BeeTracker extends PApplet {
 
             //draw detected blobs
             bdu.drawBlobs(viewFrame, viewBounds,
-              frameDims, frameOffset, exitCenter);
+              frameDims, frameOffset);
           } else {  //mark bees
             viewFrame.stroke(0xffdddd00);
             viewFrame.ellipseMode(CENTER);

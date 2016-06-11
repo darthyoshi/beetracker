@@ -2201,10 +2201,8 @@ public class BeeTracker extends PApplet {
    * ControlP5 callback method.
    */
   public void addSetting() {
-    float settingTime = imgSequenceMode ? imgIndex : movie.time();
-
     //current timestamp doesn't already have settings
-    if(!settingsTimeStamps.hasValue(settingTime)) {
+    if(!settingsTimeStamps.hasValue(time)) {
       //duplicate current settings
       float[] newExit = new float[4], newBox = new float[4];
       int[] newThreshold = new int[3];
@@ -2220,14 +2218,14 @@ public class BeeTracker extends PApplet {
       }
 
       //add new settings to appropriate data structures
-      insets.put(settingTime, newBox);
-      radials.put(settingTime, newExit);
-      thresholds.put(settingTime, newThreshold);
+      insets.put(time, newBox);
+      radials.put(time, newExit);
+      thresholds.put(time, newThreshold);
 
-      settingsTimeStamps.append(settingTime);
+      settingsTimeStamps.append(time);
       settingsTimeStamps.sort();
 
-      updateSettings(settingTime);
+      updateSettings(time);
     }
   }
 
@@ -2302,7 +2300,7 @@ public class BeeTracker extends PApplet {
         thresholds.remove(timeStamp);
       }
 
-      updateSettings(imgSequenceMode ? imgIndex : movie.time());
+      updateSettings(time);
     }
   }
 

@@ -2333,13 +2333,6 @@ public class BeeTracker extends PApplet {
   }
 
   /**
-   * @return the replay state
-   */
-  public boolean isReplay() {
-    return replay;
-  }
-
-  /**
    * ControlP5 callback method.
    */
   public void programMenuButton() {

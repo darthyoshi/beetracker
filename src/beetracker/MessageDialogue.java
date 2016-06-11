@@ -19,6 +19,7 @@
 package beetracker;
 
 import java.awt.EventQueue;
+import java.io.File;
 
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -26,7 +27,7 @@ import javax.swing.JScrollPane;
 /**
  * @class MessageDialogue
  * @author Kay Choi
- * @date 6 Jun 16
+ * @date 11 Jun 16
  * @description Displays Java Swing message dialogues.
  */
 class MessageDialogue {
@@ -196,9 +197,12 @@ class MessageDialogue {
 
     if(filePath != null) {
       String msg = "Video statistics have been saved to \"" + filePath +
-          '\"';
+        '\"';
 
-      if(parent.isReplay()) {
+      File pointsFile = new File((new File(filePath))
+        .getParentFile().getAbsolutePath()+File.separatorChar+"points.json");
+
+      if(pointsFile.exists()) {
         JOptionPane.showMessageDialog(null, msg);
       } else {
         result = JOptionPane.showConfirmDialog(

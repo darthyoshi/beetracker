@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 6 Jun 16
+ * @date 11 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -95,7 +95,7 @@ public class BeeTracker extends PApplet {
 
   private PImage titleImg;
 
-  static final boolean debug = true;
+  static final boolean debug = false;
 
   private HashMap<Float, HashMap<Integer, List<float[]>>> allFramePoints = null;
   private HashMap<Integer, List<float[]>> centroids;
@@ -461,7 +461,7 @@ public class BeeTracker extends PApplet {
                   "s, actual time " + time + 's');
               }
 
-              if(time - timeStamp > 0.000001f) {
+              if(time > timeStamp) {
                 replayCheckForTimeOut = true;
 
                 centroids = allFramePoints.get(timeStamp);
@@ -708,11 +708,8 @@ public class BeeTracker extends PApplet {
         //end of movie reached
         if(
           isPlaying &&
-          (
-            (imgSequenceMode && (int)time >= (int)duration) ||
-            (!imgSequenceMode && ((int)(10000f*(duration - time))) <=
-              ((int)(10000f/movie.frameRate)))
-          )
+          ((time >= duration) || (!imgSequenceMode && 
+          duration - time <= 1f/movie.frameRate))
         ) {
           isPlaying = false;
 

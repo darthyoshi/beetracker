@@ -379,9 +379,9 @@ class TrackingUtils {
       }
       times.sort();
 
-        for(Float time : times) {
-          result.put(time, String.format("#%06x,%s", color, tracker.eventLabels.get(time)));
-        }
+      for(Float time : times) {
+        result.put(time, String.format("%d,#%06x,%s",
+          tracker.eventIDs.get(time), color, tracker.eventLabels.get(time)));
       }
     }
 

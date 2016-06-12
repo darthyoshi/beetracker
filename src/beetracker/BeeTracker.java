@@ -708,7 +708,7 @@ public class BeeTracker extends PApplet {
         //end of movie reached
         if(
           isPlaying &&
-          ((time >= duration) || (!imgSequenceMode && 
+          ((time >= duration) || (!imgSequenceMode &&
           duration - time <= 1f/movie.frameRate))
         ) {
           isPlaying = false;
@@ -760,8 +760,8 @@ public class BeeTracker extends PApplet {
               formattedTime.put(timeStamp, builder.toString());
 
               msg.append(builder.toString())
-                .append(" - ")
-                .append(summary.get(timeStamp))
+                .append(" - bee #")
+                .append(summary.get(timeStamp).replaceAll(",", ", "))
                 .append('\n');
             }
           }
@@ -1086,7 +1086,7 @@ public class BeeTracker extends PApplet {
             videoDate.get(Calendar.SECOND)
           ));
 
-        writer.append("\"video date\",\"seek time\",color,type\n").flush();
+        writer.append("\"video date\",\"seek time\",\"bee ID\",color,type\n").flush();
         for(float timeStamp : timeStamps) {
           writer.append(dateString.toString())
             .append(formattedTime.get(timeStamp))

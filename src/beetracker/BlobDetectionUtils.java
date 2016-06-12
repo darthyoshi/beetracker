@@ -210,7 +210,7 @@ class BlobDetectionUtils {
           for(k = 1; k < indices.size(); k++) {
             if((b2 = bd.getBlob(indices.get(k))) != null) {
               if(Math.pow(Math.pow(b2.x - b.x, 2.) + Math.pow(b2.y - b.y, 2.), 0.5) <
-                0.5*(Math.pow(Math.pow(b.w, 2.) + Math.pow(b.h, 2.), 0.5) + Math.pow(Math.pow(b2.w, 2.) + Math.pow(b2.h, 2.), 0.5))) {
+                0.5*(Math.pow(b.w*b.w + b.h*b.h, 0.5) + Math.pow(b2.w*b2.w + b2.h*b2.h, 0.5))) {
                 continue;
               }
             }
@@ -266,14 +266,14 @@ class BlobDetectionUtils {
   }
 
   /**
-   * @return the width of the images to process
+   * @return the expected width of the images to process
    */
   int getImageWidth() {
     return bd.imgWidth;
   }
 
   /**
-   * @return the height of the images to process
+   * @return the expected height of the images to process
    */
   int getImageHeight() {
     return bd.imgHeight;

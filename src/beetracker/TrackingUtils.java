@@ -34,18 +34,36 @@ import processing.data.IntList;
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
-  private HashMap<Integer, List<List<float[]>>> allPaths;
-  private HashMap<Integer, List<Boolean>> allWaggleStatus;
-  private HashMap<Integer, FloatList> departureTimes, arrivalTimes, waggleTimes;
-  private HashMap<Integer, FloatList> allTimeOuts;
-  private HashMap<Integer, Stack<float[]>> allIntervals;
-  private HashMap<Integer, IntList> pathIDs;
-  private int currentID = 0;
+  private int currentID;
   private IntList colors;
   private static final float distThreshold = 0.1f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
   private static final float timeOutThreshold = 1f;
+  private static final String eventTypes[] = {"arrival","departure","waggle"};
+
+  private class ColorTracker {
+    List<List<float[]>> paths;
+    List<Boolean> waggleStates;
+    FloatList timeOuts;
+    Stack<float[]> intervals;
+    IntList IDs;
+    HashMap<Float, String> eventLabels;
+    HashMap<Float, Integer> eventIDs;
+
+    ColorTracker() {
+      paths = new ArrayList<List<float[]>>();
+      waggleStates = new java.util.LinkedList<>();
+      timeOuts = new FloatList();
+      intervals = new Stack<>();
+      intervals.add(new float[]{Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY});
+      IDs = new IntList();
+      eventLabels = new HashMap<>();
+      eventIDs = new HashMap<>();
+    }
+  }
+
+  private HashMap<Integer, ColorTracker> trackers;
 
   /**
    * Class constructor.
@@ -88,26 +106,27 @@ class TrackingUtils {
     List<List<float[]>> oldPaths;
     List<Boolean> waggleStates;
     java.util.ListIterator<Boolean> waggleIter;
-    FloatList departures, arrivals, waggles, timeOuts;
+    FloatList timeOuts;
+    HashMap<Float, String> eventLabels;
+    HashMap<Float, Integer> eventIDs;
     IntList checkedIndicesOld, checkedIndicesNew;
-    IntList ids;
+    IntList pathIDs;
     float oldX, oldY, newX, newY, minDist;
     float[] point;
     float[][] distances;
     int i, j, k, numPairs, minI, minJ;
     int[][] validPairs = null;
     boolean isOldPointInExit, isNewPointInExit;
-    int timeOutIndex = parent.isImgSequenceMode() ? 1 : 0;
 
     for(int color : colors) {
-      oldPaths = allPaths.get(color);
+      oldPaths = trackers.get(color).paths;
       newPoints = new ArrayList<>(newPointMap.get(color));
-      timeOuts = allTimeOuts.get(color);
-
-      ids = pathIDs.get(color);
+      timeOuts = trackers.get(color).timeOuts;
+      pathIDs = trackers.get(color).IDs;
+      eventIDs = trackers.get(color).eventIDs;
 
       if(waggleMode) {
-        waggleStates = allWaggleStatus.get(color);
+        waggleStates = trackers.get(color).waggleStates;
       } else {
         waggleStates = null;
       }
@@ -202,10 +221,10 @@ class TrackingUtils {
         System.out.println(k + " point(s) paired");
       }
 
+      eventLabels = trackers.get(color).eventLabels;
+
       //check for waggle dances
       if(waggleStates != null) {
-        waggles = waggleTimes.get(color);
-
         waggleIter = waggleStates.listIterator();
         i = 0;
         while(waggleIter.hasNext()) {
@@ -215,16 +234,13 @@ class TrackingUtils {
             if(rec.isCandidateRecognized()) {
               waggleIter.set(true);
 
-              waggles.append(time);
+              eventLabels.put(time, eventTypes[2]);
             }
           }
 
           i++;
         }
       } else {  //check all paired points for arrivals/departures
-        departures = departureTimes.get(color);
-        arrivals = arrivalTimes.get(color);
-
         for(i = 0; i < k; i++) {
           path = oldPaths.get(validPairs[i][0]);
           point = path.get(path.size() - 1);
@@ -251,10 +267,12 @@ class TrackingUtils {
 
           if(isOldPointInExit) {
             if(!isNewPointInExit) {
-              departures.append(time);
+              eventLabels.put(time, eventTypes[1]);
+              eventIDs.put(time, pathIDs.get(oldPaths.indexOf(path)));
             }
           } else if(isNewPointInExit) {
-            arrivals.append(time);
+            eventLabels.put(time, eventTypes[0]);
+            eventIDs.put(time, pathIDs.get(oldPaths.indexOf(path)));
           }
         }
       }
@@ -278,8 +296,7 @@ class TrackingUtils {
           path.add(newPoint);
           oldPaths.add(path);
           timeOuts.append(time);
-
-          ids.append(currentID++);
+          pathIDs.append(currentID++);
 
           if(waggleStates != null) {
             waggleStates.add(false);
@@ -316,8 +333,7 @@ class TrackingUtils {
         if(time - timeOuts.get(i) > timeOutThreshold) {
           timeOuts.remove(i);
           oldPaths.remove(i);
-
-          ids.remove(i);
+          pathIDs.remove(i);
 
           if(waggleIter != null) {
             waggleIter.remove();
@@ -338,23 +354,8 @@ class TrackingUtils {
       if(!colors.hasValue(color)) {
         colors.append(color);
 
-        allPaths.put(color, new ArrayList<List<float[]>>());
-
-        Stack<float[]> tmp = new Stack<>();
-        tmp.add(new float[]{Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY});
-        allIntervals.put(color, tmp);
-
-        //waggle dance events
-        allWaggleStatus.put(color, new java.util.LinkedList<Boolean>());
-        waggleTimes.put(color, new FloatList());
-
-        //arrival/departure events
-        departureTimes.put(color, new FloatList());
-        arrivalTimes.put(color, new FloatList());
-
-        allTimeOuts.put(color, new FloatList());
-
-        pathIDs.put(color, new IntList());
+        ColorTracker tracker = new ColorTracker();
+        trackers.put(color, tracker);
       }
     }
   }
@@ -366,20 +367,20 @@ class TrackingUtils {
    */
   HashMap<Float, String> getSummary() {
     HashMap<Float, String> result = new HashMap<>();
-//TODO add path IDs to summary
-    if(waggleMode) {
-      for(int color : colors) {
-        for(Float time : waggleTimes.get(color)) {
-          result.put(time, String.format("#%06x,waggle", color));
-        }
+
+    FloatList times;
+    ColorTracker tracker;
+    for(int color : colors) {
+      tracker = trackers.get(color);
+
+      times = new FloatList();
+      for(Float time : tracker.eventLabels.keySet()) {
+        times.append(time);
       }
-    } else {
-      for(int color : colors) {
-        for(Float time : arrivalTimes.get(color)) {
-          result.put(time, String.format("#%06x,arrival", color));
-        }
-        for(Float time : departureTimes.get(color)) {
-          result.put(time, String.format("#%06x,departure", color));
+      times.sort();
+
+        for(Float time : times) {
+          result.put(time, String.format("#%06x,%s", color, tracker.eventLabels.get(time)));
         }
       }
     }
@@ -409,39 +410,9 @@ class TrackingUtils {
    * Initializes all tracking data structures.
    */
   final void init() {
-    allPaths = new HashMap<>();
-    allWaggleStatus = new HashMap<>();
-    departureTimes = new HashMap<>();
-    arrivalTimes = new HashMap<>();
-    waggleTimes = new HashMap<>();
     colors = new IntList();
-    allTimeOuts = new HashMap<>();
-    allIntervals = new HashMap<>();
-    pathIDs = new HashMap<>();
-  }
-
-  /**
-   * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
-   *   timestamps
-   */
-  HashMap<Integer, FloatList> getDepartureTimes() {
-    return departureTimes;
-  }
-
-  /**
-   * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
-   *   timestamps
-   */
-  HashMap<Integer, FloatList> getArrivalTimes() {
-    return arrivalTimes;
-  }
-
-  /**
-   * @return a HashMap mapping 6-digit hexadecimal RGB values to Lists of
-   *   timestamps
-   */
-  HashMap<Integer, FloatList> getWaggleTimes() {
-    return waggleTimes;
+    currentID = 0;
+    trackers = new HashMap<>();
   }
 
   /**
@@ -463,7 +434,7 @@ class TrackingUtils {
     for(int color : colors) {
       buf.stroke(0xff000000 + color);
 
-      for(List<float[]> path : allPaths.get(color)) {
+      for(List<float[]> path : trackers.get(color).paths) {
         for(i = 0; i < path.size()-1; i++) {
           point = path.get(i);
           point2 = path.get(i+1);
@@ -495,7 +466,8 @@ class TrackingUtils {
       System.out.append("retrieving event timeline... ");
     }
 
-    int color, yOffset;
+    int color, yOffset, j;
+    float stamp, stampOffset, prevStamp = Float.NEGATIVE_INFINITY;
     float xOffset = time/duration*369f + 26f;
 
     PGraphics img = parent.createGraphics(400, colors.size() * 75);
@@ -549,7 +521,9 @@ class TrackingUtils {
 
     img.ellipseMode(BeeTracker.CENTER);
 
-    Stack<float[]> intervals;
+
+    FloatList times;
+    HashMap<Float, String> events;
 
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
@@ -559,8 +533,7 @@ class TrackingUtils {
       img.noStroke();
 
       //mark intervals with detected bees
-      intervals = allIntervals.get(color);
-      for(float[] xBounds : intervals) {
+      for(float[] xBounds : trackers.get(color).intervals) {
         img.fill(0xff000000 + color);
         img.rect(
           xBounds[0],
@@ -575,38 +548,69 @@ class TrackingUtils {
       img.fill(0xff000000 + color);
       img.rectMode(BeeTracker.CENTER);
 
-      if(waggleMode) {
-        //mark waggle dance detections
-        for(float stamp : waggleTimes.get(color)) {
+      times = new FloatList();
+      events = trackers.get(color).eventLabels;
+
+      for(Float timeStamp : events.keySet()) {
+        times.append(timeStamp);
+      }
+      times.sort();
+
+      for(j = 0; j < times.size(); j++) {
+        stamp = times.get(j);
+        stampOffset = stamp/duration*369;
+        String type = events.get(stamp);
+
+        if(type.equals(eventTypes[2])) {
           img.triangle(
-            stamp/duration*369 + 26,
-            yOffset-42.5f,
-            stamp/duration*369 + 23.5f,
+            stampOffset + 26,
+            yOffset-32.5f,
+            stampOffset + 23.5f,
             yOffset-37.5f,
-            stamp/duration*369 + 28.5f,
+            stampOffset + 28.5f,
             yOffset-37.5f
           );
-        }
-      } else {
-        //mark arrivals
-        for(float stamp : arrivalTimes.get(color)) {
-          img.rect(
-            stamp/duration*369 + 26,
-            yOffset-45,
-            5,
-            5
-          );
+        } else {
+          if(type.equals(eventTypes[0])) {
+/*            if(stamp - prevStamp < 0.25f && events.get(prevStamp).equals(eventTypes[1])) {
+              img.stroke(0xff555555);
+              img.line(
+                stampOffset,
+                yOffset-45,
+                stampOffset,
+                yOffset-35
+              );
+              img.stroke(0xff000000);
+            }
+*/
+            img.rect(
+              stampOffset + 26,
+              yOffset-45,
+              5,
+              5
+            );
+          } else if(type.equals(eventTypes[1])) {
+/*            if(stamp - prevStamp < 0.25f && events.get(prevStamp).equals(eventTypes[0])) {
+              img.stroke(0xff555555);
+              img.line(
+                stampOffset,
+                yOffset-45,
+                stampOffset,
+                yOffset-35
+              );
+              img.stroke(0xff000000);
+            }
+*/
+            img.ellipse(
+              stampOffset + 26,
+              yOffset-35,
+              5,
+              5
+            );
+          }
         }
 
-        //mark departures
-        for(float stamp : departureTimes.get(color)) {
-          img.ellipse(
-            stamp/duration*369 + 26,
-            yOffset-35,
-            5,
-            5
-          );
-        }
+//        prevStamp = stamp;
       }
 
       img.stroke(0xff000000);
@@ -648,11 +652,11 @@ class TrackingUtils {
     for(int i = 1; i <= colors.size(); i++) {
       color = colors.get(i-1);
 
-      intervals = allIntervals.get(color);
+      intervals = trackers.get(color).intervals;
 
       intervalXBounds = intervals.peek();
 
-      if(allPaths.get(color).isEmpty()) {
+      if(trackers.get(color).paths.isEmpty()) {
         if(intervalXBounds[1] != Float.NEGATIVE_INFINITY) {
           intervals.push(new float[]{Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY});
         }

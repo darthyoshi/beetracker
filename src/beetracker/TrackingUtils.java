@@ -235,6 +235,7 @@ class TrackingUtils {
               waggleIter.set(true);
 
               eventLabels.put(time, eventTypes[2]);
+              eventIDs.put(time, pathIDs.get(i));
             }
           }
 

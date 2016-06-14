@@ -39,7 +39,7 @@ class TrackingUtils {
   private static final float distThreshold = 0.15f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
-  private static final float timeOutThreshold = 1.5f;
+  private static final float timeOutThreshold = 1f;
   private static final String eventTypes[] = {"arrival","departure","waggle"};
 
   private class ColorTracker {

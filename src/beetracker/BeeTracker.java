@@ -1788,7 +1788,7 @@ public class BeeTracker extends PApplet {
 
     if(pip) {
       offset = frameOffset;
-      dims = movieDims;
+      dims = frameDims;
     } else {
       offset = movieOffset;
       dims = movieDims;

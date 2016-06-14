@@ -743,13 +743,13 @@ public class BeeTracker extends PApplet {
             }
             timeStamps.sort();
 
-            StringBuilder builder;
+            StringBuilder timeStringBuilder;
             int tmp;
             for(float timeStamp : timeStamps) {
               tmp = (int)(timeStamp*100f);
 
-              builder = new StringBuilder();
-              builder.append(String.format(
+              timeStringBuilder = new StringBuilder();
+              timeStringBuilder.append(String.format(
                 "%02d:%02d:%02d.%02d",
                 (tmp/6000)/60,
                 tmp/6000,
@@ -757,9 +757,9 @@ public class BeeTracker extends PApplet {
                 tmp%100
               ));
 
-              formattedTime.put(timeStamp, builder.toString());
+              formattedTime.put(timeStamp, timeStringBuilder.toString());
 
-              msg.append(builder.toString())
+              msg.append(timeStringBuilder.toString())
                 .append(" - bee #")
                 .append(summary.get(timeStamp).replaceAll(",", ", "))
                 .append('\n');

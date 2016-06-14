@@ -34,7 +34,7 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 11 Jun 16
+ * @date 14 Jun 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {
@@ -209,8 +209,8 @@ class BlobDetectionUtils {
           //skip blobs that are too close to each other
           for(k = 1; k < indices.size(); k++) {
             if((b2 = bd.getBlob(indices.get(k))) != null) {
-              if(Math.pow(Math.pow(b2.x - b.x, 2.) + Math.pow(b2.y - b.y, 2.), 0.5) <
-                0.5*(Math.pow(b.w*b.w + b.h*b.h, 0.5) + Math.pow(b2.w*b2.w + b2.h*b2.h, 0.5))) {
+              if(BeeTracker.dist(b.x, b.y, b2.x, b2.y) <
+                0.5f*(BeeTracker.mag(b.w, b.h) + BeeTracker.mag(b2.w, b2.h))) {
                 continue;
               }
             }

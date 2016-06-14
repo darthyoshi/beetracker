@@ -23,7 +23,7 @@ import java.util.LinkedList;
 /**
  * @class ShapeRecognizer
  * @author Kay Choi
- * @date 2 Jun 16
+ * @date 14 Jun 16
  * @description Provides shape recognition for waggle dance detection.
  */
 public class ShapeRecognizer {
@@ -117,7 +117,6 @@ public class ShapeRecognizer {
   void recognize(java.util.List<float[]> path, int[] frameDims) {
     java.util.ListIterator<float[]> iter = path.listIterator(path.size());
     float[] point, prevCandPoint = null;
-    float dx, dy;
     int i;
 
     LinkedList<float[]> candidateList = new LinkedList<>();
@@ -131,12 +130,11 @@ public class ShapeRecognizer {
 
       //artificially increase candidate sample rate
       if(prevCandPoint != null) {
-        dx = (prevCandPoint[0]-point[0])/rate;
-        dy = (prevCandPoint[1]-point[1])/rate;
-
         for(i = 1; i < rate; i++) {
-          candidateList.add(new float[] {(point[0]+i*dx)*frameDims[0],
-            (point[1]+i*dy)*frameDims[1]});
+          candidateList.add(new float[] {
+            BeeTracker.lerp(prevCandPoint[0], point[0], ((float)i)/rate)*frameDims[0],
+            BeeTracker.lerp(prevCandPoint[1], point[1], ((float)i)/rate)*frameDims[1]
+          });
         }
       }
 

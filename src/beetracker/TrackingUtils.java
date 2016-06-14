@@ -30,7 +30,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 11 Jun 16
+ * @date 14 Jun 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -157,11 +157,11 @@ class TrackingUtils {
           j = 0;
           for(float[] newPoint : newPoints) {
             point = path.get(path.size() - 1);
-            oldX = (point[0] - newPoint[0])*movieDims[0];
-            oldY = (point[1] - newPoint[1])*movieDims[1];
 
-            distances[i][j] = (float)Math.pow(oldX*oldX + oldY*oldY,
-              0.5);
+            distances[i][j] = BeeTracker.dist(
+              point[0]*movieDims[0], point[1]*movieDims[1],
+              newPoint[0]*movieDims[0], newPoint[1]*movieDims[1]
+            );
 
             j++;
           }
@@ -202,7 +202,7 @@ class TrackingUtils {
           checkedIndicesNew.append(minJ);
 
           //mark pairs with valid distance
-          if(minDist < distThreshold*0.5f*(movieDims[0]+movieDims[1])) {
+          if(minDist < distThreshold*BeeTracker.sqrt(movieDims[0]*movieDims[1])) {
             validPairs[k][0] = minI;
             validPairs[k][1] = minJ;
 

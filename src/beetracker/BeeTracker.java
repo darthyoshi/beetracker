@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 11 Jun 16
+ * @date 14 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -1715,33 +1715,22 @@ public class BeeTracker extends PApplet {
     //semi-minor axis (y)
     result[1] = exitCenter[1] - mouseY;
 
-    result[0] = result[1] = (float)Math.pow((Math.pow(result[0], 2) +
-      Math.pow(result[1], 2)), .5);
+    result[0] = result[1] = mag(result[0], result[1]);
 
-    //constrain semi-major axis (x)
-    if(result[0] > exitCenter[0] - offset[0]) {
-      result[0] = exitCenter[0] - offset[0];
-    }
-
-    if(result[0] > dims[0] - exitCenter[0] + offset[0]) {
-      result[0] = dims[0] - exitCenter[0] + offset[0];
-    }
-
-    //constrain semi-minor axis (y)
-    if(result[1] > exitCenter[1] - offset[1]) {
-      result[1] = exitCenter[1] - offset[1];
-    }
-
-    if(result[1] > dims[1] - exitCenter[1] + offset[1]) {
-      result[1] = dims[1] - exitCenter[1] + offset[1];
-    }
+    //constrain semi-major axes
+    result[0] = constrain(
+      result[0],
+      exitCenter[0] - offset[0],
+      dims[0] - exitCenter[0] + offset[0]
+    );
+    result[1] = constrain(
+      result[1],
+      exitCenter[1] - offset[1],
+      dims[1] - exitCenter[1] + offset[1]
+    );
 
     //choose smaller axis
-    if(result[0] < result[1]) {
-      result[1] = result[0];
-    } else {
-      result[0] = result[1];
-    }
+    result[0] = result[1] = min(result[0], result[1]);
 
     //normalize axes
     if(!pip) {
@@ -1762,7 +1751,6 @@ public class BeeTracker extends PApplet {
    * @return an integer array containing the adjusted coordinates
    */
   private int[] constrainMousePosition(int mouseX, int mouseY) {
-    int[] result = {mouseX, mouseY};
     int[] offset, dims;
 
     if(pip) {
@@ -1773,19 +1761,10 @@ public class BeeTracker extends PApplet {
       dims = movieDims;
     }
 
-    if(mouseX < offset[0]) {
-      result[0] = offset[0];
-    } else if (mouseX > offset[0] + dims[0]) {
-      result[0] = offset[0] + dims[0];
-    }
-
-    if(mouseY < offset[1]) {
-      result[1] = offset[1];
-    } else if(mouseY > offset[1] + dims[1]) {
-      result[1] = offset[1] + dims[1];
-    }
-
-    return result;
+    return new int[] {
+      constrain(mouseX, offset[0],  offset[0]+dims[0]),
+      constrain(mouseY, offset[1],  offset[1]+dims[1])
+    };
   }
 
   /**
@@ -1885,13 +1864,13 @@ public class BeeTracker extends PApplet {
 
     //scale by width
     result[0] = viewBounds[2] - viewBounds[0] + 1;
-    result[1] = (int)Math.ceil((double)result[0]/ratio);
+    result[1] = ceil(((float)result[0])/ratio);
 
     //scale by height
     int tmp = viewBounds[3] - viewBounds[1] + 1;
     if(result[1] > tmp) {
       result[1] = tmp;
-      result[0] = (int)Math.ceil((double)result[1]*ratio);
+      result[0] = ceil(((float)result[1])*ratio);
     }
 
     return result;

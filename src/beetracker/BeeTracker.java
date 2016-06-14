@@ -117,6 +117,8 @@ public class BeeTracker extends PApplet {
 
   private JDialog eventDialog = null;
 
+  private HashMap<Float, String> msgs;
+
   /**
    * Overrides from PApplet.
    */
@@ -193,6 +195,12 @@ public class BeeTracker extends PApplet {
       viewBounds[2] - viewBounds[0] + 1,
       viewBounds[3] - viewBounds[1] + 1
     );
+    viewFrame.beginDraw();
+    viewFrame.textSize(10);
+    viewFrame.textAlign(LEFT, TOP);
+    viewFrame.endDraw();
+
+    msgs = new HashMap<>();
   }
 
   /**
@@ -609,6 +617,31 @@ public class BeeTracker extends PApplet {
 
           //draw recorded paths
           tu.drawPaths(viewFrame, frameDims, frameOffset);
+        }
+
+        //list recent events
+        if(!msgs.isEmpty()) {
+          FloatList msgTimes = new FloatList(msgs.size());
+          for(Float t : msgs.keySet()) {
+            msgTimes.append(t);
+          }
+          msgTimes.sort();
+          StringBuilder msg = new StringBuilder();
+          for(float t : msgTimes) {
+            if(time < t) {
+              msg.append(msgs.get(t)).append('\n');
+            } else {
+              msgs.remove(t);
+              msgTimes.remove(msgTimes.index(t));
+            }
+          }
+          viewFrame.fill(0xff000000);
+          viewFrame.text(msg.toString(), 6, 6);
+          viewFrame.text(msg.toString(), 4, 4);
+          viewFrame.text(msg.toString(), 6, 4);
+          viewFrame.text(msg.toString(), 4, 6);
+          viewFrame.fill(0xffffffff);
+          viewFrame.text(msg.toString(), 5, 5);
         }
 
         viewFrame.endDraw();
@@ -2442,5 +2475,24 @@ public class BeeTracker extends PApplet {
    */
   public boolean isZoomed() {
     return pip;
+  }
+
+  /**
+   * Adds an event to the notifications.
+   * @param eventType
+   */
+  void registerEvent(String eventType) {
+    int tmp = (int)(time*100f);
+    msgs.put(
+      time + 5f,
+      String.format(
+        "%02d:%02d:%02d.%02d, %s",
+        (tmp/6000)/60,
+        tmp/6000,
+        (tmp/100)%60,
+        tmp%100,
+        eventType
+      )
+    );
   }
 }

@@ -236,6 +236,7 @@ class TrackingUtils {
 
               eventLabels.put(time, eventTypes[2]);
               eventIDs.put(time, pathIDs.get(i));
+              parent.registerEvent(eventTypes[2]);
             }
           }
 
@@ -270,10 +271,12 @@ class TrackingUtils {
             if(!isNewPointInExit) {
               eventLabels.put(time, eventTypes[1]);
               eventIDs.put(time, pathIDs.get(oldPaths.indexOf(path)));
+              parent.registerEvent(eventTypes[1]);
             }
           } else if(isNewPointInExit) {
             eventLabels.put(time, eventTypes[0]);
             eventIDs.put(time, pathIDs.get(oldPaths.indexOf(path)));
+            parent.registerEvent(eventTypes[0]);
           }
         }
       }

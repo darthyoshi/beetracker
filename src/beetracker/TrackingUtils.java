@@ -507,7 +507,7 @@ class TrackingUtils {
       img.text("color:", 25, yOffset-57);
 
       if(waggleMode) {
-        img.text("W", 7, yOffset-40);
+        img.text("W", 7, yOffset-35);
       } else {
         img.text("A", 7, yOffset-40);
         img.text("D", 7, yOffset-30);
@@ -568,11 +568,11 @@ class TrackingUtils {
         if(type.equals(eventTypes[2])) {
           img.triangle(
             stampOffset + 26,
-            yOffset-32.5f,
-            stampOffset + 23.5f,
             yOffset-37.5f,
+            stampOffset + 23.5f,
+            yOffset-42.5f,
             stampOffset + 28.5f,
-            yOffset-37.5f
+            yOffset-42.5f
           );
         } else {
           if(type.equals(eventTypes[0])) {

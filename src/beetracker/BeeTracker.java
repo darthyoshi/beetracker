@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 14 Jun 16
+ * @date 15 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -1753,13 +1753,13 @@ public class BeeTracker extends PApplet {
     //constrain semi-major axes
     result[0] = constrain(
       result[0],
-      exitCenter[0] - offset[0],
-      dims[0] - exitCenter[0] + offset[0]
+      0,
+      min(exitCenter[0] - offset[0], dims[0] - exitCenter[0] + offset[0])
     );
     result[1] = constrain(
       result[1],
-      exitCenter[1] - offset[1],
-      dims[1] - exitCenter[1] + offset[1]
+      0,
+      min(exitCenter[1] - offset[1], dims[1] - exitCenter[1] + offset[1])
     );
 
     //choose smaller axis

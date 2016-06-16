@@ -888,13 +888,11 @@ public class BeeTracker extends PApplet {
         }
 
         while(stillFrame == null && imgIndex < imgSequence.length) {
-          if(imgSequence[imgIndex] == null) {
-            updateImgSequence(imgIndex);
-          }
+          updateImgSequence(imgIndex);
 
           stillFrame = imgSequence[imgIndex];
 
-          if(stillFrame.width == -1) {
+          if(stillFrame.width <= 0) {
             stillFrame = null;
 
             if(imgIndex < imgSequence.length-1) {
@@ -929,16 +927,24 @@ public class BeeTracker extends PApplet {
    */
   private void updateImgSequence(int index) {
     int i;
-    for(i = 0; i < index - 2; i++) {
+    for(i = 0; i < index; i++) {
       imgSequence[i] = null;
     }
-    while(i < index + 2 && i < imgNames.length) {
+    if(imgSequence[i] == null) {
+      if(debug) {
+        println("image sequence \"stream\": " + imgNames[i]);
+      }
+
+      imgSequence[i] = loadImage(imgNames[i]);
+    }
+    i++;
+    while(i < index + 10 && i< imgNames.length) {
       if(imgSequence[i] == null) {
         if(debug) {
           println("image sequence \"stream\": " + imgNames[i]);
         }
 
-        imgSequence[i] = loadImage(imgNames[i]);
+        imgSequence[i] = requestImage(imgNames[i]);
       }
       i++;
     }

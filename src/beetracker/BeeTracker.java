@@ -1535,6 +1535,8 @@ public class BeeTracker extends PApplet {
     uic.setSeekTime(0f);
     thresholdRadios(0);
 
+    msgs.clear();
+
     System.out.append("footage closed\n------\n").flush();
 
     tu.init();

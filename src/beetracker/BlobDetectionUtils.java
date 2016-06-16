@@ -34,7 +34,7 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 14 Jun 16
+ * @date 15 Jun 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {
@@ -43,6 +43,7 @@ class BlobDetectionUtils {
   private final BlobDetection bd;
   private final PShader thresholdShader, morphoShader, alphaShader;
   private PGraphics buf = null;
+  private IntList validBlobs;
 
   /**
    * Class constructor.
@@ -135,7 +136,7 @@ class BlobDetectionUtils {
     buf.noFill();
     buf.strokeWeight(1);
 
-    for (int n = 0; n < bd.getBlobNb(); n++) {
+    for (int n : validBlobs) {
       if ((b = bd.getBlob(n)) != null) {
         //mark edges all blobs
         buf.stroke(0xFFFFFFFF);
@@ -188,6 +189,8 @@ class BlobDetectionUtils {
     parent.colorMode(BeeTracker.HSB, 255);
 
     //index of unchecked blobs
+    validBlobs = new IntList(bd.getBlobNb());
+
     IntList indices = new IntList(bd.getBlobNb());
     for(i = 0; i < bd.getBlobNb(); i++) {
       indices.append(i);
@@ -207,11 +210,11 @@ class BlobDetectionUtils {
           }
 */
           //skip blobs that are too close to each other
-          for(k = 1; k < indices.size(); k++) {
-            if((b2 = bd.getBlob(indices.get(k))) != null) {
+          for(k = 0; k < indices.size(); k++) {
+            if(i != k && (b2 = bd.getBlob(indices.get(k))) != null) {
               if(BeeTracker.dist(b.x, b.y, b2.x, b2.y) <
                 0.5f*(BeeTracker.mag(b.w, b.h) + BeeTracker.mag(b2.w, b2.h))) {
-                continue;
+                indices.remove(k);
               }
             }
           }
@@ -227,7 +230,8 @@ class BlobDetectionUtils {
             if((int)parent.hue(pixel) <= hue+5 && (int)parent.hue(pixel) >= hue-5) {
               result.get(color).add(point);
 
-              //remove blob from consideration
+              //remove blob from further consideration
+              validBlobs.append(indices.get(i));
               indices.remove(i--);
             }
           } else {  //case: centroid is not in blob
@@ -249,6 +253,7 @@ class BlobDetectionUtils {
                 {
                   result.get(color).add(point);
 
+                  validBlobs.append(indices.get(i));
                   indices.remove(i--);
 
                   break loop;

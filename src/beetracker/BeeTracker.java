@@ -520,15 +520,7 @@ public class BeeTracker extends PApplet {
 
             if(record || replay) {
               if(debug) {
-                println(
-                  "---------BEGIN FRAME (" +
-                  (
-                    imgSequenceMode ?
-                    Integer.toString((int)time) :
-                    String.format("%.2fs", time)
-                  ) +
-                  ")---------\npip: " + pip
-                );
+                println(String.format("---------BEGIN FRAME (%.2fs)---------\npip: %b", time, pip));
               }
 
               tu.trackCentroids(
@@ -2486,7 +2478,7 @@ public class BeeTracker extends PApplet {
   }
 
   /**
-   * Adds an event to the notifications.
+   * Adds an event to the notification queue.
    * @param eventType
    */
   void registerEvent(String eventType) {

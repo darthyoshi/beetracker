@@ -216,9 +216,7 @@ class BlobDetectionUtils {
             }
           }
 
-          point = new float[2];
-          point[0] = b.x;
-          point[1] = b.y;
+          point = new float[] {b.x, b.y};
           pixel = frame.pixels[
            (int)(b.y*frame.height)*frame.width +
            (int)(b.x*frame.width)
@@ -230,9 +228,7 @@ class BlobDetectionUtils {
               result.get(color).add(point);
 
               //remove blob from consideration
-              indices.remove(i);
-
-              break;
+              indices.remove(i--);
             }
           } else {  //case: centroid is not in blob
             loop:
@@ -252,6 +248,8 @@ class BlobDetectionUtils {
                   (int)parent.hue(pixel) == hue)
                 {
                   result.get(color).add(point);
+
+                  indices.remove(i--);
 
                   break loop;
                 }

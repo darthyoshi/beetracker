@@ -227,7 +227,8 @@ class BlobDetectionUtils {
 
           //case: centroid is in blob
           if(parent.brightness(pixel) > 0f) {
-            if((int)parent.hue(pixel) <= hue+5 && (int)parent.hue(pixel) >= hue-5) {
+            if((int)parent.hue(pixel) <= hue+5 &&
+              (int)parent.hue(pixel) >= hue-5) {
               result.get(color).add(point);
 
               //remove blob from further consideration
@@ -248,9 +249,11 @@ class BlobDetectionUtils {
               ) {
                 pixel = frame.pixels[k*frame.width + l];
 
-                if(parent.brightness(pixel) > 0f &&
-                  (int)parent.hue(pixel) == hue)
-                {
+                if(
+                  parent.brightness(pixel) > 0f &&
+                  (int)parent.hue(pixel) <= hue+5 &&
+                  (int)parent.hue(pixel) >= hue-5
+                ) {
                   result.get(color).add(point);
 
                   validBlobs.append(indices.get(i));

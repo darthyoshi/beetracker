@@ -19,6 +19,7 @@
 package beetracker;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -79,7 +80,7 @@ class BlobDetectionUtils {
    */
   void filterImg(PImage img, IntList colors, int[] threshold) {
     if(!Arrays.equals(this.threshold, threshold)) {
-      this.threshold = java.util.Arrays.copyOf(threshold, threshold.length);
+      this.threshold = Arrays.copyOf(threshold, threshold.length);
       thresholdShader.set(
         "threshold",
         ((float)threshold[0])/255f,

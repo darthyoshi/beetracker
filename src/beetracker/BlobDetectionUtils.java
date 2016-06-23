@@ -44,6 +44,7 @@ class BlobDetectionUtils {
   private final PShader thresholdShader, morphoShader, alphaShader;
   private PGraphics buf = null;
   private IntList validBlobs;
+  private int[] threshold = null;
 
   /**
    * Class constructor.
@@ -77,12 +78,15 @@ class BlobDetectionUtils {
    * @param threshold an array containing the HSV thresholds
    */
   void filterImg(PImage img, IntList colors, int[] threshold) {
-    thresholdShader.set(
-      "threshold",
-      ((float)threshold[0])/255f,
-      ((float)threshold[1])/255f,
-      ((float)threshold[2])/255f
-    );
+    if(!Arrays.equals(this.threshold, threshold)) {
+      this.threshold = java.util.Arrays.copyOf(threshold, threshold.length);
+      thresholdShader.set(
+        "threshold",
+        ((float)threshold[0])/255f,
+        ((float)threshold[1])/255f,
+        ((float)threshold[2])/255f
+      );
+    }
 
     if(buf == null || buf.width != img.width || buf.height != img.height) {
       buf = parent.createGraphics(img.width, img.height, BeeTracker.P2D);
@@ -90,8 +94,7 @@ class BlobDetectionUtils {
 
     buf.beginDraw();
     buf.colorMode(BeeTracker.HSB, 1);
-    buf.endDraw();
-
+    buf.clear();
     buf.copy(img, 0, 0, img.width, img.height, 0, 0, buf.width, buf.height);
 
     alphaShader.set("init", true);
@@ -112,6 +115,8 @@ class BlobDetectionUtils {
     //remove noise
     morphImage(buf, false);
     morphImage(buf, true);
+
+    buf.endDraw();
 
     img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
   }

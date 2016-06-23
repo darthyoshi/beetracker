@@ -1,6 +1,6 @@
 /*
 * BeeTracker
-* Copyright (C) 2015 Kay Choi
+* Copyright (C) 2016 Kay Choi
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -31,16 +31,7 @@ uniform bool init;
 
 void main() {
   vec4 col = texture2D(texture, vertTexCoord.st);
-  
-  if(init) {
-    gl_FragColor = vec4(col.rgb, 0.5);
-  }
-  else {
-    if(col.a < 1.0) {
-      gl_FragColor = vec4(0,0,0,0);
-    }
-    else {
-      gl_FragColor = col;
-    }
-  }
+
+  gl_FragColor = init ? vec4(col.rgb, 0.5) :
+    (col.a < 1.0 ? vec4(0,0,0,0) : col);
 }

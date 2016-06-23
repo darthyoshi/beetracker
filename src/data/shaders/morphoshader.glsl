@@ -1,6 +1,6 @@
 /*
 * BeeTracker
-* Copyright (C) 2015 Kay Choi
+* Copyright (C) 2016 Kay Choi
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,17 @@ uniform vec2 texOffset;
 
 varying vec4 vertTexCoord;
 
-uniform float filterRadius;
+uniform float filterRadius[2];
 uniform bool dilateMode;
+uniform vec4 exitParams;
+
+/**
+ * Determines if the texel is within the circle.
+ */
+bool isInExit() {
+  return pow((exitParams[0]-vertTexCoord.s)/exitParams[2],2.0) +
+    pow((1.0-exitParams[1]-vertTexCoord.t)/exitParams[3],2.0) < 1.0;
+}
 
 /**
  * Applies a morphological probe to determine the new texel value.
@@ -37,11 +46,12 @@ uniform bool dilateMode;
 vec4 probeColor() {
   float i, j, x, y;
   vec4 col, result = (dilateMode ? vec4(0, 0, 0, 0) : texture2D(texture, vertTexCoord.st));
+  int index = isInExit() ? 0 : 1;
 
-  for(i = -filterRadius; i <= filterRadius; i++) {
+  for(i = -filterRadius[index]; i <= filterRadius[index]; i++) {
     x = i*texOffset.s + vertTexCoord.s;
-    for(j = -filterRadius; j <= filterRadius; j++) {
-      if(abs(i) + abs(j) <= filterRadius) {
+    for(j = -filterRadius[index]; j <= filterRadius[index]; j++) {
+      if(abs(i) + abs(j) <= filterRadius[index]) {
         y = j*texOffset.t + vertTexCoord.t;
         col = texture2D(texture, vec2(x, y));
 

@@ -34,12 +34,12 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 15 Jun 16
+ * @date 22 Jun 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {
   private final BeeTracker parent;
-  private static final float filterRadius = 6f;
+  private static final float[] filterRadius = {3f, 6f};
   private final BlobDetection bd;
   private final PShader thresholdShader, morphoShader, alphaShader;
   private PGraphics buf = null;
@@ -294,5 +294,15 @@ class BlobDetectionUtils {
   private void morphImage(PGraphics buf, boolean dilateMode) {
     morphoShader.set("dilateMode", dilateMode);
     buf.filter(morphoShader);
+  }
+
+  /**
+   * Sets the exit boundary parameters for noise filtering.
+   * @param exitCenter the exit center, normalized to the inset frame
+   * @param exitAxes the exit semi-major axes, normalized to the inset frame
+   */
+  void setExit(float[] exitCenter, float[] exitAxes) {
+    morphoShader.set("exitParams", exitCenter[0], exitCenter[1],
+      exitAxes[0], exitAxes[1]);
   }
 }

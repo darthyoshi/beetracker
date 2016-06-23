@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 15 Jun 16
+ * @date 22 Jun 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -1057,6 +1057,17 @@ public class BeeTracker extends PApplet {
       exitCenter[1] = (exitRadial[1]-insetBox[1])*frameDims[1]/
         (insetBox[3]-insetBox[1]) + frameOffset[1];
     }
+
+    float[] exitXY = new float[] {
+      (exitRadial[0]-insetBox[0])/(insetBox[2]-insetBox[0]),
+      (exitRadial[1]-insetBox[1])/(insetBox[3]-insetBox[1])
+    };
+    float[] exitAxes = new float[] {
+      exitRadial[2]/(insetBox[2]-insetBox[0]),
+      exitRadial[3]/(insetBox[3]-insetBox[1])
+    };
+
+    bdu.setExit(exitXY, exitAxes);
   }
 
   /**
@@ -1673,16 +1684,16 @@ public class BeeTracker extends PApplet {
       if(!selectExit) {
         if(!pip) {
           insetBox[0] = insetBox[2] =
-            1f*(mouse[0]-movieOffset[0])/movieDims[0];
+            ((float)(mouse[0]-movieOffset[0]))/movieDims[0];
           insetBox[1] = insetBox[3] =
-            1f*(mouse[1]-movieOffset[1])/movieDims[1];
+            ((float)(mouse[1]-movieOffset[1]))/movieDims[1];
 
           isDrag = true;
         }
       } else {
         if(!pip) {
-          exitRadial[0] = 1f*(mouse[0]-movieOffset[0])/movieDims[0];
-          exitRadial[1] = 1f*(mouse[1]-movieOffset[1])/movieDims[1];
+          exitRadial[0] = ((float)(mouse[0]-movieOffset[0]))/movieDims[0];
+          exitRadial[1] = ((float)(mouse[1]-movieOffset[1]))/movieDims[1];
         } else {
           exitRadial[0] = insetBox[0] + (
             (insetBox[2]-insetBox[0]) *
@@ -1712,8 +1723,8 @@ public class BeeTracker extends PApplet {
       int[] mouse = constrainMousePosition(mouseX, mouseY);
 
       if(!selectExit) {
-        insetBox[2] = 1f*(mouse[0]-movieOffset[0])/movieDims[0];
-        insetBox[3] = 1f*(mouse[1]-movieOffset[1])/movieDims[1];
+        insetBox[2] = ((float)(mouse[0]-movieOffset[0]))/movieDims[0];
+        insetBox[3] = ((float)(mouse[1]-movieOffset[1]))/movieDims[1];
       } else {
         float[] tmp = constrainRadius(mouse[0], mouse[1]);
 

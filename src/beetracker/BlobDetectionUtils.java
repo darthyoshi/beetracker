@@ -42,10 +42,13 @@ class BlobDetectionUtils {
   private final BeeTracker parent;
   private static final float[] filterRadius = {3f, 6f};
   private final BlobDetection bd;
-  private final PShader thresholdShader, morphoShader, alphaShader;
-  private PGraphics buf = null;
+  private final PShader thresholdShader, morphoShader, alphaShader, maskShader;
+  private PGraphics buf = null, exitBuf = null;
   private IntList validBlobs;
   private int[] threshold = null;
+  private int[] bufParams = null;
+  private float[] exitBufParams = null;
+  private boolean waggleMode = false;
 
   /**
    * Class constructor.
@@ -67,6 +70,7 @@ class BlobDetectionUtils {
     morphoShader = parent.loadShader("shaders/morphoshader.glsl");
     morphoShader.set("filterRadius", filterRadius);
     alphaShader = parent.loadShader("shaders/alphashader.glsl");
+    maskShader = parent.loadShader("shaders/maskshader.glsl");
   }
 
   /**
@@ -91,35 +95,31 @@ class BlobDetectionUtils {
 
     if(buf == null || buf.width != img.width || buf.height != img.height) {
       buf = parent.createGraphics(img.width, img.height, BeeTracker.P2D);
+      buf.beginDraw();
+      buf.colorMode(BeeTracker.HSB, 1);
+      buf.endDraw();
+      bufParams = new int[] {0, 0, buf.width, buf.height};
+
+      exitBuf = parent.createGraphics(img.width, img.height, BeeTracker.P2D);
+      exitBuf.beginDraw();
+      exitBuf.colorMode(BeeTracker.HSB, 1);
+      exitBuf.endDraw();
     }
 
-    buf.beginDraw();
-    buf.colorMode(BeeTracker.HSB, 1);
-    buf.clear();
-    buf.copy(img, 0, 0, img.width, img.height, 0, 0, buf.width, buf.height);
-
-    alphaShader.set("init", true);
-    buf.filter(alphaShader);
-
-    for(int i = 0; i < colors.size(); i++) {
-      thresholdShader.set("basehue", buf.hue(colors.get(i)));
-      buf.filter(thresholdShader);
-    }
-
-    alphaShader.set("init", false);
-    buf.filter(alphaShader);
-
-    //fill blob holes
-    morphImage(buf, true);
-    morphImage(buf, false);
-
-    //remove noise
-    morphImage(buf, false);
-    morphImage(buf, true);
-
-    buf.endDraw();
-
+    applyShader(img, buf, bufParams, false, colors);
     img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
+
+    if(!waggleMode) {
+      int[] tmp = {
+        (int)(exitBufParams[0]*img.width),
+        (int)(exitBufParams[1]*img.height),
+        (int)(exitBufParams[2]*img.width),
+        (int)(exitBufParams[3]*img.height)
+      };
+      applyShader(img, exitBuf, tmp, true, colors);
+      exitBuf.filter(maskShader);
+      img.blend(exitBuf, 0, 0, exitBuf.width, exitBuf.height, 0, 0, img.width, img.height, BeeTracker.LIGHTEST);
+    }
   }
 
   /**
@@ -308,7 +308,98 @@ class BlobDetectionUtils {
    * @param exitAxes the exit semi-major axes, normalized to the inset frame
    */
   void setExit(float[] exitCenter, float[] exitAxes) {
-    morphoShader.set("exitParams", exitCenter[0], exitCenter[1],
+    maskShader.set("exitParams", exitCenter[0], exitCenter[1],
       exitAxes[0], exitAxes[1]);
+    exitBufParams = new float[] {exitCenter[0], exitCenter[1],
+      exitAxes[0], exitAxes[1]};
+  }
+
+  /**
+   * TODO
+   * @param src
+   * @param dst
+   * @param dstParams
+   * @param isExitFilter
+   * @param colors
+   */
+  private void applyShader(
+    PImage src,
+    PGraphics dst,
+    int[] dstParams, 
+    boolean isExitFilter,
+    IntList colors
+  ) {
+    dst.beginDraw();
+    dst.clear();
+    dst.copy(
+      src,
+      dstParams[0], dstParams[1],
+      dstParams[2], dstParams[3],
+      dstParams[0], dstParams[1],
+      dstParams[2], dstParams[3]
+    );
+
+    alphaShader.set("init", true);
+    dst.filter(alphaShader);
+
+    for(int i = 0; i < colors.size(); i++) {
+      thresholdShader.set("basehue", buf.hue(colors.get(i)));
+      dst.filter(thresholdShader);
+    }
+
+    alphaShader.set("init", false);
+    dst.filter(alphaShader);
+
+    morphoShader.set("exitMode", isExitFilter);
+
+    //fill blob holes
+    morphImage(dst, true);
+    morphImage(dst, false);
+
+    //remove noise
+    morphImage(dst, false);
+    morphImage(dst, true);
+
+    dst.endDraw();
+  }
+
+  /**
+   * TODO
+   * @param frame
+   * @param b
+   * @param hue
+   * @return
+   */
+  private int getBlobArea(PImage frame, Blob b, int hue) {
+    int result = 0;
+    int i, j, pixel;
+    
+    for(
+      j = ((int)(b.yMin*frame.height));
+      j < ((int)(b.yMax*frame.height));
+      j++
+    ) {
+      for(
+        i = ((int)(b.xMin*frame.width));
+        i < ((int)(b.xMax*frame.width));
+        i++
+      ) {
+        pixel = frame.pixels[j*frame.width + i];
+
+        if(
+          parent.brightness(pixel) > 0f &&
+          (int)parent.hue(pixel) <= hue+5 &&
+          (int)parent.hue(pixel) >= hue-5
+        ) {
+          result++;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  void updateFilterRadius(boolean waggleMode) {
+    this.waggleMode = waggleMode;
   }
 }

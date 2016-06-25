@@ -30,15 +30,7 @@ varying vec4 vertTexCoord;
 
 uniform float filterRadius[2];
 uniform bool dilateMode;
-uniform vec4 exitParams;
-
-/**
- * Determines if the texel is within the circle.
- */
-bool isInExit() {
-  return pow((exitParams[0]-vertTexCoord.s)/exitParams[2],2.0) +
-    pow((1.0-exitParams[1]-vertTexCoord.t)/exitParams[3],2.0) < 1.0;
-}
+uniform bool exitMode;
 
 /**
  * Applies a morphological probe to determine the new texel value.
@@ -46,7 +38,7 @@ bool isInExit() {
 vec4 probeColor() {
   float i, j, x, y;
   vec4 col, result = (dilateMode ? vec4(0, 0, 0, 0) : texture2D(texture, vertTexCoord.st));
-  int index = isInExit() ? 0 : 1;
+  int index = exitMode ? 0 : 1;
 
   for(i = -filterRadius[index]; i <= filterRadius[index]; i++) {
     x = i*texOffset.s + vertTexCoord.s;

@@ -183,7 +183,7 @@ class BlobDetectionUtils {
     HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
     float[] point;
     Blob b, b2;
-    int i, j, k, color, pixel, hue;
+    int i, j, k, l, m, color, pixel, hue, numBlobPixels;
 
     frame.loadPixels();
     bd.computeBlobs(frame.pixels);
@@ -194,7 +194,7 @@ class BlobDetectionUtils {
 
     parent.colorMode(BeeTracker.HSB, 255);
 
-    //index of unchecked blobs
+    //index of accepted blobs
     validBlobs = new IntList(bd.getBlobNb());
 
     IntList indices = new IntList(bd.getBlobNb());
@@ -207,20 +207,32 @@ class BlobDetectionUtils {
       color = colors.get(j);
       hue = (int)parent.hue(color);
 
-      //iterate through remaining blobs
+      //iterate through unchecked blobs
       for(i = 0; i < indices.size(); i++) {
         if((b = bd.getBlob(indices.get(i))) != null) {
-/*          //TODO discard small blobs
-          if(blob is too small) {
+          //discard blobs that are too thin
+          if(b.h/b.w*frame.height/frame.width < 0.5f || b.h/b.w*frame.height/frame.width > 2f) {
+            indices.remove(i--);
+            continue;
+          }
+/*
+          if((float)(numBlobPixels = getBlobArea(frame, b, hue))/
+            (frame.width*frame.height*b.w*b.h) < 0.40f) {
+            indices.remove(i);
             continue;
           }
 */
-          //skip blobs that are too close to each other
+          //skip blobs that are too close to a larger blob
           for(k = 0; k < indices.size(); k++) {
             if(i != k && (b2 = bd.getBlob(indices.get(k))) != null) {
               if(BeeTracker.dist(b.x, b.y, b2.x, b2.y) <
                 0.5f*(BeeTracker.mag(b.w, b.h) + BeeTracker.mag(b2.w, b2.h))) {
-                indices.remove(k);
+                if(getBlobArea(frame, b2, hue) < getBlobArea(frame, b, hue)) {
+                  if(validBlobs.hasValue(indices.get(k))) {
+                    validBlobs.removeValue(indices.get(k));
+                    indices.remove(k--);
+                  }
+                }
               }
             }
           }
@@ -249,7 +261,7 @@ class BlobDetectionUtils {
               k++
             ) {
               for(
-                int l = (int)(b.xMin*frame.width);
+                l = (int)(b.xMin*frame.width);
                 l < (int)(b.xMax*frame.width);
                 l++
               ) {

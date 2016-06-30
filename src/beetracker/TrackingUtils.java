@@ -40,7 +40,7 @@ class TrackingUtils {
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
   private static final float timeOutThreshold = 1f;
-  private static final String eventTypes[] = {"arrival","departure","waggle"};
+  private static final String eventTypes[] = {"ingress","egress","waggle"};
 
   private class ColorTracker {
     List<List<float[]>> paths;
@@ -242,7 +242,7 @@ class TrackingUtils {
 
           i++;
         }
-      } else {  //check all paired points for arrivals/departures
+      } else {  //check all paired points for ingress/egress
         for(i = 0; i < k; i++) {
           path = oldPaths.get(validPairs[i][0]);
           point = path.get(path.size() - 1);
@@ -365,7 +365,7 @@ class TrackingUtils {
   }
 
   /**
-   * Retrieves the arrival and departure timestamps for all tracked colors.
+   * Retrieves the ingress and egress timestamps for all tracked colors.
    * @return a HashMap mapping Strings to HashMaps mapping six-digit
    *   hexadecimal RGB values to Lists of floating point timestamps
    */

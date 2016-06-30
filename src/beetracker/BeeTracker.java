@@ -94,8 +94,6 @@ public class BeeTracker extends PApplet {
   private TrackingUtils tu;
 
   private PrintStream log = null;
-  private static final PrintStream stdOut = System.out;
-  private static final PrintStream stdErr = System.err;
 
   private PImage titleImg;
 
@@ -1511,7 +1509,7 @@ public class BeeTracker extends PApplet {
       imgNames = null;
       stillFrame = null;
       imgIndex = -1;
-    } else {
+    } else if(movie != null){
       movie.stop();
       movie = null;
     }
@@ -1600,9 +1598,6 @@ public class BeeTracker extends PApplet {
 
     if(log != null) {
       log.close();
-
-      System.setOut(stdOut);
-      System.setErr(stdErr);
     }
 
     sem.release();

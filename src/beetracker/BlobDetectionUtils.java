@@ -193,7 +193,7 @@ class BlobDetectionUtils {
     HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
     float[] point;
     Blob b, b2;
-    int i, j, k, l, m, color, pixel, hue, numBlobPixels;
+    int i, j, k, l, index1, index2, color, pixel, hue, numBlobPixels;
 
     frame.loadPixels();
     bd.computeBlobs(frame.pixels);
@@ -207,22 +207,30 @@ class BlobDetectionUtils {
     //index of accepted blobs
     validBlobs = new IntList(bd.getBlobNb());
 
-    IntList indices = new IntList(bd.getBlobNb());
+    IntList unCheckedIndices = new IntList(bd.getBlobNb());
     for(i = 0; i < bd.getBlobNb(); i++) {
-      indices.append(i);
+      unCheckedIndices.append(i);
     }
+
+    IntList skipIndices;
 
     //iterate through colors
     for(j = 0; j < colors.size(); j++) {
       color = colors.get(j);
       hue = (int)parent.hue(color);
 
-      //iterate through unchecked blobs
-      for(i = 0; i < indices.size(); i++) {
-        if((b = bd.getBlob(indices.get(i))) != null) {
-          //discard blobs that are too thin
+      //discard problematic blobs
+      for(i = unCheckedIndices.size() - 1; i >= 0; i--) {
+        index1 = unCheckedIndices.get(i);
+
+        if(BeeTracker.debug) {
+          System.out.println("#blobs left: " + unCheckedIndices.size());
+        }
+
+        if((b = bd.getBlob(index1)) != null) {
+          //blob is too thin
           if(b.h/b.w*frame.height/frame.width < 0.5f || b.h/b.w*frame.height/frame.width > 2f) {
-            indices.remove(i--);
+            unCheckedIndices.remove(i);
             continue;
           }
 /*
@@ -232,21 +240,34 @@ class BlobDetectionUtils {
             continue;
           }
 */
-          //skip blobs that are too close to a larger blob
-          for(k = 0; k < indices.size(); k++) {
-            if(i != k && (b2 = bd.getBlob(indices.get(k))) != null) {
-              if(BeeTracker.dist(b.x, b.y, b2.x, b2.y) <
-                0.5f*(BeeTracker.mag(b.w, b.h) + BeeTracker.mag(b2.w, b2.h))) {
-                if(getBlobArea(frame, b2, hue) < getBlobArea(frame, b, hue)) {
-                  if(validBlobs.hasValue(indices.get(k))) {
-                    validBlobs.removeValue(indices.get(k));
-                    indices.remove(k--);
-                  }
+          skipIndices = new IntList(unCheckedIndices.size());
+
+          //blob is too close to a larger blob
+          for(k = 0; k < unCheckedIndices.size(); k++) {
+            index2 = unCheckedIndices.get(k);
+            if(index1 != index2 && (b2 = bd.getBlob(index2)) != null) {
+              if(isOverlap(b, b2) &&
+                getBlobArea(frame, b2, hue) < getBlobArea(frame, b, hue)) {
+                if(!skipIndices.hasValue(index2)) {
+                  skipIndices.append(index2);
                 }
               }
             }
           }
 
+          for(int skip : skipIndices) {
+            if(unCheckedIndices.hasValue(skip)) {
+              unCheckedIndices.removeValue(skip);
+              i--;
+            }
+          }
+        }
+      }
+
+      //iterate through unchecked blobs
+      for(i = unCheckedIndices.size() - 1; i >= 0; i--) {
+        index1 = unCheckedIndices.get(i);
+        if((b = bd.getBlob(index1)) != null) {
           point = new float[] {b.x, b.y};
           pixel = frame.pixels[
            (int)(b.y*frame.height)*frame.width +
@@ -260,8 +281,8 @@ class BlobDetectionUtils {
               result.get(color).add(point);
 
               //remove blob from further consideration
-              validBlobs.append(indices.get(i));
-              indices.remove(i--);
+              validBlobs.append(index1);
+              unCheckedIndices.remove(i);
             }
           } else {  //case: centroid is not in blob
             loop:
@@ -284,8 +305,8 @@ class BlobDetectionUtils {
                 ) {
                   result.get(color).add(point);
 
-                  validBlobs.append(indices.get(i));
-                  indices.remove(i--);
+                  validBlobs.append(index1);
+                  unCheckedIndices.remove(i);
 
                   break loop;
                 }
@@ -386,11 +407,12 @@ class BlobDetectionUtils {
   }
 
   /**
-   * TODO
-   * @param frame
-   * @param b
-   * @param hue
-   * @return
+   * Calculates the area, in pixels, of a blob. 
+   * @param frame the source image
+   * @param b the blob
+   * @param hue the hue value of the blob
+   * @return the number of pixels within the blob bounding box with the proper
+   *   color
    */
   private int getBlobArea(PImage frame, Blob b, int hue) {
     int result = 0;
@@ -418,6 +440,10 @@ class BlobDetectionUtils {
       }
     }
 
+    if(BeeTracker.debug) {
+      System.out.println("blob area: " + result);
+    }
+
     return result;
   }
 
@@ -427,5 +453,31 @@ class BlobDetectionUtils {
    */
   void setWaggleMode(boolean waggleMode) {
     this.waggleMode = waggleMode;
+  }
+
+  /**
+   * @param b1 the first blob
+   * @param b2 the second blob
+   * @return true if the bounding boxes of b1 and b2 overlap
+   */
+  private boolean isOverlap(Blob b1, Blob b2) {
+    boolean xOverlap = b1.x < b2.x ? b1.xMax > b2.xMin : b1.xMin < b2.xMax;
+    boolean yOverlap = b1.y < b2.y ? b1.yMax > b2.yMin : b1.yMin < b2.yMax;
+
+    if(BeeTracker.debug) {
+      System.out.append("checking overlap").append('\n')
+        .append("B1 (x): ").append(Float.toString(b1.xMin)).append(' ')
+        .append(Float.toString(b1.xMax)).append('\n')
+        .append("B1 (y): ").append(Float.toString(b1.yMin)).append(' ')
+        .append(Float.toString(b1.yMax)).append('\n')
+        .append("B2 (x): ").append(Float.toString(b2.xMin)).append(' ')
+        .append(Float.toString(b2.xMax)).append('\n')
+        .append("B2 (y): ").append(Float.toString(b2.yMin)).append(' ')
+        .append(Float.toString(b2.yMax)).append('\n')
+        .append("overlap: ").append(Boolean.toString(xOverlap && yOverlap))
+        .append('\n').flush();
+    }
+
+    return xOverlap && yOverlap;
   }
 }

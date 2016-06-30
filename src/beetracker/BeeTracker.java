@@ -1396,7 +1396,7 @@ public class BeeTracker extends PApplet {
 
     uic.updateEventType(waggleMode);
     tu.setEventType(waggleMode);
-    bdu.updateFilterRadius(waggleMode);
+    bdu.setWaggleMode(waggleMode);
   }
 
   /**

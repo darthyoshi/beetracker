@@ -40,7 +40,7 @@ import processing.opengl.PShader;
  */
 class BlobDetectionUtils {
   private final BeeTracker parent;
-  private static final float[] filterRadius = {3f, 6f};
+  private static final float[] filterRadius = {4f, 6f};
   private final BlobDetection bd;
   private final PShader thresholdShader, morphoShader, alphaShader, maskShader;
   private PGraphics buf = null, exitBuf = null;
@@ -107,19 +107,25 @@ class BlobDetectionUtils {
     }
 
     applyShader(img, buf, bufParams, false, colors);
-    img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
 
     if(!waggleMode) {
-      int[] tmp = {
-        (int)(exitBufParams[0]*img.width),
-        (int)(exitBufParams[1]*img.height),
-        (int)(exitBufParams[2]*img.width),
-        (int)(exitBufParams[3]*img.height)
-      };
-      applyShader(img, exitBuf, tmp, true, colors);
+      applyShader(
+        img,
+        exitBuf,
+        new int[]{
+          (int)((exitBufParams[0]-exitBufParams[2])*img.width),
+          (int)((exitBufParams[1]-exitBufParams[3])*img.height),
+          2*(int)(exitBufParams[2]*img.width),
+          2*(int)(exitBufParams[3]*img.height)
+        },
+        true,
+        colors
+      );
       exitBuf.filter(maskShader);
-      img.blend(exitBuf, 0, 0, exitBuf.width, exitBuf.height, 0, 0, img.width, img.height, BeeTracker.LIGHTEST);
     }
+
+    img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
+    img.blend(exitBuf, 0, 0, exitBuf.width, exitBuf.height, 0, 0, img.width, img.height, BeeTracker.LIGHTEST);
   }
 
   /**
@@ -327,12 +333,12 @@ class BlobDetectionUtils {
   }
 
   /**
-   * TODO
-   * @param src
-   * @param dst
-   * @param dstParams
-   * @param isExitFilter
-   * @param colors
+   * Uses shaders to extract colored pixels from an image. 
+   * @param src the source image
+   * @param dst the destination buffer
+   * @param dstParams the area to copy
+   * @param isExitFilter true if the filter is being applied to the exit circle
+   * @param colors a list of the RGB values to scan for
    */
   private void applyShader(
     PImage src,
@@ -411,7 +417,11 @@ class BlobDetectionUtils {
     return result;
   }
 
-  void updateFilterRadius(boolean waggleMode) {
+  /**
+   * Sets the filter behavior based on event detection type.
+   * @param waggleMode true for waggle dance detection
+   */
+  void setWaggleMode(boolean waggleMode) {
     this.waggleMode = waggleMode;
   }
 }

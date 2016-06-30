@@ -45,7 +45,7 @@ class TrackingUtils {
   private class ColorTracker {
     List<List<float[]>> paths;
     List<Boolean> waggleStates;
-    FloatList timeOuts;
+    FloatList timeOuts, eventTimes;
     Stack<float[]> intervals;
     IntList IDs;
     HashMap<Float, String> eventLabels;
@@ -60,6 +60,7 @@ class TrackingUtils {
       IDs = new IntList();
       eventLabels = new HashMap<>();
       eventIDs = new HashMap<>();
+      eventTimes = new FloatList();
     }
   }
 
@@ -106,7 +107,7 @@ class TrackingUtils {
     List<List<float[]>> oldPaths;
     List<Boolean> waggleStates;
     java.util.ListIterator<Boolean> waggleIter;
-    FloatList timeOuts;
+    FloatList timeOuts, eventTimes;
     HashMap<Float, String> eventLabels;
     HashMap<Float, Integer> eventIDs;
     IntList checkedIndicesOld, checkedIndicesNew;
@@ -124,6 +125,7 @@ class TrackingUtils {
       timeOuts = trackers.get(color).timeOuts;
       pathIDs = trackers.get(color).IDs;
       eventIDs = trackers.get(color).eventIDs;
+      eventTimes = trackers.get(color).eventTimes;
 
       if(waggleMode) {
         waggleStates = trackers.get(color).waggleStates;
@@ -237,6 +239,7 @@ class TrackingUtils {
               eventLabels.put(time, eventTypes[2]);
               eventIDs.put(time, pathIDs.get(i));
               parent.registerEvent(eventTypes[2]);
+              eventTimes.append(time);
             }
           }
 
@@ -263,19 +266,70 @@ class TrackingUtils {
               "pair " + i + ":\nold point " + validPairs[i][0] +
               " is inside exit: " + (isOldPointInExit ? "true" : "false") +
               "\nnew point " + validPairs[i][1] +" is inside exit: " +
-              (isNewPointInExit ? "true" : "false")
+              (isNewPointInExit ? "true" : "false") +
+              "\nchecking ingress/egress events"
             );
           }
 
+          eventTimes.sort();
+          float eventTime;
+          int ID = pathIDs.get(oldPaths.indexOf(path));
+          j = eventTimes.size()-1;
           if(isOldPointInExit) {
             if(!isNewPointInExit) {
+              if(BeeTracker.debug) {
+                System.out.println(eventTypes[1]+": checking for loitering");
+              }
+
+              //check previous 1s for loitering
+              while(j >= 0) {
+                if((eventTime = eventTimes.get(j)) <= time && eventTime > time - 1f) {
+                  if(eventIDs.get(time) == ID &&
+                    eventLabels.get(eventTime).equalsIgnoreCase(eventTypes[0])) {
+                    eventLabels.remove(eventTime);
+                    eventIDs.remove(eventTime);
+                    eventTimes.remove(i);
+                    parent.removeEvent(eventTime);
+                    break;
+                  }
+                } else {
+                  break;
+                }
+
+                j--;
+              }
+
               eventLabels.put(time, eventTypes[1]);
-              eventIDs.put(time, pathIDs.get(oldPaths.indexOf(path)));
+              eventIDs.put(time, ID);
+              eventTimes.append(time);
               parent.registerEvent(eventTypes[1]);
             }
           } else if(isNewPointInExit) {
+            if(BeeTracker.debug) {
+              System.out.println(eventTypes[0]+": checking for loitering");
+            }
+
+            //check previous 1s for loitering
+            while(j >= 0) {
+              if((eventTime = eventTimes.get(j)) <= time && eventTime > time - 1f) {
+                if(eventIDs.get(time) == ID &&
+                  eventLabels.get(eventTime).equalsIgnoreCase(eventTypes[1])) {
+                  eventLabels.remove(eventTime);
+                  eventIDs.remove(eventTime);
+                  eventTimes.remove(i);
+                  parent.removeEvent(eventTime);
+                  break;
+                }
+              } else {
+                break;
+              }
+
+              j--;
+            }
+
             eventLabels.put(time, eventTypes[0]);
-            eventIDs.put(time, pathIDs.get(oldPaths.indexOf(path)));
+            eventIDs.put(time, ID);
+            eventTimes.append(time);
             parent.registerEvent(eventTypes[0]);
           }
         }
@@ -471,7 +525,7 @@ class TrackingUtils {
     }
 
     int color, yOffset, j;
-    float stamp, stampOffset, prevStamp = Float.NEGATIVE_INFINITY;
+    float stamp, stampOffset;
     float xOffset = time/duration*369f + 26f;
 
     PGraphics img = parent.createGraphics(400, colors.size() * 75);
@@ -576,17 +630,6 @@ class TrackingUtils {
           );
         } else {
           if(type.equals(eventTypes[0])) {
-/*            if(stamp - prevStamp < 0.25f && events.get(prevStamp).equals(eventTypes[1])) {
-              img.stroke(0xff555555);
-              img.line(
-                stampOffset,
-                yOffset-45,
-                stampOffset,
-                yOffset-35
-              );
-              img.stroke(0xff000000);
-            }
-*/
             img.rect(
               stampOffset + 26,
               yOffset-45,
@@ -594,17 +637,6 @@ class TrackingUtils {
               5
             );
           } else if(type.equals(eventTypes[1])) {
-/*            if(stamp - prevStamp < 0.25f && events.get(prevStamp).equals(eventTypes[0])) {
-              img.stroke(0xff555555);
-              img.line(
-                stampOffset,
-                yOffset-45,
-                stampOffset,
-                yOffset-35
-              );
-              img.stroke(0xff000000);
-            }
-*/
             img.ellipse(
               stampOffset + 26,
               yOffset-35,
@@ -613,8 +645,6 @@ class TrackingUtils {
             );
           }
         }
-
-//        prevStamp = stamp;
       }
 
       img.stroke(0xff000000);

@@ -2507,4 +2507,12 @@ public class BeeTracker extends PApplet {
       )
     );
   }
+
+  /**
+   * Removes an event from the notification queue.
+   * @param eventTime the time stamp of the event to remove
+   */
+  void removeEvent(float eventTime) {
+    msgs.remove(eventTime + 5f);
+  }
 }

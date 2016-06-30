@@ -372,17 +372,29 @@ class UIControl {
       .setPaddingX(5);
 //    toolTip.register(hue, "Set hue tolerance threshold");
 
-    Toggle sat = cp5.addToggle("S").setBroadcast(false);
-    sat.getCaptionLabel()
+    Toggle sat1 = cp5.addToggle("S1").setBroadcast(false);
+    sat1.getCaptionLabel()
       .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
       .setPaddingX(5);
-//    toolTip.register(sat, "Set minimum saturation threshold");
+//    toolTip.register(sat1, "Set minimum saturation threshold");
 
-    Toggle val = cp5.addToggle("V").setBroadcast(false);
-    val.getCaptionLabel()
+    Toggle val1 = cp5.addToggle("V1").setBroadcast(false);
+    val1.getCaptionLabel()
       .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
       .setPaddingX(5);
-//    toolTip.register(val, "Set minimum value threshold");
+//    toolTip.register(val1, "Set minimum value threshold");
+
+    Toggle sat2 = cp5.addToggle("S2").setBroadcast(false);
+    sat2.getCaptionLabel()
+      .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
+      .setPaddingX(5);
+//    toolTip.register(sat2, "Set maximum saturation threshold");
+
+    Toggle val2 = cp5.addToggle("V2").setBroadcast(false);
+    val2.getCaptionLabel()
+      .align(ControlP5Constants.RIGHT_OUTSIDE, ControlP5Constants.CENTER)
+      .setPaddingX(5);
+//    toolTip.register(val2, "Set maximum value threshold");
 
     thresholdRadios = cp5.addRadioButton("thresholdRadios")
       .setPosition(
@@ -391,8 +403,10 @@ class UIControl {
       )
       .setItemsPerRow(1)
       .addItem(hue, 0)
-      .addItem(sat, 1)
-      .addItem(val, 2)
+      .addItem(sat1, 1)
+      .addItem(sat2, 2)
+      .addItem(val1, 3)
+      .addItem(val2, 4)
       .setSize(15, 15)
       .setNoneSelectedAllowed(false)
       .setGroup(thresholdGroup);
@@ -491,7 +505,7 @@ class UIControl {
     buf.endDraw();
 
     allToggles = new Toggle[]{
-      hue, sat, val,
+      hue, sat1, val1, sat2, val2,
       selectFrame, selectExit,
       normalMode, waggleMode
     };

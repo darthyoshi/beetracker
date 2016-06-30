@@ -87,9 +87,13 @@ class BlobDetectionUtils {
       this.threshold = Arrays.copyOf(threshold, threshold.length);
       thresholdShader.set(
         "threshold",
-        ((float)threshold[0])/255f,
-        ((float)threshold[1])/255f,
-        ((float)threshold[2])/255f
+        new float[] {
+          ((float)threshold[0])/255f,
+          ((float)threshold[1])/255f,
+          ((float)threshold[2])/255f,
+          ((float)threshold[3])/255f,
+          ((float)threshold[4])/255f
+        }
       );
     }
 

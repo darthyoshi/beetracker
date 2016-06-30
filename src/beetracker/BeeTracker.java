@@ -48,12 +48,16 @@ import processing.video.Movie;
 @SuppressWarnings("serial")
 public class BeeTracker extends PApplet {
   static final int[] viewBounds = {50, 70, 749, 569};
-  private static final int[] defaultThresholds = {40, 75, 75};
+  private static final int[] defaultThresholds = {40, 60, 255, 60, 255};
   private static final String months[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   };
-  private static final String[] thresholdKeys = {"hue", "sat", "val"};
+  private static final String[] thresholdKeys = {
+    "hue",
+    "satMin", "satMax",
+    "valMin", "valMax"
+  };
   private static final String[] imgTypes = {"gif", "jpg", "png", "tga"};
 
   private processing.data.IntList colors;
@@ -312,7 +316,7 @@ public class BeeTracker extends PApplet {
             }
 
             //set thresholds
-            threshold = new int[3];
+            threshold = new int[5];
             try {
               setting = timeSetting.getJSONObject("thresholds");
 
@@ -323,6 +327,8 @@ public class BeeTracker extends PApplet {
               threshold[0] = defaultThresholds[0];
               threshold[1] = defaultThresholds[1];
               threshold[2] = defaultThresholds[2];
+              threshold[3] = defaultThresholds[3];
+              threshold[4] = defaultThresholds[4];
 
               e4.printStackTrace(System.err);
             } finally {
@@ -352,10 +358,12 @@ public class BeeTracker extends PApplet {
       settingsTimeStamps.append(0f);
 
       thresholds = new HashMap<>();
-      threshold = new int[3];
+      threshold = new int[5];
       threshold[0] = defaultThresholds[0];
       threshold[1] = defaultThresholds[1];
       threshold[2] = defaultThresholds[2];
+      threshold[3] = defaultThresholds[3];
+      threshold[4] = defaultThresholds[4];
       thresholds.put(0f, threshold);
 
       radials = new HashMap<>();

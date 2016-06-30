@@ -27,7 +27,7 @@ uniform sampler2D texture;
 
 varying vec4 vertTexCoord;
 
-uniform vec3 threshold;
+uniform float threshold[5];
 uniform float basehue;
 
 void main() {
@@ -62,9 +62,9 @@ void main() {
 
   //check if texel color is within thresholds
   if(
-    h < threshold[0] + basehue && h > basehue - threshold[0] &&
-    s > threshold[1] &&
-    v > threshold[2]
+    h > basehue - threshold[0] && h < basehue + threshold[0] &&
+    s > threshold[1] && s < threshold[2] &&
+    v > threshold[3] && v < threshold[4]
   ) {
     //convert HSV to RGB
     float r, g, b, x;

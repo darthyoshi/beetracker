@@ -1340,6 +1340,31 @@ public class BeeTracker extends PApplet {
       println("threshold slider value: " + value);
     }
 
+    //keep lower bounds and upper bounds from crossing
+    switch(type) {
+    case 1:
+      threshold[2] = (int)max(threshold[2], value);
+
+      break;
+
+    case 2:
+      threshold[1] = (int)min(threshold[1], value);
+
+      break;
+
+    case 3:
+      threshold[4] = (int)max(threshold[4], value);
+
+      break;
+
+    case 4:
+      threshold[3] = (int)min(threshold[3], value);
+
+      break;
+
+    default:
+    }
+
     threshold[type] = (int)value;
   }
 

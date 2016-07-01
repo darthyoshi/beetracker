@@ -283,22 +283,8 @@ class TrackingUtils {
               }
 
               //check previous 1s for loitering
-              while(j >= 0) {
-                if((eventTime = eventTimes.get(j)) <= time && eventTime > time - 1f) {
-                  if(eventIDs.get(time) == ID &&
-                    eventLabels.get(eventTime).equalsIgnoreCase(eventTypes[0])) {
-                    eventLabels.remove(eventTime);
-                    eventIDs.remove(eventTime);
-                    eventTimes.remove(i);
-                    parent.removeEvent(eventTime);
-                    break;
-                  }
-                } else {
-                  break;
-                }
-
-                j--;
-              }
+              clearLoiterEvent(eventTimes, eventIDs, eventLabels,
+                time, ID, eventTypes[0]);
 
               eventLabels.put(time, eventTypes[1]);
               eventIDs.put(time, ID);
@@ -311,22 +297,8 @@ class TrackingUtils {
             }
 
             //check previous 1s for loitering
-            while(j >= 0) {
-              if((eventTime = eventTimes.get(j)) <= time && eventTime > time - 1f) {
-                if(eventIDs.get(time) == ID &&
-                  eventLabels.get(eventTime).equalsIgnoreCase(eventTypes[1])) {
-                  eventLabels.remove(eventTime);
-                  eventIDs.remove(eventTime);
-                  eventTimes.remove(i);
-                  parent.removeEvent(eventTime);
-                  break;
-                }
-              } else {
-                break;
-              }
-
-              j--;
-            }
+            clearLoiterEvent(eventTimes, eventIDs, eventLabels,
+              time, ID, eventTypes[1]);
 
             eventLabels.put(time, eventTypes[0]);
             eventIDs.put(time, ID);
@@ -404,6 +376,53 @@ class TrackingUtils {
     updateEventTimeline(time, duration);
   }
 
+  /**
+   * Clears events caused by loitering, where loitering is defined as a single
+   *   bee alternating between ingress and egress events within 0.5s.
+   * @param eventTimes the list of event time stamps
+   * @param eventIDs the bee IDs for the events
+   * @param eventLabels the event type labels
+   * @param currentTimeStamp
+   * @param currentEventID
+   * @param currentEventLabel "ingress" or "egress"
+   */
+  private void clearLoiterEvent(
+    FloatList eventTimes,
+    HashMap<Float, Integer> eventIDs,
+    HashMap<Float, String> eventLabels,
+    float currentTimeStamp,
+    int currentEventID,
+    String currentEventLabel
+  ) {
+    float eventTime;
+    int j = eventTimes.size() - 1;
+  
+    while(j >= 0) {
+      if((eventTime = eventTimes.get(j)) <= currentTimeStamp &&
+        eventTime > currentTimeStamp - 0.5f) {
+        if(
+          eventIDs.get(eventTime) != null &&
+          eventIDs.get(eventTime) == currentEventID &&
+          eventLabels.get(eventTime).equalsIgnoreCase(currentEventLabel)
+        ) {
+          if(BeeTracker.debug) {
+            System.out.println("loiter detected");
+          }
+
+          eventLabels.remove(eventTime);
+          eventIDs.remove(eventTime);
+          eventTimes.remove(j);
+          parent.removeEvent(eventTime);
+          break;
+        }
+      } else {
+        break;
+      }
+
+      j--;
+    }
+  }
+  
   /**
    * Sets the colors to track.
    * @param newColors an IntList containing six-digit hexadecimal RGB values

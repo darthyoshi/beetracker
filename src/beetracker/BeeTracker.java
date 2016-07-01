@@ -530,7 +530,6 @@ public class BeeTracker extends PApplet {
               }
 
               tu.trackCentroids(
-                this,
                 centroids,
                 frameDims, frameOffset,
                 exitCenter, exitAxes,
@@ -805,7 +804,7 @@ public class BeeTracker extends PApplet {
 
           PGraphics events;
           if((record || replay) && path != null) {
-            events = tu.getEventTimeline(this, duration, duration);
+            events = tu.getEventTimeline(duration, duration);
 
             char[] tmp = path.toCharArray();
             tmp[tmp.length - 3] = 'p';
@@ -2363,7 +2362,7 @@ public class BeeTracker extends PApplet {
       eventDialog = null;
     }
 
-    PGraphics graphic = tu.getEventTimeline(this, time, duration);
+    PGraphics graphic = tu.getEventTimeline(time, duration);
     if(graphic != null) {
       graphic.beginDraw();
       graphic.fill(0xff000000);

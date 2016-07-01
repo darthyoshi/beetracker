@@ -34,6 +34,7 @@ import processing.data.IntList;
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
+  private BeeTracker parent;
   private int currentID;
   private IntList colors;
   private static final float distThreshold = 0.15f;
@@ -74,12 +75,13 @@ class TrackingUtils {
     rec = new ShapeRecognizer(parent);
     rec.loadTemplates(parent);
 
+    this.parent = parent;
+
     init();
   }
 
   /**
    * Updates the centroid positions for the current frame.
-   * @param parent the invoking BeeTracker
    * @param newPointMap a HashMap mapping six-digit hexadecimal RGB values
    *   to Lists of normalized xy coordinates
    * @param frameDims the dimensions of the inset frame
@@ -92,7 +94,6 @@ class TrackingUtils {
    * @param duration the video duration in seconds
    */
   void trackCentroids(
-    BeeTracker parent,
     HashMap<Integer, List<float[]>> newPointMap,
     int[] frameDims,
     int[] frameOffset,
@@ -510,13 +511,11 @@ class TrackingUtils {
 
   /**
    * Retrieves the visual summary of the currently recorded events.
-   * @param parent the invoking BeeTracker
    * @param time the current playback time in seconds
    * @param duration the video duration in seconds
    * @return a PGraphics image of the event timeline
    */
   PGraphics getEventTimeline(
-    BeeTracker parent,
     float time,
     float duration
   ) {

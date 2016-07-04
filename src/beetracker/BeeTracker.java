@@ -2252,16 +2252,17 @@ public class BeeTracker extends PApplet {
     //current timestamp doesn't already have settings
     if(!settingsTimeStamps.hasValue(time)) {
       //duplicate current settings
-      float[] newExit = new float[4], newBox = new float[4];
-      int[] newThreshold = new int[3];
+      float[] newExit = new float[exitRadial.length],
+        newBox = new float[exitRadial.length];
+      int[] newThreshold = new int[threshold.length];
       short i;
 
-      for(i = 0; i < 4; i++) {
+      for(i = 0; i < exitRadial.length; i++) {
         newExit[i] = exitRadial[i];
         newBox[i] = insetBox[i];
       }
 
-      for(i = 0; i < 3; i++) {
+      for(i = 0; i < threshold.length; i++) {
         newThreshold[i] = threshold[i];
       }
 

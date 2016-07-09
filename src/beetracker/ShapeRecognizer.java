@@ -110,12 +110,11 @@ public class ShapeRecognizer {
 
   /**
    * Checks a path for the waggle dance.
-   * @param path a List of normalized float pairs representing a path
+   * @param path a Deque of normalized float pairs representing a path
    * @param frameDims the dimensions of the inset frame
    * @return true if the waggle dance shape is part of the path
    */
-  void recognize(java.util.List<float[]> path, int[] frameDims) {
-    java.util.ListIterator<float[]> iter = path.listIterator(path.size());
+  void recognize(java.util.Deque<float[]> path, int[] frameDims) {
     float[] point, prevCandPoint = null;
     int i;
 
@@ -125,8 +124,9 @@ public class ShapeRecognizer {
     status = false;
 
     //check path in reverse
-    while(iter.hasPrevious()) {
-      point = iter.previous();
+    java.util.Iterator<float[]> iter = path.descendingIterator();
+    while(iter.hasNext()) {
+      point = iter.next();
 
       //artificially increase candidate sample rate
       if(prevCandPoint != null) {

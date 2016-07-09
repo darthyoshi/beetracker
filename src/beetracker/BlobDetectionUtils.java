@@ -192,6 +192,7 @@ class BlobDetectionUtils {
   HashMap<Integer, List<float[]>> getCentroids(PImage frame, IntList colors) {
     HashMap<Integer, List<float[]>> result = new HashMap<>(colors.size());
     float[] point;
+    float w, h;
     Blob b, b2;
     int i, j, k, l, index1, index2, color, pixel, hue, numBlobPixels;
 
@@ -228,15 +229,19 @@ class BlobDetectionUtils {
         }
 
         if((b = bd.getBlob(index1)) != null) {
+          w = b.w*(float)frame.width;
+          h = b.h*(float)frame.height;
+
+          //numBlobPixels = getBlobArea(frame, b, hue);
+
           //blob is too thin
-          if(b.h/b.w*frame.height/frame.width < 0.5f || b.h/b.w*frame.height/frame.width > 2f) {
+          if(w < 0.5f*h || w > 2f*h) {
             unCheckedIndices.remove(i);
             continue;
           }
 /*
-          if((float)(numBlobPixels = getBlobArea(frame, b, hue))/
-            (frame.width*frame.height*b.w*b.h) < 0.40f) {
-            indices.remove(i);
+          if((float)numBlobPixels)/(w*h) < 0.40f) {
+            unCheckedIndices.remove(i);
             continue;
           }
 */

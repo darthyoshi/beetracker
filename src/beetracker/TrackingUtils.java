@@ -19,6 +19,8 @@
 package beetracker;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
@@ -37,14 +39,14 @@ class TrackingUtils {
   private BeeTracker parent;
   private int currentID;
   private IntList colors;
-  private static final float distThreshold = 0.15f;
+  private static final float distThreshold = 0.2f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
   private static final float timeOutThreshold = 1.5f;
   private static final String eventTypes[] = {"ingress","egress","waggle"};
 
   private class ColorTracker {
-    List<List<float[]>> paths;
+    List<Deque<float[]>> paths;
     List<Boolean> waggleStates;
     FloatList timeOuts, eventTimes;
     Stack<float[]> intervals;
@@ -52,9 +54,11 @@ class TrackingUtils {
     HashMap<Float, String> eventLabels;
     HashMap<Float, Integer> eventIDs;
 
+    FloatList pathStartTimes;
+
     ColorTracker() {
-      paths = new ArrayList<List<float[]>>();
-      waggleStates = new java.util.LinkedList<>();
+      paths = new ArrayList<Deque<float[]>>();
+      waggleStates = new ArrayList<>();
       timeOuts = new FloatList();
       intervals = new Stack<>();
       intervals.add(new float[]{Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY});
@@ -62,6 +66,8 @@ class TrackingUtils {
       eventLabels = new HashMap<>();
       eventIDs = new HashMap<>();
       eventTimes = new FloatList();
+
+      pathStartTimes = new FloatList();
     }
   }
 
@@ -90,7 +96,7 @@ class TrackingUtils {
    * @param exitAxes the exit semi-major axes, referenced to the inset frame
    * @param movieDims the dimensions of the video
    * @param movieOffset the offset of the video
-   * @param time timestamp of the current frame in seconds
+   * @param time time stamp of the current frame in seconds
    * @param duration the video duration in seconds
    */
   void trackCentroids(
@@ -104,13 +110,12 @@ class TrackingUtils {
     float time,
     float duration
   ) {
-    List<float[]> newPoints, path;
-    List<List<float[]>> oldPaths;
+    List<float[]> newPoints;
+    Deque<float[]> path;
+    List<Deque<float[]>> oldPaths;
     List<Boolean> waggleStates;
     java.util.ListIterator<Boolean> waggleIter;
-    FloatList timeOuts, eventTimes;
-    HashMap<Float, String> eventLabels;
-    HashMap<Float, Integer> eventIDs;
+    FloatList timeOuts;
     IntList checkedIndicesOld, checkedIndicesNew;
     IntList pathIDs;
     float oldX, oldY, newX, newY, minDist;
@@ -119,14 +124,18 @@ class TrackingUtils {
     int i, j, k, numPairs, minI, minJ;
     int[][] validPairs = null;
     boolean isOldPointInExit, isNewPointInExit;
+    ColorTracker tracker;
+    FloatList pathStartTimes;
 
     for(int color : colors) {
-      oldPaths = trackers.get(color).paths;
+      tracker = trackers.get(color);
+
+      oldPaths = tracker.paths;
       newPoints = new ArrayList<>(newPointMap.get(color));
-      timeOuts = trackers.get(color).timeOuts;
-      pathIDs = trackers.get(color).IDs;
-      eventIDs = trackers.get(color).eventIDs;
-      eventTimes = trackers.get(color).eventTimes;
+      timeOuts = tracker.timeOuts;
+      pathIDs = tracker.IDs;
+
+      pathStartTimes = tracker.pathStartTimes;
 
       if(waggleMode) {
         waggleStates = trackers.get(color).waggleStates;
@@ -159,7 +168,7 @@ class TrackingUtils {
 
           j = 0;
           for(float[] newPoint : newPoints) {
-            point = path.get(path.size() - 1);
+            point = path.peekLast();
 
             distances[i][j] = BeeTracker.dist(
               point[0]*movieDims[0], point[1]*movieDims[1],
@@ -224,8 +233,6 @@ class TrackingUtils {
         System.out.println(k + " point(s) paired");
       }
 
-      eventLabels = trackers.get(color).eventLabels;
-
       //check for waggle dances
       if(waggleStates != null) {
         waggleIter = waggleStates.listIterator();
@@ -237,74 +244,14 @@ class TrackingUtils {
             if(rec.isCandidateRecognized()) {
               waggleIter.set(true);
 
-              eventLabels.put(time, eventTypes[2]);
-              eventIDs.put(time, pathIDs.get(i));
-              parent.registerEvent(eventTypes[2]);
-              eventTimes.append(time);
+              tracker.eventLabels.put(time, eventTypes[2]);
+              tracker.eventIDs.put(time, pathIDs.get(i));
+              parent.registerEvent(eventTypes[2], time);
+              tracker.eventTimes.append(time);
             }
           }
 
           i++;
-        }
-      } else {  //check all paired points for ingress/egress
-        for(i = 0; i < k; i++) {
-          path = oldPaths.get(validPairs[i][0]);
-          point = path.get(path.size() - 1);
-
-          oldX = point[0]*frameDims[0]+frameOffset[0];
-          oldY = point[1]*frameDims[1]+frameOffset[1];
-
-          point = newPoints.get(validPairs[i][1]);
-
-          newX = point[0]*frameDims[0]+frameOffset[0];
-          newY = point[1]*frameDims[1]+frameOffset[1];
-
-          isOldPointInExit = isInExit(oldX, oldY, exitCenterXY, exitAxes);
-          isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
-
-          if(BeeTracker.debug) {
-            System.out.println(
-              "pair " + i + ":\nold point " + validPairs[i][0] +
-              " is inside exit: " + (isOldPointInExit ? "true" : "false") +
-              "\nnew point " + validPairs[i][1] +" is inside exit: " +
-              (isNewPointInExit ? "true" : "false") +
-              "\nchecking ingress/egress events"
-            );
-          }
-
-          eventTimes.sort();
-          float eventTime;
-          int ID = pathIDs.get(oldPaths.indexOf(path));
-          j = eventTimes.size()-1;
-          if(isOldPointInExit) {
-            if(!isNewPointInExit) {
-              if(BeeTracker.debug) {
-                System.out.println(eventTypes[1]+": checking for loitering");
-              }
-
-              //check previous 1s for loitering
-              clearLoiterEvent(eventTimes, eventIDs, eventLabels,
-                time, ID, eventTypes[0]);
-
-              eventLabels.put(time, eventTypes[1]);
-              eventIDs.put(time, ID);
-              eventTimes.append(time);
-              parent.registerEvent(eventTypes[1]);
-            }
-          } else if(isNewPointInExit) {
-            if(BeeTracker.debug) {
-              System.out.println(eventTypes[0]+": checking for loitering");
-            }
-
-            //check previous 1s for loitering
-            clearLoiterEvent(eventTimes, eventIDs, eventLabels,
-              time, ID, eventTypes[1]);
-
-            eventLabels.put(time, eventTypes[0]);
-            eventIDs.put(time, ID);
-            eventTimes.append(time);
-            parent.registerEvent(eventTypes[0]);
-          }
         }
       }
 
@@ -323,11 +270,13 @@ class TrackingUtils {
       j = 1;
       for(float[] newPoint : newPoints) {
         if(newPoint != null) {
-          path = new ArrayList<>();
+          path = new java.util.LinkedList<>();
           path.add(newPoint);
           oldPaths.add(path);
           timeOuts.append(time);
           pathIDs.append(currentID++);
+
+          pathStartTimes.append(time);
 
           if(waggleStates != null) {
             waggleStates.add(false);
@@ -350,11 +299,8 @@ class TrackingUtils {
       }
 
       int numOldPoints = timeOuts.size() - j;
-      if(waggleStates != null) {
-        waggleIter = waggleStates.listIterator(numOldPoints + 1);
-      } else {
-        waggleIter = null;
-      }
+      waggleIter = waggleStates != null ?
+        waggleStates.listIterator(numOldPoints + 1) : null;
       for(i = numOldPoints; i >= 0; i--) {
         if(waggleIter != null) {
           waggleIter.previous();
@@ -362,13 +308,22 @@ class TrackingUtils {
 
         //remove points that have been missing for too long
         if(time - timeOuts.get(i) > timeOutThreshold) {
+          if(waggleIter != null) {
+            waggleIter.remove();
+          } else {  //check for ingress/egress
+            eventCheck(
+              tracker, i,
+              frameDims, frameOffset,
+              exitCenterXY, exitAxes,
+              time
+            );
+          }
+
           timeOuts.remove(i);
           oldPaths.remove(i);
           pathIDs.remove(i);
 
-          if(waggleIter != null) {
-            waggleIter.remove();
-          }
+          pathStartTimes.remove(i);
         }
       }
     }
@@ -376,53 +331,6 @@ class TrackingUtils {
     updateEventTimeline(time, duration);
   }
 
-  /**
-   * Clears events caused by loitering, where loitering is defined as a single
-   *   bee alternating between ingress and egress events within 0.5s.
-   * @param eventTimes the list of event time stamps
-   * @param eventIDs the bee IDs for the events
-   * @param eventLabels the event type labels
-   * @param currentTimeStamp
-   * @param currentEventID
-   * @param currentEventLabel "ingress" or "egress"
-   */
-  private void clearLoiterEvent(
-    FloatList eventTimes,
-    HashMap<Float, Integer> eventIDs,
-    HashMap<Float, String> eventLabels,
-    float currentTimeStamp,
-    int currentEventID,
-    String currentEventLabel
-  ) {
-    float eventTime;
-    int j = eventTimes.size() - 1;
-  
-    while(j >= 0) {
-      if((eventTime = eventTimes.get(j)) <= currentTimeStamp &&
-        eventTime > currentTimeStamp - 0.5f) {
-        if(
-          eventIDs.get(eventTime) != null &&
-          eventIDs.get(eventTime) == currentEventID &&
-          eventLabels.get(eventTime).equalsIgnoreCase(currentEventLabel)
-        ) {
-          if(BeeTracker.debug) {
-            System.out.println("loiter detected");
-          }
-
-          eventLabels.remove(eventTime);
-          eventIDs.remove(eventTime);
-          eventTimes.remove(j);
-          parent.removeEvent(eventTime);
-          break;
-        }
-      } else {
-        break;
-      }
-
-      j--;
-    }
-  }
-  
   /**
    * Sets the colors to track.
    * @param newColors an IntList containing six-digit hexadecimal RGB values
@@ -439,23 +347,22 @@ class TrackingUtils {
   }
 
   /**
-   * Retrieves the ingress and egress timestamps for all tracked colors.
+   * Retrieves the ingress and egress time stamps for all tracked colors.
    * @return a HashMap mapping Strings to HashMaps mapping six-digit
-   *   hexadecimal RGB values to Lists of floating point timestamps
+   *   hexadecimal RGB values to Lists of floating point time stamps
    */
   HashMap<Float, String> getSummary() {
     HashMap<Float, String> result = new HashMap<>();
 
     FloatList times;
+    Float[] tmp;
     ColorTracker tracker;
     for(int color : colors) {
       tracker = trackers.get(color);
 
-      times = new FloatList();
-      for(Float time : tracker.eventLabels.keySet()) {
-        times.append(time);
-      }
-      times.sort();
+      tmp = tracker.eventLabels.keySet().toArray(new Float[0]);
+      Arrays.sort(tmp);
+      times = new FloatList((Object[])tmp);
 
       for(Float time : times) {
         result.put(time, String.format("%d,#%06x,%s",
@@ -506,16 +413,20 @@ class TrackingUtils {
     int[] frameOffset
   ) {
     int i;
-    float[] point, point2;
+    float[] point = null, point2;
+    java.util.Iterator<float[]> iter;
 
     buf.strokeWeight(2);
     for(int color : colors) {
       buf.stroke(0xff000000 + color);
 
-      for(List<float[]> path : trackers.get(color).paths) {
-        for(i = 0; i < path.size()-1; i++) {
-          point = path.get(i);
-          point2 = path.get(i+1);
+      for(Deque<float[]> path : trackers.get(color).paths) {
+        iter = path.iterator();
+        if(iter.hasNext()) {
+          point = iter.next();
+        }
+        while(iter.hasNext()) {
+          point2 = iter.next();
 
           buf.line(
             point[0]*frameDims[0]+frameOffset[0]-BeeTracker.viewBounds[0],
@@ -523,6 +434,8 @@ class TrackingUtils {
             point2[0]*frameDims[0]+frameOffset[0]-BeeTracker.viewBounds[0],
             point2[1]*frameDims[1]+frameOffset[1]-BeeTracker.viewBounds[1]
           );
+
+          point = point2;
         }
       }
     }
@@ -599,6 +512,7 @@ class TrackingUtils {
 
 
     FloatList times;
+    Float[] tmp;
     HashMap<Float, String> events;
 
     for(int i = 1; i <= colors.size(); i++) {
@@ -624,13 +538,11 @@ class TrackingUtils {
       img.fill(0xff000000 + color);
       img.rectMode(BeeTracker.CENTER);
 
-      times = new FloatList();
       events = trackers.get(color).eventLabels;
 
-      for(Float timeStamp : events.keySet()) {
-        times.append(timeStamp);
-      }
-      times.sort();
+      tmp = events.keySet().toArray(new Float[0]);
+      Arrays.sort(tmp);
+      times = new FloatList((Object[])tmp);
 
       for(j = 0; j < times.size(); j++) {
         stamp = times.get(j);
@@ -668,7 +580,7 @@ class TrackingUtils {
       img.stroke(0xff000000);
       img.line(25, yOffset-40, 395, yOffset-40);
 
-      //mark current timestamp
+      //mark current time stamp
       img.line(
         xOffset,
         yOffset-49,
@@ -732,5 +644,91 @@ class TrackingUtils {
    */
   void setEventType(boolean type) {
     waggleMode = type;
+  }
+
+  /**
+   * Checks all trajectories for ingress/egress events. 
+   * @param frameDims the dimensions of the inset frame
+   * @param frameOffset the offset of the inset frame
+   * @param exitCenterXY the exit center coordinates, referenced to the inset frame
+   * @param exitAxes the exit semi-major axes, referenced to the inset frame
+   * @param time time stamp of the current frame in seconds
+   */
+  void eventCheckAll(
+    int[] frameDims,
+    int[] frameOffset,
+    float[] exitCenterXY,
+    float[] exitAxes,
+    float time
+  ) {
+    int i;
+    ColorTracker tracker;
+    for(int color : colors) {
+      tracker = trackers.get(color);
+      for(i = 0; i < tracker.paths.size(); i++) {
+        eventCheck(
+          tracker, i,
+          frameDims, frameOffset,
+          exitCenterXY, exitAxes,
+          time
+        );
+      }
+    }
+  }
+
+  /**
+   * Checks a trajectory for ingress/egress events.
+   * @param tracker the ColorTracker object containing the target trajectory
+   * @param index the index of the target trajectory
+   * @param frameDims the dimensions of the inset frame
+   * @param frameOffset the offset of the inset frame
+   * @param exitCenterXY the exit center coordinates, referenced to the inset frame
+   * @param exitAxes the exit semi-major axes, referenced to the inset frame
+   * @param time time stamp of the current frame in seconds
+   */
+  void eventCheck(
+    ColorTracker tracker,
+    int index,
+    int[] frameDims,
+    int[] frameOffset,
+    float[] exitCenterXY,
+    float[] exitAxes,
+    float time
+  ) {
+    Deque<float[]> path = tracker.paths.get(index);
+
+    if(!path.isEmpty()) {
+      float[] point = path.peekFirst();
+
+      float oldX = point[0]*frameDims[0]+frameOffset[0];
+      float oldY = point[1]*frameDims[1]+frameOffset[1];
+
+      point = path.peekLast();
+
+      float newX = point[0]*frameDims[0]+frameOffset[0];
+      float newY = point[1]*frameDims[1]+frameOffset[1];
+
+      boolean isOldPointInExit = isInExit(oldX, oldY, exitCenterXY, exitAxes);
+      boolean isNewPointInExit = isInExit(newX, newY, exitCenterXY, exitAxes);
+
+      int ID = tracker.IDs.get(index);
+
+      if(isOldPointInExit) {
+        if(!isNewPointInExit) {
+          //egress event
+          float eventTime = tracker.pathStartTimes.get(index);
+          tracker.eventLabels.put(eventTime, eventTypes[1]);
+          tracker.eventIDs.put(eventTime, ID);
+          tracker.eventTimes.append(eventTime);
+          parent.registerEvent(eventTypes[1], eventTime);
+        }
+      } else if(isNewPointInExit) {
+        //ingress event
+        tracker.eventLabels.put(time, eventTypes[0]);
+        tracker.eventIDs.put(time, ID);
+        tracker.eventTimes.append(time);
+        parent.registerEvent(eventTypes[0], time);
+      }
+    }
   }
 }

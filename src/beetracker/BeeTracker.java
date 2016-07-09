@@ -741,6 +741,14 @@ public class BeeTracker extends PApplet {
           ((time >= duration) || (!imgSequenceMode &&
           duration - time <= 1f/movie.frameRate))
         ) {
+          if(record && !waggleMode) {
+            tu.eventCheckAll(
+              frameDims, frameOffset,
+              exitCenter, exitAxes,
+              time
+            );
+          }
+
           isPlaying = false;
 
           StringBuilder msg = new StringBuilder("End of video reached.\n");

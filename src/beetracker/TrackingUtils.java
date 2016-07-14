@@ -39,7 +39,7 @@ class TrackingUtils {
   private BeeTracker parent;
   private int currentID;
   private IntList colors;
-  private static final float distThreshold = 0.2f;
+  private static final float distThreshold = 1.5f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
   private static final float timeOutThreshold = 1.5f;
@@ -53,7 +53,6 @@ class TrackingUtils {
     IntList IDs;
     HashMap<Float, String> eventLabels;
     HashMap<Float, Integer> eventIDs;
-
     FloatList pathStartTimes;
 
     ColorTracker() {
@@ -152,7 +151,7 @@ class TrackingUtils {
         System.out.println(String.format(
           "---checking blobs colored %06x---%s %d%s %d",
           color,
-          "\npoints in last frame:",
+          "\npaths from last frame:",
           oldPaths.size(),
           "\npoints in current frame:",
           newPoints.size()
@@ -162,20 +161,30 @@ class TrackingUtils {
       if(oldPaths.size() > 0 && newPoints.size() > 0) {
         distances = new float[oldPaths.size()][newPoints.size()];
 
+        if(BeeTracker.debug) {
+          System.out.println("distance table:");
+        }
+
         //calc distances between all old and all new points
         for(i = 0; i < oldPaths.size(); i++) {
-          path = oldPaths.get(i);
+          point = oldPaths.get(i).peekLast();
 
           j = 0;
           for(float[] newPoint : newPoints) {
-            point = path.peekLast();
-
             distances[i][j] = BeeTracker.dist(
               point[0]*movieDims[0], point[1]*movieDims[1],
               newPoint[0]*movieDims[0], newPoint[1]*movieDims[1]
             );
 
+            if(BeeTracker.debug) {
+              System.out.print(distances[i][j] + " ");
+            }
+
             j++;
+          }
+
+          if(BeeTracker.debug) {
+             System.out.println();
           }
         }
 
@@ -214,7 +223,7 @@ class TrackingUtils {
           checkedIndicesNew.append(minJ);
 
           //mark pairs with valid distance
-          if(minDist < distThreshold*BeeTracker.sqrt(movieDims[0]*movieDims[1])) {
+          if(minDist < distThreshold*BeeTracker.sqrt(movieDims[0]*movieDims[1])*(time-timeOuts.get(minI))) {
             validPairs[k][0] = minI;
             validPairs[k][1] = minJ;
 

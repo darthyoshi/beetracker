@@ -262,7 +262,7 @@ class VideoBrowser {
         if(selectedDir != null) {
           System.out.append("selected directory: \"")
             .append(selectedDir.getAbsolutePath())
-            .append('\"')
+            .append("\"\n")
             .flush();
         }
 

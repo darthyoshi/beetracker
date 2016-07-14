@@ -121,6 +121,8 @@ public class BeeTracker extends PApplet {
 
   private HashMap<Float, String> msgs;
 
+  processing.core.PFont font;
+
   /**
    * Overrides from PApplet.
    */
@@ -154,9 +156,10 @@ public class BeeTracker extends PApplet {
       }
     }
 
-    final processing.core.PFont font = loadFont("LiberationSansNarrow-15.vlw");
+    font = loadFont("LiberationSansNarrow-15.vlw");
+    textFont(font);
 
-    uic = new UIControl(this, font);
+    uic = new UIControl(this);
 
     frameRate(60);
     strokeWeight(1);
@@ -164,8 +167,6 @@ public class BeeTracker extends PApplet {
     File outputDir = new File(System.getProperty("user.dir") +
       File.separatorChar + "output");
     outputDir.mkdir();
-
-    textFont(font);
 
     surface.setTitle("BeeTracker");
 

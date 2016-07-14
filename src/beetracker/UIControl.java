@@ -118,11 +118,10 @@ class UIControl {
   /**
    * Class constructor.
    * @param parent the instantiating object
-   * @param font the program font
    */
-  UIControl(BeeTracker parent, processing.core.PFont font) {
+  UIControl(BeeTracker parent) {
     cp5 = new ControlP5(parent);
-    cp5.setFont(font);
+    cp5.setFont(parent.font);
 
     cp5.setBroadcast(false);
 

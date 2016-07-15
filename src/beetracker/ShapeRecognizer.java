@@ -23,7 +23,7 @@ import java.util.LinkedList;
 /**
  * @class ShapeRecognizer
  * @author Kay Choi
- * @date 14 Jun 16
+ * @date 9 Jul 16
  * @description Provides shape recognition for waggle dance detection.
  */
 public class ShapeRecognizer {

@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 22 Jun 16
+ * @date 14 Jul 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")

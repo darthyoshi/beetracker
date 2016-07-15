@@ -35,7 +35,7 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 22 Jun 16
+ * @date 9 Jul 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {

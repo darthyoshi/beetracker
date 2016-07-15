@@ -32,7 +32,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 14 Jun 16
+ * @date 14 Jul 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {

@@ -2529,9 +2529,10 @@ public class BeeTracker extends PApplet {
   /**
    * Adds an event to the notification queue.
    * @param eventType
+   * @param eventTime
    */
-  void registerEvent(String eventType) {
-    int tmp = (int)(time*100f);
+  void registerEvent(String eventType, float eventTime) {
+    int tmp = (int)(eventTime*100f);
     msgs.put(
       time + 5f,
       String.format(

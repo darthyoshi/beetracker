@@ -32,7 +32,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 14 Jul 16
+ * @date 19 Jul 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -463,10 +463,10 @@ class TrackingUtils {
     if(BeeTracker.debug) {
       System.out.append("retrieving event timeline... ");
     }
-
     int color, yOffset, j;
     float stamp, stampOffset;
     float xOffset = time/duration*369f + 26f;
+    boolean durationExceedsHour = duration >= 3600f;
 
     PGraphics img = parent.createGraphics(400, colors.size() * 75);
     img.beginDraw();
@@ -475,9 +475,29 @@ class TrackingUtils {
 
     int halfDuration = (int)(duration*.5f);
 
-    String begin = "00:00";
-    String middle = String.format("%02d:%02d", halfDuration/60, halfDuration%60);
-    String end = String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60);
+    String begin;
+    String middle;
+    String end;
+
+    if(durationExceedsHour) {
+      begin = "00:00:00";
+      middle = String.format(
+        "%02d:%02d:%02d",
+        halfDuration/3600,
+        (halfDuration/60)%60,
+        halfDuration%60
+      );
+      end = String.format(
+        "%02d:%02d:%02d",
+        ((int)duration)/3600,
+        (((int)duration)/60)%60,
+        ((int)duration)%60
+      );
+    } else {
+      begin = "00:00";
+      middle = String.format("%02d:%02d", halfDuration/60, halfDuration%60);
+      end = String.format("%02d:%02d", ((int)duration)/60, ((int)duration)%60);
+    }
 
     //timeline backgrounds
     for(int i = 1; i <= colors.size(); i++) {

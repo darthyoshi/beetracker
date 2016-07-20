@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 14 Jul 16
+ * @date 19 Jul 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -790,8 +790,8 @@ public class BeeTracker extends PApplet {
               timeStringBuilder = new StringBuilder();
               timeStringBuilder.append(String.format(
                 "%02d:%02d:%02d.%02d",
-                (tmp/6000)/60,
-                tmp/6000,
+                tmp/360000,
+                (tmp/6000)%60,
                 (tmp/100)%60,
                 tmp%100
               ));
@@ -2377,12 +2377,16 @@ public class BeeTracker extends PApplet {
       graphic.beginDraw();
       graphic.fill(0xff000000);
       graphic.textAlign(RIGHT);
-      graphic.text(String.format(
+      graphic.text(
+        String.format(
           "current time: %02d:%02d:%02d",
           ((int)time)/3600,
-          ((int)time)/60,
+          (((int)time)/60)%60,
           ((int)time)%60
-        ), 395, 18);
+        ),
+        395,
+        18
+      );
       graphic.endDraw();
 
       MessageDialogue.showEventTimeline(this, graphic.get());

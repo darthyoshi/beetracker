@@ -36,7 +36,7 @@ import processing.core.PImage;
 /**
  * @class UIControl
  * @author Kay Choi
- * @date 14 Jul 16
+ * @date 19 Jul 16
  * @description Manages the UI elements for BeeTracker.
  */
 class UIControl {
@@ -670,12 +670,12 @@ class UIControl {
    *   video
    */
   private void formatSeekLabel() {
-    int tmp = (int)(seekBar.getValue()*100);
+    int tmp = (int)(seekBar.getValue()*100f);
 
     seekBar.setValueLabel(String.format(
         "%02d:%02d:%02d.%02d",
-        (tmp/6000)/60,
-        tmp/6000,
+        tmp/360000,
+        (tmp/6000)%60,
         (tmp/100)%60,
         tmp%100
       )).getValueLabel()

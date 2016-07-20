@@ -39,10 +39,10 @@ class TrackingUtils {
   private BeeTracker parent;
   private int currentID;
   private IntList colors;
-  private static final float distThreshold = 1.5f;
+  private static final float distThreshold = .25f;
   private boolean waggleMode = false;
   private final ShapeRecognizer rec;
-  private static final float timeOutThreshold = 1.5f;
+  private static final float timeOutThreshold = 1.25f;
   private static final String eventTypes[] = {"ingress","egress","waggle"};
 
   private class ColorTracker {
@@ -223,7 +223,7 @@ class TrackingUtils {
           checkedIndicesNew.append(minJ);
 
           //mark pairs with valid distance
-          if(minDist < distThreshold*BeeTracker.sqrt(movieDims[0]*movieDims[1])*(time-timeOuts.get(minI))) {
+          if(minDist < distThreshold*BeeTracker.sqrt(movieDims[0]*movieDims[1])) {
             validPairs[k][0] = minI;
             validPairs[k][1] = minJ;
 

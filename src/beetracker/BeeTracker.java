@@ -605,8 +605,8 @@ public class BeeTracker extends PApplet {
                       frameOffset[0] - viewBounds[0],
                     centroid[1]*frameDims[1] +
                       frameOffset[1] - viewBounds[1],
-                    .005f*frameDims[1],
-                    .005f*frameDims[1]
+                    10,
+                    10
                   );
                 }
               }

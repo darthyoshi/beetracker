@@ -2557,4 +2557,22 @@ public class BeeTracker extends PApplet {
   void removeEvent(float eventTime) {
     msgs.remove(eventTime + 5f);
   }
+
+  /**
+   * ControlP5 callback method.
+   * @param value
+   */
+  public void seekTo(String value) {
+    Float result;
+
+    try {
+      result = Float.parseFloat(value);
+    } catch(NumberFormatException e) {
+      result = null;
+    }
+
+    if(result != null && (movie != null || imgSequence != null)) {
+      seek(constrain(result, 0f, duration));
+    }
+  }
 }

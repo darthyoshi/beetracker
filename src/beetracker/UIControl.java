@@ -230,13 +230,24 @@ class UIControl {
       .showTickMarks(true)
       .setSliderMode(Slider.FLEXIBLE);
     seekBar.setCaptionLabel("");
+    formatSeekLabel();
+
+    cp5.addTextfield("seekTo")
+      .setSize(50, 15)
+      .setPosition(
+        seekBar.getPosition()[0] + 150,
+        seekBar.getPosition()[1] + 19
+      ).setGroup(playGroup)
+      .setCaptionLabel("seek:")
+      .getCaptionLabel().setPaddingX(5)
+      .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER);
 
     Button removeSetting = cp5.addButton("removeSetting")
       .setCaptionLabel("Del")
       .setSize(50, 18)
       .setPosition(
         seekBar.getPosition()[0] + seekBar.getWidth() - 50,
-        seekBar.getPosition()[1] + 17
+        seekBar.getPosition()[1] + 18
       ).setGroup(setupGroup);
     removeSetting.getCaptionLabel()
       .align(ControlP5Constants.CENTER, ControlP5Constants.CENTER);

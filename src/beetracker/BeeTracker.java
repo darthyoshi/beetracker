@@ -85,7 +85,7 @@ public class BeeTracker extends PApplet {
   private PImage[] imgSequence = null;
   private PImage stillFrame = null;
   private int imgIndex = -1;
-  private float duration;
+  private float duration = -1f;
   private float time = -1f;
   private int fps = 0;
 
@@ -1547,7 +1547,7 @@ public class BeeTracker extends PApplet {
       movie = null;
     }
 
-    time = -1f;
+    time = duration = -1f;
 
     movieDims = null;
     videoName = null;
@@ -2571,7 +2571,7 @@ public class BeeTracker extends PApplet {
       result = null;
     }
 
-    if(result != null && (movie != null || imgSequence != null)) {
+    if(result != null && duration > 0f) {
       seek(constrain(result, 0f, duration));
     }
   }

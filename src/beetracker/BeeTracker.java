@@ -2575,4 +2575,16 @@ public class BeeTracker extends PApplet {
       seek(constrain(result, 0f, duration));
     }
   }
+
+  /**
+   * Overrides from PApplet
+   */
+  @Override
+  public void keyPressed() {
+    if(duration > 0f) {
+      if(key == ' ') {
+        playButton();
+      }
+    }
+  }
 }

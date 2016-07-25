@@ -2594,7 +2594,7 @@ public class BeeTracker extends PApplet {
   @Override
   public void keyPressed() {
     if(duration > 0f) {
-      if(key == ' ') {
+      if(!uic.isSeekToFocused() && key == ' ') {
         playButton();
       }
     }

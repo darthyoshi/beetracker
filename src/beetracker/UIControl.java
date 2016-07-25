@@ -56,6 +56,7 @@ class UIControl {
   private final Button statusLabel;
 //  private final Button[] openButtons;
   private final Textlabel modeLabel, selectLabel;
+  private final controlP5.Textfield seekTo;
 
   private final processing.core.PGraphics buf;
 
@@ -232,14 +233,14 @@ class UIControl {
     seekBar.setCaptionLabel("");
     formatSeekLabel();
 
-    cp5.addTextfield("seekTo")
+    seekTo = cp5.addTextfield("seekTo")
       .setSize(50, 15)
       .setPosition(
         seekBar.getPosition()[0] + 150,
         seekBar.getPosition()[1] + 19
       ).setGroup(playGroup)
-      .setCaptionLabel("seek:")
-      .getCaptionLabel().setPaddingX(5)
+      .setCaptionLabel("seek:");
+    seekTo.getCaptionLabel().setPaddingX(5)
       .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER);
 
     Button removeSetting = cp5.addButton("removeSetting")
@@ -1097,5 +1098,12 @@ class UIControl {
     colorList.setCaptionLabel(label);
 
     color = 0xff000000 + (label.equals(listLbl) ? 0 : Integer.parseInt(label, 16));
+  }
+
+  /**
+   * @return true if seekTo Textfield is focused
+   */
+  boolean isSeekToFocused() {
+    return seekTo.isFocus();
   }
 }

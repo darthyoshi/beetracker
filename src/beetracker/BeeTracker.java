@@ -1314,6 +1314,13 @@ public class BeeTracker extends PApplet {
     if(debug) {
       println("ControlEvent: " + event.getName());
     }
+
+    switch(event.getName()) {
+    case "seekTo":
+      ((controlP5.Textfield)event.getController()).setFocus(false);
+
+      break;
+    }
   }
 
   /**

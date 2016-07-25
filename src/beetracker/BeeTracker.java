@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 19 Jul 16
+ * @date 25 Jul 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -2573,7 +2573,12 @@ public class BeeTracker extends PApplet {
     Float result;
 
     try {
-      result = Float.parseFloat(value);
+      String[] args = value.split(":", 3);
+      result = Float.parseFloat(args[args.length-1]);
+
+      for(int i = 0; i < args.length-1; i++) {
+        result += Integer.parseInt(args[i])*pow(60,args.length-1-i);
+      }
     } catch(NumberFormatException e) {
       result = null;
     }

@@ -236,11 +236,11 @@ class UIControl {
     seekTo = cp5.addTextfield("seekTo")
       .setSize(50, 15)
       .setPosition(
-        seekBar.getPosition()[0] + 150,
+        seekBar.getPosition()[0] + 200,
         seekBar.getPosition()[1] + 19
       ).setGroup(playGroup)
-      .setCaptionLabel("seek:");
-    seekTo.getCaptionLabel().setPaddingX(5)
+      .setCaptionLabel("jump to: ");
+    seekTo.getCaptionLabel()
       .align(ControlP5Constants.LEFT_OUTSIDE, ControlP5Constants.CENTER);
 
     Button removeSetting = cp5.addButton("removeSetting")

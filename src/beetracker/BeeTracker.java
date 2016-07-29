@@ -42,7 +42,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 25 Jul 16
+ * @date 28 Jul 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -170,7 +170,19 @@ public class BeeTracker extends PApplet {
 
     surface.setTitle("BeeTracker");
 
-    ((com.jogamp.newt.opengl.GLWindow)surface.getNative()).addWindowListener(
+    com.jogamp.newt.opengl.GLWindow newtCanvas =
+      (com.jogamp.newt.opengl.GLWindow) surface.getNative();
+    for (com.jogamp.newt.event.WindowListener l : newtCanvas.getWindowListeners()) {
+      if (l.getClass().getName().startsWith("processing")) {
+        newtCanvas.removeWindowListener(l);
+      }
+    }
+    // Set on close action to do nothing i.e. keep the window open
+    newtCanvas.setDefaultCloseOperation(com.jogamp.nativewindow.
+      WindowClosingProtocol.WindowClosingMode.DO_NOTHING_ON_CLOSE);
+    //define on custom close action
+    final BeeTracker self = this;
+    newtCanvas.addWindowListener(
       new com.jogamp.newt.event.WindowAdapter() {
         @Override
         public void windowDestroyNotify(WindowEvent arg0) {

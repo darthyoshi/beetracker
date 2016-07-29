@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
@@ -186,12 +187,41 @@ public class BeeTracker extends PApplet {
       new com.jogamp.newt.event.WindowAdapter() {
         @Override
         public void windowDestroyNotify(WindowEvent arg0) {
-          exit();
-        }
-
-        @Override
-        public void windowDestroyed(WindowEvent arg0) {
-          exit();
+          if(debug) {
+            println("window destroy notify");
+          }
+          if(duration > 0f) {
+            //unsaved frame annotations
+            if(
+              replay &&
+              !(
+                new File(
+                  System.getProperty("user.dir") + File.separatorChar +
+                  "output" + File.separatorChar + videoName +
+                  File.separatorChar + "points.json"
+                ).exists()
+              )
+            ) {
+              try {
+                EventQueue.invokeAndWait(new Runnable() {
+                  @Override
+                  public void run() {
+                    if(MessageDialogue.saveAnnotationsMessage(self) ==
+                      JOptionPane.YES_OPTION) {
+                      writeFramePointsToJSON();
+                    }
+                    exit();
+                  }
+                });
+              } catch (java.lang.reflect.InvocationTargetException e) {
+                  e.printStackTrace();
+              } catch (InterruptedException e) {
+                  e.printStackTrace();
+              }
+            }
+          } else {
+            exit();
+          }
         }
       }
     );
@@ -2605,10 +2635,56 @@ public class BeeTracker extends PApplet {
    */
   @Override
   public void keyPressed() {
+    if(keyCode == ESC) {
+      if(duration > 0f) {
+        //unsaved frame annotations
+        if(
+          replay &&
+          !(
+            new File(
+              System.getProperty("user.dir") + File.separatorChar +
+              "output" + File.separatorChar + videoName +
+              File.separatorChar + "points.json"
+            ).exists()
+          )
+        ) {
+          try {
+            final BeeTracker self = this;
+            EventQueue.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                if(MessageDialogue.saveAnnotationsMessage(self) ==
+                  JOptionPane.YES_OPTION) {
+                  writeFramePointsToJSON();
+                }
+                exit();
+              }
+            });
+          } catch (java.lang.reflect.InvocationTargetException e) {
+              e.printStackTrace();
+          } catch (InterruptedException e) {
+              e.printStackTrace();
+          }
+        }
+      }
+      exit();
+    }
     if(duration > 0f) {
       if(!uic.isSeekToFocused() && key == ' ') {
         playButton();
       }
     }
+  }
+
+  /**
+   * @return true if BeeTracker is currently in replay mode
+   * @return
+   */
+  boolean isReplay() {
+    return replay;
+  }
+
+  String getVideoName() {
+    return videoName;
   }
 }

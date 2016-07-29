@@ -27,7 +27,7 @@ import javax.swing.JScrollPane;
 /**
  * @class MessageDialogue
  * @author Kay Choi
- * @date 11 Jun 16
+ * @date 28 Jul 16
  * @description Displays Java Swing message dialogues.
  */
 class MessageDialogue {
@@ -89,6 +89,19 @@ class MessageDialogue {
             JOptionPane.YES_NO_OPTION
           ) == JOptionPane.YES_OPTION
         ) {
+          if(
+            parent.isReplay() &&
+            !(
+              new File(
+                System.getProperty("user.dir") + File.separatorChar +
+                "output" + File.separatorChar + parent.getVideoName() +
+                File.separatorChar + "points.json"
+              ).exists()
+            ) &&
+            saveAnnotationsMessage(parent) == JOptionPane.YES_OPTION
+          ) {
+            parent.writeFramePointsToJSON();
+          }
           parent.stopPlayback();
         }
       }
@@ -277,5 +290,24 @@ class MessageDialogue {
         );
       }
     });
+  }
+
+  /**
+   * Prompts the user to save frame annotations.
+   * @param parent the invoking BeeTracker
+   * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
+   *   JOptionPane.CANCEL_OPTION 
+   */
+  static int saveAnnotationsMessage(BeeTracker parent) {
+    return JOptionPane.showOptionDialog(
+      null,
+      "Save frame annotations?",
+      "Unsaved annotations!",
+      JOptionPane.YES_NO_OPTION,
+      JOptionPane.WARNING_MESSAGE,
+      null,
+      null,
+      null
+    );
   }
 }

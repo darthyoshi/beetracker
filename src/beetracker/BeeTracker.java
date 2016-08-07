@@ -24,6 +24,7 @@ import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -191,9 +192,22 @@ public class BeeTracker extends PApplet {
             println("window destroy notify");
           }
           if(duration > 0f) {
-            //unsaved frame annotations
-            if(
-              replay &&
+            if(!replay) {
+              try {
+                EventQueue.invokeAndWait(new Runnable() {
+                  @Override
+                  public void run() {
+                    if(MessageDialogue.cancelPlayBackPrompt()) {
+                      exit();
+                    }
+                  }
+                });
+              } catch(InterruptedException | InvocationTargetException e) {
+                java.util.logging.Logger.getLogger(BeeTracker.class.getName())
+                  .log(java.util.logging.Level.SEVERE, null, e);
+                crash(e.toString());
+              }
+            } else if(
               !(
                 new File(
                   System.getProperty("user.dir") + File.separatorChar +
@@ -202,6 +216,7 @@ public class BeeTracker extends PApplet {
                 ).exists()
               )
             ) {
+              //unsaved frame annotations
               try {
                 EventQueue.invokeAndWait(new Runnable() {
                   @Override
@@ -213,10 +228,10 @@ public class BeeTracker extends PApplet {
                     exit();
                   }
                 });
-              } catch (java.lang.reflect.InvocationTargetException e) {
-                  e.printStackTrace();
-              } catch (InterruptedException e) {
-                  e.printStackTrace();
+              } catch (InterruptedException | InvocationTargetException e) {
+                  java.util.logging.Logger.getLogger(BeeTracker.class.getName())
+                    .log(java.util.logging.Level.SEVERE, null, e);
+                  crash(e.toString());
               }
             }
           } else {
@@ -2635,11 +2650,28 @@ public class BeeTracker extends PApplet {
    */
   @Override
   public void keyPressed() {
-    if(keyCode == ESC) {
-      if(duration > 0f) {
-        //unsaved frame annotations
-        if(
-          replay &&
+    if(debug) {
+      println("keyCode: " + keyCode);
+    }
+    if(duration > 0f) {
+      if(keyCode == ESC) {
+        key = 0;
+        if(!replay) {
+          try {
+            EventQueue.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                if(MessageDialogue.cancelPlayBackPrompt()) {
+                  exit();
+                }
+              }
+            });
+          } catch(InterruptedException | InvocationTargetException e) {
+            java.util.logging.Logger.getLogger(BeeTracker.class.getName())
+              .log(java.util.logging.Level.SEVERE, null, e);
+            crash(e.toString());
+          }
+        } else if(
           !(
             new File(
               System.getProperty("user.dir") + File.separatorChar +
@@ -2648,8 +2680,9 @@ public class BeeTracker extends PApplet {
             ).exists()
           )
         ) {
+          final BeeTracker self = this;
+          //unsaved frame annotations
           try {
-            final BeeTracker self = this;
             EventQueue.invokeAndWait(new Runnable() {
               @Override
               public void run() {
@@ -2660,16 +2693,14 @@ public class BeeTracker extends PApplet {
                 exit();
               }
             });
-          } catch (java.lang.reflect.InvocationTargetException e) {
-              e.printStackTrace();
-          } catch (InterruptedException e) {
-              e.printStackTrace();
+          } catch (InterruptedException | InvocationTargetException e) {
+              java.util.logging.Logger.getLogger(BeeTracker.class.getName())
+                .log(java.util.logging.Level.SEVERE, null, e);
+              crash(e.toString());
           }
         }
       }
-      exit();
-    }
-    if(duration > 0f) {
+
       if(!uic.isSeekToFocused() && key == ' ') {
         playButton();
       }

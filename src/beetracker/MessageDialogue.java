@@ -74,21 +74,14 @@ class MessageDialogue {
   }
 
   /**
-   * Displays a dialogue to confirm whether or not to prematurely end playback.
+   * Confirms whether or not to prematurely end playback.
    * @param parent the invoking BeeTracker
    */
   static void stopButtonWarning(final BeeTracker parent) {
     EventQueue.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if(
-          JOptionPane.showConfirmDialog(
-            null,
-            "Cancel playback? Current video statistics will not be saved.",
-            "Warning",
-            JOptionPane.YES_NO_OPTION
-          ) == JOptionPane.YES_OPTION
-        ) {
+        if(cancelPlayBackPrompt()) {
           if(
             parent.isReplay() &&
             !(
@@ -106,6 +99,19 @@ class MessageDialogue {
         }
       }
     });
+  }
+
+  /**
+   * Displays a prompt to confirm premature end of playback.
+   * @return true if JOptionPane.YES_OPTION is selected
+   */
+  static boolean cancelPlayBackPrompt() {
+    return JOptionPane.showConfirmDialog(
+      null,
+      "Cancel playback? Current video statistics will not be saved.",
+      "Warning",
+      JOptionPane.YES_NO_OPTION
+    ) == JOptionPane.YES_OPTION;
   }
 
   /**
@@ -191,7 +197,7 @@ class MessageDialogue {
           JOptionPane.ERROR_MESSAGE
         );
 
-        parent.exit();
+        System.exit(1);
       }
     });
   }
@@ -296,7 +302,7 @@ class MessageDialogue {
    * Prompts the user to save frame annotations.
    * @param parent the invoking BeeTracker
    * @return JOptionPane.YES_OPTION, JOptionPane.NO_OPTION,
-   *   JOptionPane.CANCEL_OPTION 
+   *   JOptionPane.CANCEL_OPTION
    */
   static int saveAnnotationsMessage(BeeTracker parent) {
     return JOptionPane.showOptionDialog(

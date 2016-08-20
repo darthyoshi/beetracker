@@ -35,7 +35,7 @@ import processing.opengl.PShader;
 /**
  * @class BlobDetectionUtils
  * @author Kay Choi
- * @date 9 Jul 16
+ * @date 19 Aug 16
  * @description Handles all BeeTracker blob-related operations.
  */
 class BlobDetectionUtils {
@@ -129,7 +129,8 @@ class BlobDetectionUtils {
     }
 
     img.copy(buf, 0, 0, buf.width, buf.height, 0, 0, img.width, img.height);
-    img.blend(exitBuf, 0, 0, exitBuf.width, exitBuf.height, 0, 0, img.width, img.height, BeeTracker.LIGHTEST);
+    img.blend(exitBuf, 0, 0, exitBuf.width, exitBuf.height,
+      0, 0, img.width, img.height, BeeTracker.LIGHTEST);
   }
 
   /**
@@ -446,7 +447,7 @@ class BlobDetectionUtils {
     }
 
     if(BeeTracker.debug) {
-      System.out.println("blob area: " + result);
+      System.out.println("blob area: " + result + "px");
     }
 
     return result;
@@ -463,11 +464,13 @@ class BlobDetectionUtils {
   /**
    * @param b1 the first blob
    * @param b2 the second blob
-   * @return true if the bounding boxes of b1 and b2 overlap
+   * @return true if the bounding boxes of b1 and b2 are within 4px of each other
    */
   private boolean isOverlap(Blob b1, Blob b2) {
-    boolean xOverlap = b1.x < b2.x ? b1.xMax > b2.xMin : b1.xMin < b2.xMax;
-    boolean yOverlap = b1.y < b2.y ? b1.yMax > b2.yMin : b1.yMin < b2.yMax;
+    boolean xOverlap = b1.x < b2.x ? b1.xMax > b2.xMin-filterRadius[0]/buf.width :
+      b1.xMin-filterRadius[0]/buf.width < b2.xMax;
+    boolean yOverlap = b1.y < b2.y ? b1.yMax > b2.yMin-filterRadius[0]/buf.height :
+      b1.yMin-filterRadius[0]/buf.height < b2.yMax;
 
     if(BeeTracker.debug) {
       System.out.append("checking overlap").append('\n')

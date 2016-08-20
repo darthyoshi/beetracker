@@ -191,6 +191,7 @@ public class BeeTracker extends PApplet {
           if(debug) {
             println("window destroy notify");
           }
+
           if(duration > 0f) {
             if(!replay) {
               try {

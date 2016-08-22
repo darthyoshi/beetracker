@@ -44,7 +44,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 28 Jul 16
+ * @date 21 Aug 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -208,31 +208,33 @@ public class BeeTracker extends PApplet {
                   .log(java.util.logging.Level.SEVERE, null, e);
                 crash(e.toString());
               }
-            } else if(
-              !(
+            } else {
+              if(!(
                 new File(
                   System.getProperty("user.dir") + File.separatorChar +
                   "output" + File.separatorChar + videoName +
                   File.separatorChar + "points.json"
                 ).exists()
-              )
-            ) {
-              //unsaved frame annotations
-              try {
-                EventQueue.invokeAndWait(new Runnable() {
-                  @Override
-                  public void run() {
-                    if(MessageDialogue.saveAnnotationsMessage(self) ==
-                      JOptionPane.YES_OPTION) {
-                      writeFramePointsToJSON();
+              )) {
+                //unsaved frame annotations
+                try {
+                  EventQueue.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                      if(MessageDialogue.saveAnnotationsMessage(self) ==
+                        JOptionPane.YES_OPTION) {
+                        writeFramePointsToJSON();
+                      }
+                      exit();
                     }
-                    exit();
-                  }
-                });
-              } catch (InterruptedException | InvocationTargetException e) {
-                  java.util.logging.Logger.getLogger(BeeTracker.class.getName())
-                    .log(java.util.logging.Level.SEVERE, null, e);
-                  crash(e.toString());
+                  });
+                } catch (InterruptedException | InvocationTargetException e) {
+                    java.util.logging.Logger.getLogger(BeeTracker.class.getName())
+                      .log(java.util.logging.Level.SEVERE, null, e);
+                    crash(e.toString());
+                }
+              } else {
+                exit();
               }
             }
           } else {
@@ -2672,32 +2674,34 @@ public class BeeTracker extends PApplet {
               .log(java.util.logging.Level.SEVERE, null, e);
             crash(e.toString());
           }
-        } else if(
-          !(
+        } else {
+          if(!(
             new File(
               System.getProperty("user.dir") + File.separatorChar +
               "output" + File.separatorChar + videoName +
               File.separatorChar + "points.json"
             ).exists()
-          )
-        ) {
-          final BeeTracker self = this;
-          //unsaved frame annotations
-          try {
-            EventQueue.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                if(MessageDialogue.saveAnnotationsMessage(self) ==
-                  JOptionPane.YES_OPTION) {
-                  writeFramePointsToJSON();
+          )) {
+            final BeeTracker self = this;
+            //unsaved frame annotations
+            try {
+              EventQueue.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                  if(MessageDialogue.saveAnnotationsMessage(self) ==
+                    JOptionPane.YES_OPTION) {
+                    writeFramePointsToJSON();
+                  }
+                  exit();
                 }
-                exit();
-              }
-            });
-          } catch (InterruptedException | InvocationTargetException e) {
+              });
+            } catch (InterruptedException | InvocationTargetException e) {
               java.util.logging.Logger.getLogger(BeeTracker.class.getName())
                 .log(java.util.logging.Level.SEVERE, null, e);
               crash(e.toString());
+            }
+          } else {
+            exit();
           }
         }
       }

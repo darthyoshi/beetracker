@@ -32,7 +32,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 19 Jul 16
+ * @date 23 Aug 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -407,6 +407,8 @@ class TrackingUtils {
     colors = new IntList();
     currentID = 0;
     trackers = new HashMap<>();
+
+    rec.oneDollar.clean();
   }
 
   /**

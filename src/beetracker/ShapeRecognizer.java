@@ -23,13 +23,14 @@ import java.util.LinkedList;
 /**
  * @class ShapeRecognizer
  * @author Kay Choi
- * @date 9 Jul 16
+ * @date 27 Aug 16
  * @description Provides shape recognition for waggle dance detection.
  */
 public class ShapeRecognizer {
   private static final int shapeScore = 70;
   private boolean status = false;
   private static final int rate = 32;
+  private static final float minWaggleSize = 0.01f;
 
   de.voidplus.dollar.OneDollar oneDollar;
 
@@ -112,34 +113,41 @@ public class ShapeRecognizer {
    * Checks a path for the waggle dance.
    * @param path a Deque of normalized float pairs representing a path
    * @param frameDims the dimensions of the inset frame
-   * @return true if the waggle dance shape is part of the path
    */
   void recognize(java.util.Deque<float[]> path, int[] frameDims) {
-    float[] point, prevCandPoint = null;
+    float[] normPoint, absPoint;
     int i;
+    float xMin, xMax, yMin, yMax;
 
     LinkedList<float[]> candidateList = new LinkedList<>();
     int[] candidateArray;
 
     status = false;
 
-    //check path in reverse
+    //check path starting from most recent point
+    xMin = yMin = Float.MAX_VALUE;
+    xMax = yMax = Float.MIN_VALUE;
     java.util.Iterator<float[]> iter = path.descendingIterator();
     while(iter.hasNext()) {
-      point = iter.next();
+      normPoint = iter.next();
+      absPoint = new float[] {normPoint[0]*frameDims[0], normPoint[1]*frameDims[1]};
 
-      //artificially increase candidate sample rate
-      if(prevCandPoint != null) {
-        for(i = 1; i < rate; i++) {
-          candidateList.add(new float[] {
-            BeeTracker.lerp(prevCandPoint[0], point[0], ((float)i)/rate)*frameDims[0],
-            BeeTracker.lerp(prevCandPoint[1], point[1], ((float)i)/rate)*frameDims[1]
-          });
-        }
+      //calc path bounding box
+      if(normPoint[0] < xMin) {
+        xMin = normPoint[0];
+      }
+      if(normPoint[0] > xMax) {
+        xMax = normPoint[0];
+      }
+      if(normPoint[1] < yMin) {
+        yMin = normPoint[1];
+      }
+      if(normPoint[1] > yMax) {
+        yMax = normPoint[1];
       }
 
-      candidateList.add(new float[] {point[0]*frameDims[0],
-        point[1]*frameDims[1]});
+      candidateList.add(absPoint);
+
       candidateArray = new int[candidateList.size()*2];
       i = 0;
       for(float[] tmpPoint : candidateList) {
@@ -148,14 +156,26 @@ public class ShapeRecognizer {
         candidateArray[i] = (int)tmpPoint[1];
         i++;
       }
-      oneDollar.check(candidateArray);
 
-      //current path contains recognized gesture, no need to continue
-      if(status) {
-        break;
+      float dX = xMax - xMin; 
+      float dY = 1f*(yMax-yMin)*frameDims[1]/frameDims[0];
+      if(BeeTracker.debug) {
+        System.out.print("path bounding box: " + dX + " " + dY + "\ncheck path: ");
       }
+      //ignore paths with insufficiently large bounding boxes
+      if(dX > minWaggleSize && dY > minWaggleSize) {
+        if(BeeTracker.debug) {
+          System.out.println(true);
+        }
+        oneDollar.check(candidateArray);
 
-      prevCandPoint = point;
+        //current path contains recognized gesture, no need to continue
+        if(status) {
+          break;
+        }
+      } else if(BeeTracker.debug){
+        System.out.println(false);
+      }
     }
   }
 

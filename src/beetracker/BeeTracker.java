@@ -44,7 +44,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 21 Aug 16
+ * @date 28 Aug 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -2599,19 +2599,21 @@ public class BeeTracker extends PApplet {
 
   /**
    * Adds an event to the notification queue.
+   * @param pathID
    * @param eventType
    * @param eventTime
    */
-  void registerEvent(String eventType, float eventTime) {
+  void registerEvent(int pathID, String eventType, float eventTime) {
     int tmp = (int)(eventTime*100f);
     msgs.put(
       time + 5f,
       String.format(
-        "%02d:%02d:%02d.%02d, %s",
+        "%02d:%02d:%02d.%02d, bee #%d, %s",
         (tmp/6000)/60,
         tmp/6000,
         (tmp/100)%60,
         tmp%100,
+        pathID,
         eventType
       )
     );

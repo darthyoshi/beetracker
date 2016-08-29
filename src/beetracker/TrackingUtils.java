@@ -32,7 +32,7 @@ import processing.data.IntList;
 /**
  * @class TrackingUtils
  * @author Kay Choi
- * @date 23 Aug 16
+ * @date 28 Aug 16
  * @description Handles all BeeTracker tracking-related operations.
  */
 class TrackingUtils {
@@ -255,7 +255,7 @@ class TrackingUtils {
 
               tracker.eventLabels.put(time, eventTypes[2]);
               tracker.eventIDs.put(time, pathIDs.get(i));
-              parent.registerEvent(eventTypes[2], time);
+              parent.registerEvent(pathIDs.get(i), eventTypes[2], time);
               tracker.eventTimes.append(time);
             }
           }
@@ -751,14 +751,14 @@ class TrackingUtils {
           tracker.eventLabels.put(eventTime, eventTypes[1]);
           tracker.eventIDs.put(eventTime, ID);
           tracker.eventTimes.append(eventTime);
-          parent.registerEvent(eventTypes[1], eventTime);
+          parent.registerEvent(ID, eventTypes[1], eventTime);
         }
       } else if(isNewPointInExit) {
         //ingress event
         tracker.eventLabels.put(time, eventTypes[0]);
         tracker.eventIDs.put(time, ID);
         tracker.eventTimes.append(time);
-        parent.registerEvent(eventTypes[0], time);
+        parent.registerEvent(ID, eventTypes[0], time);
       }
     }
   }

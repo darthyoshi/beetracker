@@ -105,9 +105,9 @@ public class ShapeRecognizer {
       }
     }
     int[] array = new int[path.size()*2];
-    java.util.ListIterator<int[]> iter = path.listIterator(path.size());
+    Iterator<int[]> iter = path.descendingIterator();
     for(int i = 0; i < array.length; i += 2) {
-      point = iter.previous();
+      point = iter.next();
       array[i] = point[0];
       array[i+1] = point[1];
     }

@@ -18,12 +18,13 @@
 
 package beetracker;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * @class ShapeRecognizer
  * @author Kay Choi
- * @date 27 Aug 16
+ * @date 28 Aug 16
  * @description Provides shape recognition for waggle dance detection.
  */
 public class ShapeRecognizer {
@@ -31,6 +32,8 @@ public class ShapeRecognizer {
   private boolean status = false;
   private static final int rate = 32;
   private static final float minWaggleSize = 0.01f;
+  private static final int timeOut = 5;
+  private final BeeTracker root; 
 
   de.voidplus.dollar.OneDollar oneDollar;
 
@@ -39,11 +42,13 @@ public class ShapeRecognizer {
    * @param root the BeeTracker object
    */
   ShapeRecognizer(BeeTracker root) {
+    this.root = root;
     oneDollar = new de.voidplus.dollar.OneDollar(root)
       .setMinSimilarity(shapeScore)
-      .enableMinSimilarity()
       .setVerbose(BeeTracker.debug)
-      .setFragmentationRate(rate);
+      .setMaxTime(timeOut*1000)
+      .setFragmentationRate(rate)
+      .disableAutoCheck();
   }
 
   /**
@@ -127,7 +132,7 @@ public class ShapeRecognizer {
     //check path starting from most recent point
     xMin = yMin = Float.MAX_VALUE;
     xMax = yMax = Float.MIN_VALUE;
-    java.util.Iterator<float[]> iter = path.descendingIterator();
+    Iterator<float[]> iter = path.descendingIterator();
     while(iter.hasNext()) {
       normPoint = iter.next();
       absPoint = new float[] {normPoint[0]*frameDims[0], normPoint[1]*frameDims[1]};
@@ -176,6 +181,57 @@ public class ShapeRecognizer {
       } else if(BeeTracker.debug){
         System.out.println(false);
       }
+    }
+  }
+
+  /**
+   * Checks a path for the waggle dance.
+   * @param color the hexadecimal color associated with the path
+   * @param pathID
+   * @param path a Deque of normalized float pairs representing a path
+   * @param frameDims the dimensions of the inset frame
+   */
+  void recognize(int color, int pathID, java.util.Deque<float[]> path, int[] frameDims) {
+    float[] point = path.peekLast();
+    oneDollar.track(color*0x100+pathID, point[0]*frameDims[0], point[1]*frameDims[1]);
+
+    //check points from last 5s
+    Iterator<float[]> iter = path.descendingIterator();
+    int timer = timeOut*root.fps;
+    float xMin, xMax, yMin, yMax;
+    xMin = yMin = Float.MAX_VALUE;
+    xMax = yMax = Float.MIN_VALUE;
+    while(iter.hasNext() && timer > 0) {
+      point = iter.next();
+      if(point[0] < xMin) {
+        xMin = point[0];
+      }
+      if(point[0] > xMax) {
+        xMax = point[0];
+      }
+      if(point[1] < yMin) {
+        yMin = point[1];
+      }
+      if(point[1] > yMax) {
+        yMax = point[1];
+      }
+
+      timer--;
+    }
+
+    float dX = xMax - xMin; 
+    float dY = 1f*(yMax-yMin)*frameDims[1]/frameDims[0];
+    if(BeeTracker.debug) {
+      System.out.print("path bounding box: " + dX + " " + dY + "\ncheck path: ");
+    }
+    //ignore paths with insufficiently large bounding boxes within last 5s
+    if(dX > minWaggleSize && dY > minWaggleSize) {
+      if(BeeTracker.debug) {
+        System.out.println(true);
+      }
+      oneDollar.check();
+    } else if(BeeTracker.debug) {
+      System.out.println(false);
     }
   }
 

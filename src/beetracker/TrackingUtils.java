@@ -248,7 +248,8 @@ class TrackingUtils {
         i = 0;
         while(waggleIter.hasNext()) {
           if(!waggleIter.next()) {
-            rec.recognize(oldPaths.get(i), frameDims);
+//            rec.recognize(oldPaths.get(i), frameDims);
+            rec.recognize(color, pathIDs.get(i), oldPaths.get(i), frameDims);
 
             if(rec.isCandidateRecognized()) {
               waggleIter.set(true);

@@ -89,7 +89,7 @@ public class BeeTracker extends PApplet {
   private int imgIndex = -1;
   private float duration = -1f;
   private float time = -1f;
-  private int fps = 0;
+  int fps = 0;
 
   private UIControl uic;
   private BlobDetectionUtils bdu;

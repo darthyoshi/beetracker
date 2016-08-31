@@ -32,7 +32,7 @@ public class ShapeRecognizer {
   private boolean status = false;
   private static final int rate = 32;
   private static final float minWaggleSize = 0.01f;
-  private static final int timeOut = 5;
+  private static final int timeOut = 10;
   private final BeeTracker root; 
 
   de.voidplus.dollar.OneDollar oneDollar;
@@ -132,8 +132,9 @@ public class ShapeRecognizer {
     //check path starting from most recent point
     xMin = yMin = Float.MAX_VALUE;
     xMax = yMax = Float.MIN_VALUE;
+    int timer = timeOut*root.fps;
     Iterator<float[]> iter = path.descendingIterator();
-    while(iter.hasNext()) {
+    while(iter.hasNext() && timer > 0) {
       normPoint = iter.next();
       absPoint = new float[] {normPoint[0]*frameDims[0], normPoint[1]*frameDims[1]};
 
@@ -181,6 +182,8 @@ public class ShapeRecognizer {
       } else if(BeeTracker.debug){
         System.out.println(false);
       }
+
+      timer--;
     }
   }
 

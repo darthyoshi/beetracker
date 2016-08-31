@@ -185,13 +185,13 @@ public class ShapeRecognizer {
   }
 
   /**
-   * Checks a path for the waggle dance.
+   * Updates a path for tracking the waggle dance.
    * @param color the hexadecimal color associated with the path
    * @param pathID
    * @param path a Deque of normalized float pairs representing a path
    * @param frameDims the dimensions of the inset frame
    */
-  void recognize(int color, int pathID, java.util.Deque<float[]> path, int[] frameDims) {
+  void trackPath(int color, int pathID, java.util.Deque<float[]> path, int[] frameDims) {
     float[] point = path.peekLast();
     oneDollar.track(color*0x100+pathID, point[0]*frameDims[0], point[1]*frameDims[1]);
 
@@ -229,6 +229,7 @@ public class ShapeRecognizer {
       if(BeeTracker.debug) {
         System.out.println(true);
       }
+
       oneDollar.check();
     } else if(BeeTracker.debug) {
       System.out.println(false);

@@ -44,7 +44,7 @@ import processing.video.Movie;
 /**
  * @class BeeTracker
  * @author Kay Choi, 909926828
- * @date 28 Aug 16
+ * @date 1 Sep 16
  * @description A tool for tracking bees in a video.
  */
 @SuppressWarnings("serial")
@@ -89,7 +89,7 @@ public class BeeTracker extends PApplet {
   private int imgIndex = -1;
   private float duration = -1f;
   private float time = -1f;
-  int fps = 0;
+  int fps = -1;
 
   private UIControl uic;
   private BlobDetectionUtils bdu;
@@ -903,6 +903,8 @@ public class BeeTracker extends PApplet {
           if(!imgSequenceMode) {
             duration = movie.duration();
 
+            fps = movie.frameRate;
+
             uic.setSeekRange(duration);
           }
 
@@ -1615,6 +1617,7 @@ public class BeeTracker extends PApplet {
     }
 
     time = duration = -1f;
+    fps = -1;
 
     movieDims = null;
     videoName = null;

@@ -903,7 +903,7 @@ public class BeeTracker extends PApplet {
           if(!imgSequenceMode) {
             duration = movie.duration();
 
-            fps = movie.frameRate;
+            fps = (int)ceil(movie.frameRate);
 
             uic.setSeekRange(duration);
           }

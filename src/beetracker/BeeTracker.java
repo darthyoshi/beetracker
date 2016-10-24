@@ -1006,7 +1006,7 @@ public class BeeTracker extends PApplet {
       imgSequence[i] = loadImage(imgNames[i]);
     }
     i++;
-    while(i < index + 10 && i< imgNames.length) {
+    while(i < index + 10 && i < imgNames.length) {
       if(imgSequence[i] == null) {
         if(debug) {
           println("image sequence \"stream\": " + imgNames[i]);
@@ -1322,7 +1322,6 @@ public class BeeTracker extends PApplet {
 
           if(!imgSequenceMode) {
             movie.play();
-            movie.volume(0f);
           }
 
           if(debug) {
